@@ -9,7 +9,8 @@
 
 - SOPT 28th WEBJAM   
 
-- 프로젝트 기간: 2021.06.26 ~ 2020.07.17
+- 프로젝트 기간: 2021.06.26 ~ 2021.07.17
+- 프로젝트 릴리즈 기간: 2021.08.01 ~
 - [API 명세서](https://www.notion.so/API-docs-7ea0d6ba794942c09e1850200a63bdf6)
 - [Notion](https://chatter-gallium-16e.notion.site/Server-e02ec53e702a4f53a15737edfb394f5b)
 - [Code Convention](https://github.com/Team-O2/Back-end/blob/develop/README/CodeConvention.md)
@@ -196,8 +197,8 @@
 <br></br>
 
 # Team
-| **🙋 [고성용](https://github.com/holmir97)** | **🙋 [이현진](https://github.com/hyundang)** |
-| :---: | :---: |
-| [![FVCproductions](https://avatars.githubusercontent.com/u/64517473?v=4)]()    | [![FVCproductions](https://avatars.githubusercontent.com/u/69850106?v=4)]() |
-| 서버 개발자 | 서버 개발자 |
-|프로젝트 세팅<br /> Auth API <br /> User API <br /> Concert API <br /> Admin API <br /> Notice API <br />|프로젝트 세팅 <br /> Auth API <br /> User API <br /> Challenge API <br /> Scheduler <br /> 서버 배포</br>| 
+| **🙋 [고성용](https://github.com/holmir97)** | **🙋 [이현진](https://github.com/hyundang)** | **🙋 [정설희](https://github.com/xxeol2)** |
+| :---: | :---: | :---: |
+| [![FVCproductions](https://avatars.githubusercontent.com/u/64517473?v=4)]()    | [![FVCproductions](https://avatars.githubusercontent.com/u/69850106?v=4)]() |[![FVCproductions](https://avatars.githubusercontent.com/u/71129059?v=4)]() |
+| 서버 개발자 | 서버 개발자 | 서버 개발자 |
+|프로젝트 세팅<br /> Auth API <br /> User API <br /> Concert API <br /> Admin API <br /> Notice API <br />|프로젝트 세팅 <br /> Auth API <br /> User API <br /> Challenge API <br /> Scheduler <br /> 서버 배포</br>| 프로젝트 세팅<br /> DB 설계 </br> 서버 배포</br>
