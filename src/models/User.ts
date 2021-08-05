@@ -4,8 +4,6 @@ import {
   CreatedAt,
   UpdatedAt,
   Table,
-  DataType,
-  BelongsToMany,
   PrimaryKey,
   AutoIncrement,
   Unique,
@@ -14,6 +12,7 @@ import {
   HasMany,
   HasOne,
 } from "sequelize-typescript";
+import UserInfo from "./UserInfo";
 import Post from'./Post'
 import Badge from "./Badge";
 import Like from "./Like";
@@ -67,4 +66,6 @@ export default class User extends Model {
 
   @HasMany(() => Like)
   like: Like[];
+  @HasOne(() => UserInfo)
+  userInfos: UserInfo;
 }

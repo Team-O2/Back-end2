@@ -2,18 +2,15 @@ import User from "./User";
 import {
   Model,
   Column,
-  CreatedAt,
-  UpdatedAt,
   Table,
-  DataType,
-  BelongsToMany,
   PrimaryKey,
-  AutoIncrement,
-  Unique,
   Default,
-  AllowNull,
   ForeignKey,
+  BelongsTo,
+  AllowNull,
+  HasMany,
 } from "sequelize-typescript";
+import Generation from "./Generation";
 
 @Table({
   tableName: "userInfo",
@@ -57,9 +54,10 @@ export default class UserInfo extends Model {
   @Column
   isRegist: Boolean;
 
-  // @BelongsTo(() => UserInfo)
-  // userInfo: UserInfo;
-
-  // @BelongsToMany(() => UserInterest)
-  // userInterest: UserInterest[];
+  @HasMany(() => Generation)
+  generations: Generation[];
+  @PrimaryKey
+  @AllowNull(false)
+  @BelongsTo(() => User)
+  user: User;
 }
