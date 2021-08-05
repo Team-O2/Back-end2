@@ -6,6 +6,7 @@ import {
   AutoIncrement,
   Unique,
   ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 import User from "./User";
 
@@ -23,4 +24,7 @@ export default class UserInterest extends Model {
 
   @Column
   interest: string;
+
+  @BelongsTo(() => User)
+  user: User;
 }

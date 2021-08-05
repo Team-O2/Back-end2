@@ -12,8 +12,12 @@ import {
   Default,
   AllowNull,
   HasMany,
+  HasOne,
 } from "sequelize-typescript";
 import Post from'./Post'
+import Badge from "./Badge";
+import Like from "./Like";
+import UserInterest from "./UserInterest";
 
 @Table({
   tableName: "user",
@@ -52,12 +56,15 @@ export default class User extends Model {
   @UpdatedAt
   updatedAt!: Date;
 
-  // @BelongsTo(() => UserInfo)
-  // userInfo: UserInfo;
-
-  // @BelongsToMany(() => UserInterest)
-  // userInterest: UserInterest[];
-
   @HasMany(() => Post)
   posts: Post[];
+  
+  @HasMany(() => UserInterest)
+  userInterest: UserInterest[];
+
+  @HasOne(() => Badge)
+  badge: Badge[];
+
+  @HasMany(() => Like)
+  like: Like[];
 }

@@ -6,6 +6,7 @@ import {
   AutoIncrement,
   Unique,
   ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 import Post from "./Post";
 import User from "./User";
@@ -25,4 +26,10 @@ export default class Like extends Model {
   @ForeignKey(() => User)
   @Column
   userID: number;
+
+  @BelongsTo(() => Post)
+  post: Post;
+
+  @BelongsTo(() => User)
+  user: User;
 }
