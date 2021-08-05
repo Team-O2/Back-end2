@@ -6,7 +6,8 @@ import {
     Unique,
     Default,
     AllowNull,
-    ForeignKey
+    ForeignKey,
+    BelongsTo
   } from "sequelize-typescript";
   import User from './User'
   import Post from './Post'
@@ -43,5 +44,7 @@ import {
     @Column
     isNotice: Boolean;
 
+    @BelongsTo(() => Post)
+    post: Post;
   }
   
