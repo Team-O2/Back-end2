@@ -11,7 +11,9 @@ import {
   Unique,
   Default,
   AllowNull,
+  HasMany,
 } from "sequelize-typescript";
+import Post from'./Post'
 
 @Table({
   tableName: "user",
@@ -55,4 +57,7 @@ export default class User extends Model {
 
   // @BelongsToMany(() => UserInterest)
   // userInterest: UserInterest[];
+
+  @HasMany(() => Post)
+  posts: Post[];
 }
