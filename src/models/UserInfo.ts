@@ -56,6 +56,7 @@ export default class UserInfo extends Model {
 
   @HasMany(() => Generation)
   generations: Generation[];
+
   @PrimaryKey
   @AllowNull(false)
   @BelongsTo(() => User)
