@@ -6,8 +6,8 @@ import { response, dataResponse } from "../library/response";
 import auth from "../middleware/auth";
 const upload = require("../modules/upload");
 // interfaces
-import { IAdmin } from "../interfaces/IAdmin";
-import { IConcert } from "../interfaces/IConcert";
+// import { IAdmin } from "../interfaces/IAdmin";
+// import { IConcert } from "../interfaces/IConcert";
 //services
 import {
   postAdminList,
