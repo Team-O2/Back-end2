@@ -12,7 +12,7 @@ import User from "./User";
 import Post from "./Post";
 
 @Table({
-  tableName: "userInfo",
+  tableName: "scrap",
   freezeTableName: true,
   underscored: true,
   timestamps: false,
@@ -24,12 +24,10 @@ export default class Scrap extends Model {
   @Column
   id: number;
 
-  @PrimaryKey
   @ForeignKey(() => Post)
   @Column
   postID: number;
 
-  @PrimaryKey
   @ForeignKey(() => User)
   @Column
   userID: number;

@@ -1,46 +1,52 @@
 import {
-    Model,
-    Column,
-    CreatedAt,
-    UpdatedAt,
-    Table,
-    DataType,
-    BelongsToMany,
-    PrimaryKey,
-    AutoIncrement,
-    Unique,
-    Default,
-    AllowNull,
-    ForeignKey,
-    BelongsTo,
-  } from "sequelize-typescript";
-  import Post from'./Post'
+  Model,
+  Column,
+  Table,
+  PrimaryKey,
+  Unique,
+  Default,
+  ForeignKey,
+  BelongsTo,
+  CreatedAt,
+  UpdatedAt,
+} from "sequelize-typescript";
+import Post from "./Post";
 
-  @Table({ tableName: "challenge", freezeTableName: true, underscored: true})
-  export default class Challenge extends Model {
-    @PrimaryKey
-    @ForeignKey(() => Post)
-    @Unique
-    @Column
-    id: number;
-  
-    @Default("")
-    @Column
-    good: string;
+@Table({
+  tableName: "challenge",
+  freezeTableName: true,
+  underscored: true,
+  timestamps: true,
+})
+export default class Challenge extends Model {
+  @PrimaryKey
+  @ForeignKey(() => Post)
+  @Unique
+  @Column
+  id: number;
 
-    @Default("")
-    @Column
-    learn: string;
+  @Default("")
+  @Column
+  good: string;
 
-    @Default("")
-    @Column
-    bad: string;
+  @Default("")
+  @Column
+  learn: string;
 
-    @Default(0)
-    @Column
-    generation: number;
+  @Default("")
+  @Column
+  bad: string;
 
-    @BelongsTo(() => Post)
-    post: Post;
-  }
-  
+  @Default(0)
+  @Column
+  generation: number;
+
+  @CreatedAt
+  createdAt!: Date;
+
+  @UpdatedAt
+  updatedAt!: Date;
+
+  @BelongsTo(() => Post)
+  post: Post;
+}

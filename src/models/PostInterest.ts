@@ -11,11 +11,11 @@ import {
 import Post from "./Post";
 
 @Table({
-  tableName: "concertInterest",
+  tableName: "postInterest",
   freezeTableName: true,
   underscored: true,
 })
-export default class concertInterest extends Model {
+export default class PostInterest extends Model {
   @PrimaryKey
   @AutoIncrement
   @Unique

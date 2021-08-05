@@ -1,20 +1,25 @@
 import {
-    Model,
-    Column,
-    Table,
-    PrimaryKey,
-    Unique,
-    Default,
-    AllowNull,
-    ForeignKey,
-    BelongsTo,
-    HasMany,
-  } from "sequelize-typescript";
-  import User from './User'
-  import Post from './Post'
-import PostInterest from "./PostInterest";
+  Model,
+  Column,
+  Table,
+  PrimaryKey,
+  Unique,
+  Default,
+  AllowNull,
+  ForeignKey,
+  BelongsTo,
+  CreatedAt,
+  UpdatedAt,
+} from "sequelize-typescript";
+import User from "./User";
+import Post from "./Post";
 
-@Table({ tableName: "concert", freezeTableName: true, underscored: true })
+@Table({
+  tableName: "concert",
+  freezeTableName: true,
+  underscored: true,
+  timestamps: true,
+})
 export default class Concert extends Model {
   @PrimaryKey
   @ForeignKey(() => Post)
@@ -45,7 +50,13 @@ export default class Concert extends Model {
   @Default(false)
   @Column
   isNotice: Boolean;
-  
+
+  @CreatedAt
+  createdAt!: Date;
+
+  @UpdatedAt
+  updatedAt!: Date;
+
   @BelongsTo(() => Post)
   post: Post;
 }

@@ -9,7 +9,6 @@ import {
   BelongsTo,
   ForeignKey,
 } from "sequelize-typescript";
-import User from "./User";
 import UserInfo from "./UserInfo";
 
 @Table({ tableName: "badge", freezeTableName: true, underscored: true })
@@ -77,6 +76,6 @@ export default class Badge extends Model {
   @Column
   challengeBadge: number;
 
-  @BelongsTo(() => User)
-  user: User;
+  @BelongsTo(() => UserInfo)
+  userInfo: UserInfo;
 }

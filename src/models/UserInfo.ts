@@ -12,8 +12,6 @@ import {
 import User from "./User";
 import Generation from "./Generation";
 import Badge from "./Badge";
-import UserInterest from "./UserInterest";
-import Post from "./Post";
 
 @Table({
   tableName: "userInfo",
@@ -59,12 +57,6 @@ export default class UserInfo extends Model {
 
   @BelongsTo(() => User)
   user: User;
-
-  @HasMany(() => Post)
-  posts: Post[];
-
-  @HasMany(() => UserInterest)
-  userInterests: UserInterest[];
 
   @HasOne(() => Badge)
   badges: Badge[];
