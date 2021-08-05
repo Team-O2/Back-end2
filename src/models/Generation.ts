@@ -5,9 +5,9 @@ import {
   PrimaryKey,
   AutoIncrement,
   Unique,
-  Default,
   AllowNull,
   ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 
 import UserInfo from "./UserInfo";
@@ -33,9 +33,6 @@ export default class Generation extends Model {
   @Column
   userID: number;
 
-  // @BelongsTo(() => UserInfo)
-  // userInfo: UserInfo;
-
-  // @BelongsToMany(() => UserInterest)
-  // userInterest: UserInterest[];
+  @BelongsTo(() => UserInfo)
+  userInfo: UserInfo;
 }
