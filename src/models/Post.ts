@@ -8,9 +8,13 @@ import {
     AutoIncrement,
     Unique,
     Default,
-    ForeignKey
+    ForeignKey,
+    BelongsTo,
+    HasOne
   } from "sequelize-typescript";
   import User from'./User'
+  import Concert from './Concert'
+  import Challenge from './Challenge'
 
   @Table({ tableName: "post", freezeTableName: true, underscored: true, timestamps: true })
   export default class Post extends Model {
@@ -33,5 +37,14 @@ import {
     @Default(false)
     @Column
     isDeleted: Boolean;
+
+    @BelongsTo(() => User)
+    user: User;
+
+    @HasOne(() => Concert)
+    concert: Concert;
+
+    @HasOne(() => Challenge)
+    challenge: Challenge;
   }
   

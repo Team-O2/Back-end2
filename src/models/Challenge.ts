@@ -11,7 +11,8 @@ import {
     Unique,
     Default,
     AllowNull,
-    ForeignKey
+    ForeignKey,
+    BelongsTo,
   } from "sequelize-typescript";
   import Post from'./Post'
 
@@ -38,6 +39,8 @@ import {
     @Default(0)
     @Column
     generation: number;
-    
+
+    @BelongsTo(() => Post)
+    post: Post;
   }
   
