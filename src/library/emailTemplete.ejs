@@ -1,0 +1,37 @@
+<html>
+
+<head>
+    <style>
+        /* .wrap {
+            width: 100%;
+        } */
+
+        .info_text {
+            margin-bottom: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            color: black;
+        }
+
+        .info_code {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 2px solid lightgray;
+            font-size: 20px;
+            font-weight: 700;
+            color: skyblue;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <p class="info_text">비밀번호 찾기를 위한 인증번호 입니다.</p>
+        <p class="info_text">비밀번호를 꼭 변경해주세요!</p>
+        <div class="info_code">
+            <%= authCode %>
+        </div>
+    </div>
+</body>
+
+</html>
