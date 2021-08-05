@@ -2,18 +2,20 @@ import {
   Model,
   Column,
   CreatedAt,
-  UpdatedAt,
   Table,
-  DataType,
-  BelongsToMany,
   PrimaryKey,
   AutoIncrement,
   Unique,
   Default,
-  AllowNull,
 } from "sequelize-typescript";
+import { Sequelize } from "sequelize";
 
-@Table({ tableName: "admin", freezeTableName: true, underscored: true })
+@Table({
+  tableName: "admin",
+  freezeTableName: true,
+  underscored: true,
+  timestamps: false,
+})
 export default class Admin extends Model {
   @PrimaryKey
   @AutoIncrement
@@ -36,9 +38,11 @@ export default class Admin extends Model {
   @Column
   challengeEndDT: Date;
 
+  @Default(0)
   @Column
   limitNum: number;
 
+  @Default(0)
   @Column
   applyNum: number;
 
@@ -49,6 +53,7 @@ export default class Admin extends Model {
   img!: string;
 
   @CreatedAt
+  @Default(Sequelize.fn("NOW"))
   @Column
-  createdAt!: Date;
+  createdAt?: Date;
 }
