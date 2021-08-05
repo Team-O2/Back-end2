@@ -1,54 +1,37 @@
 import {
   Model,
   Column,
-  CreatedAt,
-  UpdatedAt,
   Table,
-  DataType,
-  BelongsToMany,
   PrimaryKey,
   AutoIncrement,
   Unique,
   Default,
   AllowNull,
+  ForeignKey,
 } from "sequelize-typescript";
 
+import UserInfo from "./UserInfo";
+
 @Table({
-  tableName: "user",
+  tableName: "generation",
   freezeTableName: true,
   underscored: true,
-  timestamps: true,
+  timestamps: false,
 })
-export default class User extends Model {
+export default class Generation extends Model {
   @PrimaryKey
   @AutoIncrement
   @Unique
   @Column
   id: number;
 
+  @AllowNull(true)
   @Column
-  email: string;
+  generation: number;
 
+  @ForeignKey(() => UserInfo)
   @Column
-  nickname: string;
-
-  @Default(false)
-  @Column
-  isMarketing: Boolean;
-
-  @Default(2)
-  @Column
-  gender: number;
-
-  @AllowNull
-  @Column
-  emailCode!: string;
-
-  @CreatedAt
-  createdAt!: Date;
-
-  @UpdatedAt
-  updatedAt!: Date;
+  userID: number;
 
   // @BelongsTo(() => UserInfo)
   // userInfo: UserInfo;
