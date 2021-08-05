@@ -6,7 +6,9 @@ import {
   AutoIncrement,
   Unique,
   Default,
+  BelongsTo,
 } from "sequelize-typescript";
+import User from "./User";
 
 @Table({ tableName: "badge", freezeTableName: true, underscored: true })
 export default class Badge extends Model {
@@ -71,4 +73,7 @@ export default class Badge extends Model {
   @Default(0)
   @Column
   challengeBadge: number;
+
+  @BelongsTo(() => User)
+  user: User;
 }

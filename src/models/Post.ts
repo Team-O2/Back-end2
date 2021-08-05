@@ -10,41 +10,59 @@ import {
     Default,
     ForeignKey,
     BelongsTo,
-    HasOne
+    HasOne,
+    HasMany,
   } from "sequelize-typescript";
   import User from'./User'
   import Concert from './Concert'
   import Challenge from './Challenge'
+import PostInterest from "./PostInterest";
+import Hashtag from "./Hashtag";
+import Like from "./Like";
 
-  @Table({ tableName: "post", freezeTableName: true, underscored: true, timestamps: true })
-  export default class Post extends Model {
-    @PrimaryKey
-    @AutoIncrement
-    @Unique
-    @Column
-    id: number;
+@Table({
+  tableName: "post",
+  freezeTableName: true,
+  underscored: true,
+  timestamps: true,
+})
+export default class Post extends Model {
+  @PrimaryKey
+  @AutoIncrement
+  @Unique
+  @Column
+  id: number;
+
+  @CreatedAt
+  createdAt!: Date;
+
+  @UpdatedAt
+  updatedAt!: Date;
+
+
+  @ForeignKey(() => User)
+  @Column
+  userID: number;
+
+  @Default(false)
+  @Column
+  isDeleted: Boolean;
+
+  @HasMany(() => PostInterest)
+  interest: PostInterest[];
+
+  @HasMany(() => Hashtag)
+  hashtag: Hashtag[];
+
+  @HasMany(() => Like)
+  like: Like[];
   
-    @CreatedAt
-    createdAt!: Date;
+  @BelongsTo(() => User)
+  user: User;
 
-    @UpdatedAt
-    updatedAt!: Date;
+  @HasOne(() => Concert)
+  concert: Concert;
 
-    @ForeignKey(() => User)
-    @Column
-    userID: number;
-
-    @Default(false)
-    @Column
-    isDeleted: Boolean;
-
-    @BelongsTo(() => User)
-    user: User;
-
-    @HasOne(() => Concert)
-    concert: Concert;
-
-    @HasOne(() => Challenge)
-    challenge: Challenge;
-  }
-  
+  @HasOne(() => Challenge)
+  challenge: Challenge;
+}

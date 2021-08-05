@@ -6,6 +6,7 @@ import {
   AutoIncrement,
   Unique,
   ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 import Post from "./Post";
 
@@ -23,4 +24,7 @@ export default class Hashtag extends Model {
 
   @Column
   hashtag: string;
+
+  @BelongsTo(()=>Post)
+  post: Post;
 }

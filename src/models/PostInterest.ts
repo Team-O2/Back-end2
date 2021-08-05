@@ -6,11 +6,16 @@ import {
   AutoIncrement,
   Unique,
   ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 import Post from "./Post";
 
-@Table({ tableName: "postInterest", freezeTableName: true, underscored: true })
-export default class PostInterest extends Model {
+@Table({
+  tableName: "concertInterest",
+  freezeTableName: true,
+  underscored: true,
+})
+export default class concertInterest extends Model {
   @PrimaryKey
   @AutoIncrement
   @Unique
@@ -23,4 +28,7 @@ export default class PostInterest extends Model {
 
   @Column
   interest: string;
+
+  @BelongsTo(() => Post)
+  post: Post;
 }
