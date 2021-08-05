@@ -7,12 +7,15 @@ import {
   Unique,
   Default,
   BelongsTo,
+  ForeignKey,
 } from "sequelize-typescript";
 import User from "./User";
+import UserInfo from "./UserInfo";
 
 @Table({ tableName: "badge", freezeTableName: true, underscored: true })
 export default class Badge extends Model {
   @PrimaryKey
+  @ForeignKey(() => UserInfo)
   @AutoIncrement
   @Unique
   @Column

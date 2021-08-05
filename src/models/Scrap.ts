@@ -3,11 +3,10 @@ import {
   Column,
   Table,
   PrimaryKey,
-  Default,
-  AllowNull,
   AutoIncrement,
   Unique,
   ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 import User from "./User";
 import Post from "./Post";
@@ -35,9 +34,6 @@ export default class Scrap extends Model {
   @Column
   userID: number;
 
-  // @BelongsTo(() => UserInfo)
-  // userInfo: UserInfo;
-
-  // @BelongsToMany(() => UserInterest)
-  // userInterest: UserInterest[];
+  @BelongsTo(() => User)
+  user: User;
 }

@@ -1,4 +1,3 @@
-import User from "./User";
 import {
   Model,
   Column,
@@ -6,11 +5,15 @@ import {
   PrimaryKey,
   Default,
   ForeignKey,
-  BelongsTo,
-  AllowNull,
+  HasOne,
   HasMany,
+  BelongsTo,
 } from "sequelize-typescript";
+import User from "./User";
 import Generation from "./Generation";
+import Badge from "./Badge";
+import UserInterest from "./UserInterest";
+import Post from "./Post";
 
 @Table({
   tableName: "userInfo",
@@ -54,11 +57,18 @@ export default class UserInfo extends Model {
   @Column
   isRegist: Boolean;
 
-  @HasMany(() => Generation)
-  generations: Generation[];
-
-  @PrimaryKey
-  @AllowNull(false)
   @BelongsTo(() => User)
   user: User;
+
+  @HasMany(() => Post)
+  posts: Post[];
+
+  @HasMany(() => UserInterest)
+  userInterests: UserInterest[];
+
+  @HasOne(() => Badge)
+  badges: Badge[];
+
+  @HasMany(() => Generation)
+  generations: Generation[];
 }
