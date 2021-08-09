@@ -11,7 +11,7 @@ import {
 } from "sequelize-typescript";
 import UserInfo from "./UserInfo";
 
-@Table({ tableName: "badge", freezeTableName: true, underscored: true })
+@Table({ tableName: "badge", freezeTableName: true, underscored: false })
 export default class Badge extends Model {
   @PrimaryKey
   @ForeignKey(() => UserInfo)

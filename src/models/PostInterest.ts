@@ -13,7 +13,7 @@ import Post from "./Post";
 @Table({
   tableName: "postInterest",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
 })
 export default class PostInterest extends Model {
   @PrimaryKey

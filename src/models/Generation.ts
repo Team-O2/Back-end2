@@ -15,7 +15,7 @@ import UserInfo from "./UserInfo";
 @Table({
   tableName: "generation",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: false,
 })
 export default class Generation extends Model {

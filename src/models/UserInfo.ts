@@ -16,7 +16,7 @@ import Badge from "./Badge";
 @Table({
   tableName: "userInfo",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: false,
 })
 export default class UserInfo extends Model {

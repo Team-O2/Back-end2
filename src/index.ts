@@ -68,7 +68,8 @@ const server = app
   `
     );
     sequelize
-      .authenticate()
+      // .sync({ alter: true })
+      .sync()
       .then(async () => {
         console.log("MySQL Connected ...");
       })

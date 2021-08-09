@@ -14,7 +14,7 @@ import Post from "./Post";
 @Table({
   tableName: "scrap",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: false,
 })
 export default class Scrap extends Model {

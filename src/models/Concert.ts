@@ -17,7 +17,7 @@ import Post from "./Post";
 @Table({
   tableName: "concert",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: true,
 })
 export default class Concert extends Model {

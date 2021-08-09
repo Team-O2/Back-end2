@@ -13,7 +13,7 @@ import { Sequelize } from "sequelize";
 @Table({
   tableName: "admin",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: false,
 })
 export default class Admin extends Model {

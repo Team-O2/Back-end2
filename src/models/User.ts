@@ -21,7 +21,7 @@ import UserInterest from "./UserInterest";
 @Table({
   tableName: "user",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: true,
 })
 export default class User extends Model {

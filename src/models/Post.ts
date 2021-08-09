@@ -23,7 +23,7 @@ import Like from "./Like";
 @Table({
   tableName: "post",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: true,
 })
 export default class Post extends Model {

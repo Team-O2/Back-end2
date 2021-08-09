@@ -15,7 +15,7 @@ import Post from "./Post";
 @Table({
   tableName: "challenge",
   freezeTableName: true,
-  underscored: true,
+  underscored: false,
   timestamps: true,
 })
 export default class Challenge extends Model {
