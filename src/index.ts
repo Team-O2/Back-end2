@@ -4,6 +4,13 @@ import cors from "cors";
 import { sequelize } from "./models";
 import router from "./router";
 
+// sequelize
+//   .sync({ alter: true })
+//   // .sync({ force: false })
+//   .catch((error) => {
+//     console.error(error);
+//   });
+
 const app = express();
 const morgan = require("morgan");
 const nunjucks = require("nunjucks");
@@ -59,12 +66,12 @@ const server = app
     );
     sequelize
       // .sync({ alter: true })
-      .sync()
+      .authenticate()
       .then(async () => {
         console.log("MySQL Connected ...");
       })
-      .catch((e) => {
-        console.log("TT : ", e);
+      .catch((err) => {
+        console.log("TT : ", err);
       });
   })
   .on("error", (err) => {

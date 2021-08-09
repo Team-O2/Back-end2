@@ -20,7 +20,7 @@ import UserInfo from "./UserInfo";
 import UserInterest from "./UserInterest";
 
 @Table({
-  tableName: "user",
+  tableName: "User",
   freezeTableName: true,
   underscored: false,
   timestamps: true,
