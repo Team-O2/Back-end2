@@ -15,7 +15,7 @@ import User from "./User";
 import Post from "./Post";
 
 @Table({
-  tableName: "concert",
+  tableName: "Concert",
   freezeTableName: true,
   underscored: false,
   timestamps: true,

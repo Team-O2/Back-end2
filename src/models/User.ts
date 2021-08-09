@@ -12,6 +12,7 @@ import {
   HasMany,
   HasOne,
 } from "sequelize-typescript";
+import Comment from "./Comment";
 import Like from "./Like";
 import Post from "./Post";
 import Scrap from "./Scrap";
@@ -69,4 +70,7 @@ export default class User extends Model {
 
   @HasMany(() => UserInterest)
   userInterests: UserInterest[];
+
+  @HasMany(() => Comment)
+  comments: Comment[];
 }

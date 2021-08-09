@@ -11,7 +11,7 @@ import {
 import Post from "./Post";
 
 @Table({
-  tableName: "postInterest",
+  tableName: "PostInterest",
   freezeTableName: true,
   underscored: false,
 })

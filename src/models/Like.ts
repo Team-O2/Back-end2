@@ -11,7 +11,7 @@ import {
 import Post from "./Post";
 import User from "./User";
 
-@Table({ tableName: "like", freezeTableName: true, underscored: false })
+@Table({ tableName: "Like", freezeTableName: true, underscored: false })
 export default class Like extends Model {
   @PrimaryKey
   @AutoIncrement

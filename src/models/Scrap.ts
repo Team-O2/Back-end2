@@ -12,7 +12,7 @@ import User from "./User";
 import Post from "./Post";
 
 @Table({
-  tableName: "scrap",
+  tableName: "Scrap",
   freezeTableName: true,
   underscored: false,
   timestamps: false,

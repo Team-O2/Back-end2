@@ -13,7 +13,7 @@ import {
 import Post from "./Post";
 
 @Table({
-  tableName: "challenge",
+  tableName: "Challenge",
   freezeTableName: true,
   underscored: false,
   timestamps: true,

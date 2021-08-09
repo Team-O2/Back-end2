@@ -10,7 +10,7 @@ import {
 } from "sequelize-typescript";
 import User from "./User";
 
-@Table({ tableName: "userInterest", freezeTableName: true, underscored: false })
+@Table({ tableName: "UserInterest", freezeTableName: true, underscored: false })
 export default class UserInterest extends Model {
   @PrimaryKey
   @AutoIncrement
