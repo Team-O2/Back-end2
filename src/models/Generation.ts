@@ -13,7 +13,7 @@ import {
 import UserInfo from "./UserInfo";
 
 @Table({
-  tableName: "generation",
+  tableName: "Generation",
   freezeTableName: true,
   underscored: false,
   timestamps: false,

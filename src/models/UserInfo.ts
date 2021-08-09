@@ -14,7 +14,7 @@ import Generation from "./Generation";
 import Badge from "./Badge";
 
 @Table({
-  tableName: "userInfo",
+  tableName: "UserInfo",
   freezeTableName: true,
   underscored: false,
   timestamps: false,

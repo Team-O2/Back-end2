@@ -13,6 +13,7 @@ import Post from "./Post";
 import PostInterest from "./PostInterest";
 import Scrap from "./Scrap";
 import UserInterest from "./UserInterest";
+import Comment from "./Comment";
 const db = {};
 
 dotenv.config();
@@ -46,6 +47,7 @@ sequelize.addModels([
   User,
   UserInfo,
   UserInterest,
+  Comment,
 ]);
 
 export {
@@ -62,5 +64,6 @@ export {
   User,
   UserInfo,
   UserInterest,
+  Comment,
 };
 export default sequelize;

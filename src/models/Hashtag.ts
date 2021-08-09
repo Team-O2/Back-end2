@@ -10,7 +10,7 @@ import {
 } from "sequelize-typescript";
 import Post from "./Post";
 
-@Table({ tableName: "hashtag", freezeTableName: true, underscored: false })
+@Table({ tableName: "Hashtag", freezeTableName: true, underscored: false })
 export default class Hashtag extends Model {
   @PrimaryKey
   @AutoIncrement

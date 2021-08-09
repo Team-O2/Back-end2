@@ -12,6 +12,7 @@ import {
   HasMany,
   HasOne,
 } from "sequelize-typescript";
+import Comment from "./Comment";
 import Like from "./Like";
 import Post from "./Post";
 import Scrap from "./Scrap";
@@ -19,7 +20,7 @@ import UserInfo from "./UserInfo";
 import UserInterest from "./UserInterest";
 
 @Table({
-  tableName: "user",
+  tableName: "User",
   freezeTableName: true,
   underscored: false,
   timestamps: true,
@@ -69,4 +70,7 @@ export default class User extends Model {
 
   @HasMany(() => UserInterest)
   userInterests: UserInterest[];
+
+  @HasMany(() => Comment)
+  comments: Comment[];
 }

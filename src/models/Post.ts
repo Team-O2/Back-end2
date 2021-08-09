@@ -21,7 +21,7 @@ import Hashtag from "./Hashtag";
 import Like from "./Like";
 
 @Table({
-  tableName: "post",
+  tableName: "Post",
   freezeTableName: true,
   underscored: false,
   timestamps: true,

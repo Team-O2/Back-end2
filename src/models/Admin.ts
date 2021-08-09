@@ -11,7 +11,7 @@ import {
 import { Sequelize } from "sequelize";
 
 @Table({
-  tableName: "admin",
+  tableName: "Admin",
   freezeTableName: true,
   underscored: false,
   timestamps: false,

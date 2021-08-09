@@ -1,28 +1,27 @@
 import {
   Model,
   Column,
-  Table,
-  PrimaryKey,
-  Unique,
-  Default,
-  AllowNull,
-  ForeignKey,
-  BelongsTo,
   CreatedAt,
   UpdatedAt,
+  Table,
+  PrimaryKey,
+  AutoIncrement,
+  Unique,
+  Default,
+  BelongsTo,
+  ForeignKey,
 } from "sequelize-typescript";
 import User from "./User";
-import Post from "./Post";
 
 @Table({
-  tableName: "Concert",
+  tableName: "Comment",
   freezeTableName: true,
   underscored: false,
   timestamps: true,
 })
-export default class Concert extends Model {
+export default class Comment extends Model {
   @PrimaryKey
-  @ForeignKey(() => Post)
+  @AutoIncrement
   @Unique
   @Column
   id: number;
@@ -31,25 +30,25 @@ export default class Concert extends Model {
   @Column
   userID: number;
 
-  @Default("")
-  @Column
-  title: string;
-
-  @AllowNull
-  @Column
-  videoLink!: string;
-
-  @AllowNull
-  @Column
-  imgThumbnail!: string;
-
-  @AllowNull
-  @Column
-  text!: string;
-
   @Default(false)
   @Column
-  isNotice: Boolean;
+  isDeleted: Boolean;
+
+  @Column
+  text: string;
+
+  @Column
+  postID: number;
+
+  @Column
+  groupNum: number;
+
+  @Default(0)
+  @Column
+  level: number;
+
+  @Column
+  order: number;
 
   @CreatedAt
   createdAt!: Date;
@@ -57,6 +56,6 @@ export default class Concert extends Model {
   @UpdatedAt
   updatedAt!: Date;
 
-  @BelongsTo(() => Post)
-  post: Post;
+  @BelongsTo(() => User)
+  user: User;
 }

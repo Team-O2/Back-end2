@@ -2,8 +2,15 @@ import express from "express";
 import config from "./config";
 import cors from "cors";
 import { sequelize } from "./models";
+import router from "./router";
 
-const path = require("path");
+// sequelize
+//   .sync({ alter: true })
+//   // .sync({ force: false })
+//   .catch((error) => {
+//     console.error(error);
+//   });
+
 const app = express();
 const morgan = require("morgan");
 const nunjucks = require("nunjucks");
@@ -32,17 +39,7 @@ app.use(
 );
 
 // route
-// app.use('/', router);
-
-// app.use("/auth", require("./controller/auth"));
-// app.use("/challenge", require("./controller/challenge"));
-// app.use("/admin", require("./controller/admin"));
-// app.use("/concert", require("./controller/concert"));
-// app.use("/user", require("./controller/user"));
-// app.use("/notice", require("./controller/notice"));
-
-// scheduler
-// import { challengeOpen } from "./service/schedulerService";
+app.use("/", router);
 
 // error handler
 app.use(function (err, req, res, next) {
@@ -69,12 +66,12 @@ const server = app
     );
     sequelize
       // .sync({ alter: true })
-      .sync()
+      .authenticate()
       .then(async () => {
         console.log("MySQL Connected ...");
       })
-      .catch((e) => {
-        console.log("TT : ", e);
+      .catch((err) => {
+        console.log("TT : ", err);
       });
   })
   .on("error", (err) => {
