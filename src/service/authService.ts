@@ -218,41 +218,47 @@ export async function postSignin(reqData: signinReqDTO) {
   return { userData, token };
 }
 
-// /**
-//  *  @햄버거바
-//  *  @route Post auth/hamburger
-//  *  @desc
-//  *  @access Public
-//  */
+/**
+ *  @햄버거바
+ *  @route Post auth/hamburger
+ *  @desc
+ *  @access public
+ */
 
-// export async function getHamburger() {
-//   // 신청 진행 중 기수(generation)를 확인하여 오투콘서트에 삽입
-//   let dateNow = new Date();
-//   const gen = await Admin.findOne({
-//     $and: [
-//       { registerStartDT: { $lte: dateNow } },
-//       { registerEndDT: { $gte: dateNow } },
-//     ],
-//   });
+export async function getHamburger() {
+  // 신청 진행 중 기수(generation)를 확인하여 오투콘서트에 삽입
+  let dateNow = new Date();
+  const gen = await Admin.findOne({
+    where: {
+      [sequelize.Op.and]: {
+        registerStartDT: { [sequelize.Op.lte]: dateNow },
+        registerEndDT: { [sequelize.Op.gte]: dateNow },
+      },
+    },
+  });
 
-//   const progressGen = await Admin.findOne({
-//     $and: [
-//       { challengeStartDT: { $lte: dateNow } },
-//       { challengeEndDT: { $gte: dateNow } },
-//     ],
-//   });
+  const progressGen = await Admin.findOne({
+    where: {
+      [sequelize.Op.and]: {
+        challengeStartDT: { [sequelize.Op.lte]: dateNow },
+        challengeEndDT: { [sequelize.Op.gte]: dateNow },
+      },
+    },
+  });
 
-//   var registGeneration = gen ? gen.generation : null;
-//   var progressGeneration = null;
-//   if (progressGen) {
-//     progressGeneration = progressGen.generation;
-//   }
-//   const resData: hamburgerResDTO = {
-//     progressGeneration,
-//     registGeneration,
-//   };
-//   return resData;
-// }
+  var registGeneration = gen ? gen.generation : null;
+  var progressGeneration = null;
+  if (progressGen) {
+    progressGeneration = progressGen.generation;
+  }
+
+  const resData: hamburgerResDTO = {
+    progressGeneration,
+    registGeneration,
+  };
+
+  return resData;
+}
 
 // /**
 //  *  @이메일_인증번호_전송

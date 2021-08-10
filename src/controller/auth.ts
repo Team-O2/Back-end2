@@ -11,7 +11,7 @@ import {
 } from "../library/response";
 
 // services
-import { postSignup, postSignin } from "../service/authService";
+import { postSignup, postSignin, getHamburger } from "../service/authService";
 
 //DTO
 import {
@@ -20,7 +20,6 @@ import {
   hamburgerResDTO,
   pwReqDTO,
 } from "../DTO/authDTO";
-import exp from "constants";
 
 /**
  *  @회원가입
@@ -208,24 +207,23 @@ const signinController = async (req: Request, res: Response) => {
 //   }
 // );
 
-// /**
-//  *  @햄버거바
-//  *  @route Post auth/hamburger
-//  *  @desc
-//  *  @access Public
-//  */
+/**
+ *  @햄버거바
+ *  @route Post auth/hamburger
+ *  @desc
+ *  @access public
+ */
 
-// router.get("/hamburger", async (req: Request, res: Response) => {
-//   try {
-//     const data: hamburgerResDTO = await getHamburger();
+const hamburgerController = async (req: Request, res: Response) => {
+  try {
+    const data: hamburgerResDTO = await getHamburger();
 
-//     // 조회 성공
-//     dataResponse(res, returnCode.OK, "햄버거바 조회 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// })
-//
+    // 조회 성공
+    dataResponse(res, returnCode.OK, "햄버거바 조회 성공", data);
+  } catch (err) {
+    console.error(err.message);
+    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-export { signupController, signinController };
+export { signupController, signinController, hamburgerController };
