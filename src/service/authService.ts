@@ -1,5 +1,6 @@
 // models
 import User from "../models/User";
+import UserInterest from "../models/UserInterest";
 import Badge from "../models/Badge";
 import Admin from "../models/Admin";
 
@@ -19,18 +20,21 @@ import {
 // library
 import { smtpTransport } from "../library/emailSender";
 import ejs from "ejs";
+import { UserInfo } from "../models";
+import sequelize from "sequelize";
 
 /**
  *  @회원가입
- *  @route Post api/auth
+ *  @route Post /auth/signup
  *  @body email,password, nickname, marpolicy, interest
+ *  @access public
  *  @error
  *      1. 요청 바디 부족
  *      2. 아이디 중복
  */
 
 export async function postSignup(data: signupReqDTO) {
-  const { email, password, nickname, gender, marpolicy, interest } = data;
+  const { email, password, nickname, gender, isMarketing, interest } = data;
 
   // 1. 요청 바디 부족
   if (!email || !password || !nickname || !interest) {
@@ -38,51 +42,61 @@ export async function postSignup(data: signupReqDTO) {
   }
 
   // 2. 아이디 중복
-  let user = await User.findOne({ email });
-  if (user) {
+  const existUser = await User.findOne({ where: { email: email } });
+
+  if (existUser) {
     return -2;
   }
 
   // 3. 닉네임 중복
-  let checkNickname = await User.findOne({ nickname });
+  const checkNickname = await User.findOne({ where: { nickname: nickname } });
   if (checkNickname) {
     return -3;
   }
 
-  user = new User({
+  // password 암호화
+  const salt = await bcrypt.genSalt(10);
+  const hashPassword = await bcrypt.hash(password, salt);
+
+  // User 생성
+  const user = await User.create({
     email,
-    password,
+    password: hashPassword,
     nickname,
     gender,
-    marpolicy,
-    interest,
+    isMarketing,
   });
 
-  const badge = new Badge({
-    user: user.id,
+  // UserInterest 생성
+  const userID = (await user).id;
+  const interests = await interest.map((interestOne) => {
+    UserInterest.create({
+      userID: userID,
+      interest: interestOne,
+    });
+    return interestOne;
   });
-  await badge.save();
 
-  // Encrpyt password
-  const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(password, salt);
+  // UserInfo 생성
+  const userInfo = await UserInfo.create({
+    id: userID,
+  });
 
-  await user.save();
-  // console.log(user);
-  await user.updateOne({ badge: badge._id });
+  // Badge 생성
+  const badge = await Badge.create({
+    id: userInfo.id,
+  });
 
-  // 마케팅 동의(marpolicy == true) 시 뱃지 발급
-  if (user.marpolicy) {
-    await Badge.findOneAndUpdate(
-      { user: user.id },
-      { $set: { marketingBadge: true } }
-    );
+  // 마케팅 동의(isMarketing == true) 시 뱃지 발급
+  if (user.isMarketing) {
+    badge.marketingBadge = true;
+    await badge.save();
   }
 
   // Return jsonwebtoken
   const payload = {
     user: {
-      id: user.id,
+      id: userID,
     },
   };
 
@@ -93,116 +107,116 @@ export async function postSignup(data: signupReqDTO) {
   return { user, token };
 }
 
-// /**
-//  *  @로그인
-//  *  @route Post auth/siginin
-//  *  @body email,password
-//  *  @error
-//  *      1. 요청 바디 부족
-//  *      2. 아이디가 존재하지 않음
-//  *      3. 패스워드가 올바르지 않음
-//  *  @response
-//  *      0: 비회원,
-//  *      1: 챌린지안하는유저 (기간은 신청기간 중)
-//  *      2: 챌린지 안하는 유저 (기간은 신청기간이 아님)
-//  *      3: 챌린지 하는 유저 (기간은 챌린지 중)
-//  *      4: 관리자
-//  */
+/**
+ *  @로그인
+ *  @route Post auth/siginin
+ *  @body email,password
+ *  @error
+ *      1. 요청 바디 부족
+ *      2. 아이디가 존재하지 않음
+ *      3. 패스워드가 올바르지 않음
+ *  @response
+ *      0: 비회원,
+ *      1: 챌린지안하는유저 (기간은 신청기간 중)
+ *      2: 챌린지 안하는 유저 (기간은 신청기간이 아님)
+ *      3: 챌린지 하는 유저 (기간은 챌린지 중)
+ *      4: 관리자
+ */
 
-// export async function postSignin(reqData: signinReqDTO) {
-//   const { email, password } = reqData;
+export async function postSignin(reqData: signinReqDTO) {
+  const { email, password } = reqData;
 
-//   // 1. 요청 바디 부족
-//   if (!email || !password) {
-//     return -1;
-//   }
+  // 1. 요청 바디 부족
+  if (!email || !password) {
+    return -1;
+  }
 
-//   // 2. email이 DB에 존재하지 않음
-//   let user = await User.findOne({ email });
-//   if (!user) {
-//     return -2;
-//   }
+  // 2. email이 DB에 존재하지 않음
+  const user = await User.findOne({ where: { email: email } });
+  if (!user) {
+    return -2;
+  }
 
-//   // 3. password가 올바르지 않음
-//   const isMatch = await bcrypt.compare(password, user.password);
+  // 3. password가 올바르지 않음
+  const isMatch = await bcrypt.compare(password, user.password);
 
-//   if (!isMatch) {
-//     return -3;
-//   }
+  if (!isMatch) {
+    return -3;
+  }
 
-//   await user.save();
+  await user.save();
 
-//   const payload = {
-//     user: {
-//       id: user.id,
-//     },
-//   };
+  const payload = {
+    user: {
+      id: user.id,
+    },
+  };
 
-//   // access 토큰 발급
-//   // 유효기간 14일
-//   let token = jwt.sign(payload, config.jwtSecret, { expiresIn: "14d" });
+  // access 토큰 발급
+  // 유효기간 14일
+  let token = jwt.sign(payload, config.jwtSecret, { expiresIn: "14d" });
 
-//   var userState = 0;
-//   /*
-//     var = new Date('2020-10-23');
-//     var date2 = new Date('2020-10-22');
+  let userState = 0;
 
-//     console.log(date1 > date2); // true
-//   */
+  // 신청 진행 중 기수(generation)를 확인하여 오투콘서트에 삽입
+  let dateNow = new Date();
+  const gen = await Admin.findOne({
+    where: {
+      [sequelize.Op.and]: {
+        registerStartDT: { [sequelize.Op.lte]: dateNow },
+        registerEndDT: { [sequelize.Op.gte]: dateNow },
+      },
+    },
+  });
 
-//   // 신청 진행 중 기수(generation)를 확인하여 오투콘서트에 삽입
-//   let dateNow = new Date();
-//   const gen = await Admin.findOne({
-//     $and: [
-//       { registerStartDT: { $lte: dateNow } },
-//       { registerEndDT: { $gte: dateNow } },
-//     ],
-//   });
+  const progressGen = await Admin.findOne({
+    where: {
+      [sequelize.Op.and]: {
+        challengeStartDT: { [sequelize.Op.lte]: dateNow },
+        challengeEndDT: { [sequelize.Op.gte]: dateNow },
+      },
+    },
+  });
 
-//   const progressGen = await Admin.findOne({
-//     $and: [
-//       { challengeStartDT: { $lte: dateNow } },
-//       { challengeEndDT: { $gte: dateNow } },
-//     ],
-//   });
+  let registGeneration = gen ? gen.generation : null;
+  let progressGeneration = null;
+  if (progressGen) {
+    progressGeneration = progressGen.generation;
+  }
 
-//   var registGeneration = gen ? gen.generation : null;
-//   var progressGeneration = null;
-//   if (progressGen) {
-//     progressGeneration = progressGen.generation;
-//   }
+  // UserState 등록
+  // 4-관리자
+  const userInfo = await UserInfo.findOne({ where: { id: user.id } });
+  if (userInfo.isAdmin === true) {
+    userState = 4;
+    registGeneration = null;
+  }
+  // 챌린지 안하는 유저
+  else if (!userInfo.isChallenge) {
+    // 1- 해당 날짜에 신청 가능한 기수가 있음
+    if (gen) {
+      userState = 1;
+    }
+    // 2- 해당 날짜에 신청 가능한 기수가 없음
+    else {
+      userState = 2;
+    }
+  }
+  // 3- 챌린지 중인 유저
+  else {
+    userState = 3;
+  }
 
-//   // 4-관리자
-//   if (user.userType === 1) {
-//     userState = 4;
-//     registGeneration = null;
-//   }
-//   // 챌린지 안하는 유저
-//   else if (!user.isChallenge) {
-//     // 1- 해당 날짜에 신청 가능한 기수가 있음
-//     if (gen) {
-//       userState = 1;
-//     }
-//     // 2- 해당 날짜에 신청 가능한 기수가 없음
-//     else {
-//       userState = 2;
-//     }
-//   }
-//   // 3- 챌린지 중인 유저
-//   else {
-//     userState = 3;
-//   }
+  let totalGeneration = await (await Admin.findAndCountAll({})).count;
+  const userData: signinResDTO = {
+    userState,
+    progressGeneration,
+    registGeneration,
+    totalGeneration,
+  };
 
-//   var totalGeneration = await Admin.find().countDocuments();
-//   const userData: signinResDTO = {
-//     userState,
-//     progressGeneration,
-//     registGeneration,
-//     totalGeneration,
-//   };
-
-//   return { userData, token };
-// }
+  return { userData, token };
+}
 
 // /**
 //  *  @햄버거바
