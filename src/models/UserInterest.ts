@@ -10,7 +10,13 @@ import {
 } from "sequelize-typescript";
 import User from "./User";
 
-@Table({ tableName: "UserInterest", freezeTableName: true, underscored: false })
+@Table({
+  tableName: "UserInterest",
+  freezeTableName: true,
+  underscored: false,
+  charset: "utf8", // 한국어 설정
+  collate: "utf8_general_ci", // 한국어 설정
+})
 export default class UserInterest extends Model {
   @PrimaryKey
   @AutoIncrement

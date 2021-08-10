@@ -24,6 +24,8 @@ import UserInterest from "./UserInterest";
   freezeTableName: true,
   underscored: false,
   timestamps: true,
+  charset: "utf8", // 한국어 설정
+  collate: "utf8_general_ci", // 한국어 설정
 })
 export default class User extends Model {
   @PrimaryKey

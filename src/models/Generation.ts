@@ -17,6 +17,8 @@ import UserInfo from "./UserInfo";
   freezeTableName: true,
   underscored: false,
   timestamps: false,
+  charset: "utf8", // 한국어 설정
+  collate: "utf8_general_ci", // 한국어 설정
 })
 export default class Generation extends Model {
   @PrimaryKey
