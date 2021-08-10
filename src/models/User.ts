@@ -35,6 +35,10 @@ export default class User extends Model {
   @Column
   email: string;
 
+  @Unique
+  @Column
+  password: string;
+
   @Column
   nickname: string;
 
