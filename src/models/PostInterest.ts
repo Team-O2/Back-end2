@@ -14,6 +14,8 @@ import Post from "./Post";
   tableName: "PostInterest",
   freezeTableName: true,
   underscored: false,
+  charset: "utf8", // 한국어 설정
+  collate: "utf8_general_ci", // 한국어 설정
 })
 export default class PostInterest extends Model {
   @PrimaryKey

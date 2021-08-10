@@ -11,7 +11,7 @@ import {
 } from "../library/response";
 
 // services
-import { postSignup } from "../service/authService";
+import { postSignup, postSignin, getHamburger } from "../service/authService";
 
 //DTO
 import {
@@ -20,7 +20,6 @@ import {
   hamburgerResDTO,
   pwReqDTO,
 } from "../DTO/authDTO";
-import exp from "constants";
 
 /**
  *  @회원가입
@@ -59,50 +58,46 @@ const signupController = async (req: Request, res: Response) => {
     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
 };
-// };
-// /**
-//  *  @로그인
-//  *  @route Post auth/signin
-//  *  @desc Authenticate user & get token
-//  *  @access Public
-//  */
 
-// router.post(
-//   "/signin",
-//   [check("email", "Please include a valid email").isEmail()],
-//   async (req: Request, res: Response) => {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res.status(400).json({ errors: errors.array() });
-//     }
+/**
+ *  @로그인
+ *  @route Post auth/signin
+ *  @desc Authenticate user & get token
+ *  @access public
+ */
 
-//     try {
-//       const reqData: signinReqDTO = req.body;
-//       const data = await postSignin(reqData);
+const signinController = async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-//       // 요청 바디가 부족할 경우
-//       if (data == -1) {
-//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//       }
-//       // email이 DB에 없을 경우
-//       else if (data == -2) {
-//         response(res, returnCode.BAD_REQUEST, "아이디가 존재하지 않습니다");
-//       }
-//       // password가 틀렸을 경우
-//       else if (data == -3) {
-//         response(res, returnCode.BAD_REQUEST, "비밀번호가 틀렸습니다");
-//       }
-//       // 로그인 성공
-//       else {
-//         const { userData, token } = data;
-//         dataTokenResponse(res, returnCode.OK, "로그인 성공", userData, token);
-//       }
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
+  try {
+    const reqData: signinReqDTO = req.body;
+    const data = await postSignin(reqData);
+
+    // 요청 바디가 부족할 경우
+    if (data == -1) {
+      response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
+    }
+    // email이 DB에 없을 경우
+    else if (data == -2) {
+      response(res, returnCode.BAD_REQUEST, "아이디가 존재하지 않습니다");
+    }
+    // password가 틀렸을 경우
+    else if (data == -3) {
+      response(res, returnCode.BAD_REQUEST, "비밀번호가 틀렸습니다");
+    }
+    // 로그인 성공
+    else {
+      const { userData, token } = data;
+      dataTokenResponse(res, returnCode.OK, "로그인 성공", userData, token);
+    }
+  } catch (err) {
+    console.error(err.message);
+    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 // /**
 //  *  @이메일_인증번호_전송
@@ -212,24 +207,23 @@ const signupController = async (req: Request, res: Response) => {
 //   }
 // );
 
-// /**
-//  *  @햄버거바
-//  *  @route Post auth/hamburger
-//  *  @desc
-//  *  @access Public
-//  */
+/**
+ *  @햄버거바
+ *  @route Post auth/hamburger
+ *  @desc
+ *  @access public
+ */
 
-// router.get("/hamburger", async (req: Request, res: Response) => {
-//   try {
-//     const data: hamburgerResDTO = await getHamburger();
+const hamburgerController = async (req: Request, res: Response) => {
+  try {
+    const data: hamburgerResDTO = await getHamburger();
 
-//     // 조회 성공
-//     dataResponse(res, returnCode.OK, "햄버거바 조회 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// })
-//
+    // 조회 성공
+    dataResponse(res, returnCode.OK, "햄버거바 조회 성공", data);
+  } catch (err) {
+    console.error(err.message);
+    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-export { signupController };
+export { signupController, signinController, hamburgerController };

@@ -11,7 +11,13 @@ import {
 } from "sequelize-typescript";
 import UserInfo from "./UserInfo";
 
-@Table({ tableName: "Badge", freezeTableName: true, underscored: false })
+@Table({
+  tableName: "Badge",
+  freezeTableName: true,
+  underscored: false,
+  charset: "utf8", // 한국어 설정
+  collate: "utf8_general_ci", // 한국어 설정
+})
 export default class Badge extends Model {
   @PrimaryKey
   @ForeignKey(() => UserInfo)
