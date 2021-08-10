@@ -38,6 +38,9 @@ export default class Admin extends Model {
   @Column
   challengeEndDT: Date;
 
+  @Column
+  generation: number;
+
   @Default(0)
   @Column
   limitNum: number;
