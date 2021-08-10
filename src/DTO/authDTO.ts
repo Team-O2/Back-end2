@@ -3,7 +3,7 @@ export interface signupReqDTO {
   password: string;
   nickname?: string;
   interest?: [string];
-  marpolicy?: Boolean;
+  isMarketing?: Boolean;
   gender?: number;
 }
 
@@ -15,7 +15,7 @@ export interface signinReqDTO {
 export interface signinResDTO {
   userState: number;
   progressGeneration?: number;
-  registGeneration?: Number;
+  registGeneration?: number;
   totalGeneration?: number;
 }
 
