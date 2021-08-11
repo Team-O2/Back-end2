@@ -3,7 +3,7 @@ import { returnCode } from "../library/returnCode";
 import { response } from "../library/response";
 import config from "../config";
 
-export function verify(authorization) {
+function verify(authorization) {
   // verify를 통해 토큰 값을 decode 한다.
   let decoded;
   try {
@@ -23,7 +23,7 @@ export function verify(authorization) {
   }
 }
 
-export function isLogin(req, res, next) {
+function isLogin(req, res, next) {
   const { authorization } = req.headers;
 
   if (authorization == undefined) {
@@ -44,7 +44,7 @@ export function isLogin(req, res, next) {
   }
 }
 
-export function checkLogin(req, res, next) {
+function checkLogin(req, res, next) {
   const { authorization } = req.headers;
 
   try {
@@ -56,3 +56,11 @@ export function checkLogin(req, res, next) {
     response(res, returnCode.UNAUTHORIZED, error.message);
   }
 }
+
+const JWT = {
+  verify,
+  isLogin,
+  checkLogin,
+};
+
+export default JWT;

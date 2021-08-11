@@ -1,4 +1,4 @@
-export function stringToArray(str: String) {
+function stringToArray(str: String) {
   let arrayStr = str.toLowerCase().replace("[", "").replace("]", "");
 
   let resultArr = [];
@@ -22,3 +22,9 @@ export function stringToArray(str: String) {
 
   return resultArr;
 }
+
+const array = {
+  stringToArray,
+};
+
+export default array;

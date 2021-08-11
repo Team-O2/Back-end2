@@ -1,14 +1,10 @@
 import express from "express";
-import {
-  signupController,
-  signinController,
-  hamburgerController,
-} from "../controller/auth";
+import { authController } from "../controller";
 
 const router = express.Router();
 
-router.post("/signup", signupController);
-router.post("/signin", signinController);
-router.get("/hamburger", hamburgerController);
+router.post("/signup", authController.signupController);
+router.post("/signin", authController.signinController);
+router.get("/hamburger", authController.hamburgerController);
 
 export default router;
