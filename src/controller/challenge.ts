@@ -16,13 +16,11 @@ import { challengeDTO } from "../DTO";
 const postChallengeController = async (req: Request, res: Response) => {
   try {
     const reqData: challengeDTO.postChallengeReqDTO = req.body;
-    const data = await challengeService.postChallenge(
-      req.body.userID.id,
-      reqData
-    );
+    const resData: challengeDTO.postChallengeResDTO | -1 | -2 =
+      await challengeService.postChallenge(req.body.userID.id, reqData);
 
     // 요청 바디가 부족할 경우
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -30,7 +28,7 @@ const postChallengeController = async (req: Request, res: Response) => {
       );
     }
     // 유저 id 잘못된 경우
-    if (data === -2) {
+    if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -38,8 +36,7 @@ const postChallengeController = async (req: Request, res: Response) => {
       );
     }
     // 회고 등록 성공
-    const challenge = data;
-    response.dataResponse(res, returnCode.OK, "회고 등록 성공", challenge);
+    response.dataResponse(res, returnCode.OK, "챌린지 등록 성공", resData);
   } catch (err) {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
