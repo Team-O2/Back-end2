@@ -8,7 +8,7 @@ import {
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
-import Post from "./Post";
+import { Post } from ".";
 
 @Table({
   tableName: "Hashtag",

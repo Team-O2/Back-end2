@@ -9,8 +9,7 @@ import {
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
-
-import UserInfo from "./UserInfo";
+import { UserInfo } from ".";
 
 @Table({
   tableName: "Generation",

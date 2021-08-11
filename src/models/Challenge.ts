@@ -10,7 +10,7 @@ import {
   CreatedAt,
   UpdatedAt,
 } from "sequelize-typescript";
-import Post from "./Post";
+import { Post } from ".";
 
 @Table({
   tableName: "Challenge",

@@ -9,9 +9,7 @@ import {
   HasMany,
   BelongsTo,
 } from "sequelize-typescript";
-import User from "./User";
-import Generation from "./Generation";
-import Badge from "./Badge";
+import { User, Generation, Badge } from ".";
 
 @Table({
   tableName: "UserInfo",
