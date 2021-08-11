@@ -3,6 +3,7 @@ import config from "./config";
 import cors from "cors";
 import { sequelize } from "./models";
 import router from "./router";
+import path from "path";
 
 // sequelize
 //   .sync({ alter: true })
@@ -40,6 +41,9 @@ app.use(
 
 // route
 app.use("/", router);
+
+app.set("view engine", "ejs");
+app.set("view", path.join(__dirname, "views"));
 
 // error handler
 app.use(function (err, req, res, next) {
