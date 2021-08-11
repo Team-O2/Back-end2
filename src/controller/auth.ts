@@ -1,25 +1,11 @@
-import { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 import { check, validationResult } from "express-validator";
 // libraries
-import { returnCode } from "../library/returnCode";
-
-import {
-  response,
-  dataResponse,
-  tokenResponse,
-  dataTokenResponse,
-} from "../library/response";
-
+import { response, returnCode } from "../library";
 // services
-import { postSignup, postSignin, getHamburger } from "../service/authService";
-
+import { authService } from "../service";
 //DTO
-import {
-  signupReqDTO,
-  signinReqDTO,
-  hamburgerResDTO,
-  pwReqDTO,
-} from "../DTO/authDTO";
+import { authDTO } from "../DTO";
 
 /**
  *  @회원가입
@@ -34,28 +20,32 @@ const signupController = async (req: Request, res: Response) => {
   }
 
   try {
-    const reqData: signupReqDTO = req.body;
-    const data = await postSignup(reqData);
+    const reqData: authDTO.signupReqDTO = req.body;
+    const data = await authService.postSignup(reqData);
 
     // 요청 바디가 부족할 경우
     if (data === -1) {
-      response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
     } // 이미 존재하는 아이디
     else if (data === -2) {
-      response(res, returnCode.CONFLICT, "중복된 아이디 입니다");
+      response.basicResponse(res, returnCode.CONFLICT, "중복된 아이디 입니다");
     }
     // 중복된 닉네임
     else if (data === -3) {
-      response(res, returnCode.CONFLICT, "중복된 닉네임 입니다");
+      response.basicResponse(res, returnCode.CONFLICT, "중복된 닉네임 입니다");
     }
     // 회원가입 성공
     else {
       const { user, token } = data;
-      tokenResponse(res, returnCode.CREATED, "회원가입 성공", token);
+      response.tokenResponse(res, returnCode.CREATED, "회원가입 성공", token);
     }
   } catch (err) {
     console.error(err.message);
-    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
 };
 
@@ -73,29 +63,47 @@ const signinController = async (req: Request, res: Response) => {
   }
 
   try {
-    const reqData: signinReqDTO = req.body;
-    const data = await postSignin(reqData);
+    const reqData: authDTO.signinReqDTO = req.body;
+    const data = await authService.postSignin(reqData);
 
     // 요청 바디가 부족할 경우
     if (data == -1) {
-      response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
     }
     // email이 DB에 없을 경우
     else if (data == -2) {
-      response(res, returnCode.BAD_REQUEST, "아이디가 존재하지 않습니다");
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "아이디가 존재하지 않습니다"
+      );
     }
     // password가 틀렸을 경우
     else if (data == -3) {
-      response(res, returnCode.BAD_REQUEST, "비밀번호가 틀렸습니다");
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "비밀번호가 틀렸습니다"
+      );
     }
     // 로그인 성공
     else {
       const { userData, token } = data;
-      dataTokenResponse(res, returnCode.OK, "로그인 성공", userData, token);
+      response.dataTokenResponse(
+        res,
+        returnCode.OK,
+        "로그인 성공",
+        userData,
+        token
+      );
     }
   } catch (err) {
     console.error(err.message);
-    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
 };
 
@@ -216,14 +224,20 @@ const signinController = async (req: Request, res: Response) => {
 
 const hamburgerController = async (req: Request, res: Response) => {
   try {
-    const data: hamburgerResDTO = await getHamburger();
+    const data: authDTO.hamburgerResDTO = await authService.getHamburger();
 
     // 조회 성공
-    dataResponse(res, returnCode.OK, "햄버거바 조회 성공", data);
+    response.dataResponse(res, returnCode.OK, "햄버거바 조회 성공", data);
   } catch (err) {
     console.error(err.message);
-    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
 };
 
-export { signupController, signinController, hamburgerController };
+const authController = {
+  signinController,
+  signupController,
+  hamburgerController,
+};
+
+export default authController;

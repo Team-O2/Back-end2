@@ -1,4 +1,4 @@
-export const returnCode = {
+export default {
   OK: 200, // 목록, 상세, 수정 성공
   CREATED: 201, // POST나 PUT으로 데이터 등록할 경우 사용
   // 어떠한 생성 작업을 요청받아 생성 작업을 성공

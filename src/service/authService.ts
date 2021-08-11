@@ -1,24 +1,12 @@
 // models
-import User from "../models/User";
-import UserInterest from "../models/UserInterest";
-import Badge from "../models/Badge";
-import Admin from "../models/Admin";
-
+import { User, UserInterest, Badge, Admin } from "../models";
+// DTO
+import { authDTO } from "../DTO";
+// library
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import config from "../config";
-
-// DTO
-import {
-  signupReqDTO,
-  signinReqDTO,
-  signinResDTO,
-  hamburgerResDTO,
-  pwReqDTO,
-} from "../DTO/authDTO";
-
-// library
-import { smtpTransport } from "../library/emailSender";
+import { emailSender } from "../library";
 import ejs from "ejs";
 import { UserInfo } from "../models";
 import sequelize from "sequelize";
@@ -33,7 +21,7 @@ import sequelize from "sequelize";
  *      2. 아이디 중복
  */
 
-export async function postSignup(data: signupReqDTO) {
+const postSignup = async (data: authDTO.signupReqDTO) => {
   const { email, password, nickname, gender, isMarketing, interest } = data;
 
   // 1. 요청 바디 부족
@@ -105,7 +93,7 @@ export async function postSignup(data: signupReqDTO) {
   let token = jwt.sign(payload, config.jwtSecret, { expiresIn: "14d" });
 
   return { user, token };
-}
+};
 
 /**
  *  @로그인
@@ -123,7 +111,7 @@ export async function postSignup(data: signupReqDTO) {
  *      4: 관리자
  */
 
-export async function postSignin(reqData: signinReqDTO) {
+async function postSignin(reqData: authDTO.signinReqDTO) {
   const { email, password } = reqData;
 
   // 1. 요청 바디 부족
@@ -208,7 +196,7 @@ export async function postSignin(reqData: signinReqDTO) {
   }
 
   let totalGeneration = await (await Admin.findAndCountAll({})).count;
-  const userData: signinResDTO = {
+  const userData: authDTO.signinResDTO = {
     userState,
     progressGeneration,
     registGeneration,
@@ -225,7 +213,7 @@ export async function postSignin(reqData: signinReqDTO) {
  *  @access public
  */
 
-export async function getHamburger() {
+const getHamburger = async () => {
   // 신청 진행 중 기수(generation)를 확인하여 오투콘서트에 삽입
   let dateNow = new Date();
   const gen = await Admin.findOne({
@@ -252,13 +240,13 @@ export async function getHamburger() {
     progressGeneration = progressGen.generation;
   }
 
-  const resData: hamburgerResDTO = {
+  const resData: authDTO.hamburgerResDTO = {
     progressGeneration,
     registGeneration,
   };
 
   return resData;
-}
+};
 
 // /**
 //  *  @이메일_인증번호_전송
@@ -307,7 +295,7 @@ export async function getHamburger() {
 //     html: emailTemplate,
 //   };
 
-//   await smtpTransport.sendMail(mailOptions, (error, info) => {
+//   await emailSender.sendMail(mailOptions, (error, info) => {
 //     if (error) {
 //       // res.json({ msg: "err" });
 //       console.log(error);
@@ -315,7 +303,7 @@ export async function getHamburger() {
 //       // res.json({ msg: "sucess" });
 //       console.log("success");
 //     }
-//     smtpTransport.close();
+//     emailSender.close();
 //   });
 
 //   return 0;
@@ -386,3 +374,11 @@ export async function getHamburger() {
 //   await user.save();
 //   return;
 // }
+
+const authService = {
+  postSignup,
+  postSignin,
+  getHamburger,
+};
+
+export default authService;

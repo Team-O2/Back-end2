@@ -1,11 +1,11 @@
-export const response = (res, status, message) => {
+const basicResponse = (res, status, message) => {
   res.status(status).json({
     status: status,
     message: message,
   });
 };
 
-export const dataResponse = (res, status, message, data) => {
+const dataResponse = (res, status, message, data) => {
   res.status(status).json({
     status: status,
     message: message,
@@ -13,7 +13,7 @@ export const dataResponse = (res, status, message, data) => {
   });
 };
 
-export const tokenResponse = (res, status, message, token) => {
+const tokenResponse = (res, status, message, token) => {
   res.status(status).json({
     status: status,
     message: message,
@@ -21,7 +21,7 @@ export const tokenResponse = (res, status, message, token) => {
   });
 };
 
-export const dataTokenResponse = (res, status, message, data, token) => {
+const dataTokenResponse = (res, status, message, data, token) => {
   res.status(status).json({
     status: status,
     message: message,
@@ -29,3 +29,12 @@ export const dataTokenResponse = (res, status, message, data, token) => {
     token: token,
   });
 };
+
+const responseTypes = {
+  basicResponse,
+  dataResponse,
+  tokenResponse,
+  dataTokenResponse,
+};
+
+export default responseTypes;
