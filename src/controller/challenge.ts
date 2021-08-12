@@ -4,7 +4,7 @@ import { response, returnCode } from "../library";
 // services
 import { challengeService } from "../service";
 // DTO
-import { challengeDTO } from "../DTO";
+import { challengeDTO, commentDTO } from "../DTO";
 
 /**
  *  @챌린지_회고_등록
@@ -59,8 +59,8 @@ const postChallengeController = async (req: Request, res: Response) => {
 
 const postCommentController = async (req: Request, res: Response) => {
   try {
-    const reqData: challengeDTO.postCommentReqDTO = req.body;
-    const resData: challengeDTO.postCommentResDTO | -1 | -2 | -3 =
+    const reqData: commentDTO.postCommentReqDTO = req.body;
+    const resData: commentDTO.postCommentResDTO | -1 | -2 | -3 =
       await challengeService.postComment(
         Number(req.params.challengeID),
         req.body.userID.id,

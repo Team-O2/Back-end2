@@ -11,7 +11,7 @@ import {
   UserInfo,
 } from "../models";
 // DTO
-import { challengeDTO } from "../DTO";
+import { challengeDTO, commentDTO } from "../DTO";
 
 /**
  *  @챌린지_회고_등록
@@ -43,13 +43,13 @@ export const postChallenge = async (
   // challenge 생성
   const newPost = await Post.create({
     userID,
+    generation,
   });
   await Challenge.create({
     id: newPost.id,
     good: good.toLowerCase(),
     bad: bad.toLowerCase(),
     learn: learn.toLowerCase(),
-    generation,
   });
   interest.map(
     async (it) =>
@@ -93,7 +93,7 @@ export const postChallenge = async (
     bad: challenge.challenge.bad,
     learn: challenge.challenge.learn,
     interest: challenge.interests.map((i) => i.interest),
-    generation: challenge.challenge.generation,
+    generation: challenge.generation,
     likeNum: challenge.likes.length,
     scrapNum: challenge.scraps.length,
     isDeleted: challenge.isDeleted,
@@ -120,7 +120,7 @@ export const postChallenge = async (
 export const postComment = async (
   challengeID: number,
   userID: number,
-  reqData: challengeDTO.postCommentReqDTO
+  reqData: commentDTO.postCommentReqDTO
 ) => {
   const { parentID, text } = reqData;
 
@@ -200,7 +200,7 @@ export const postComment = async (
     await badge.save();
   }
 
-  const resData: challengeDTO.postCommentResDTO = {
+  const resData: commentDTO.postCommentResDTO = {
     id: comment.id,
     userID: comment.userID,
     nickname: comment.user.nickname,
