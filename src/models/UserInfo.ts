@@ -9,7 +9,7 @@ import {
   HasMany,
   BelongsTo,
 } from "sequelize-typescript";
-import { User, Generation, Badge } from ".";
+import { User, Generation } from ".";
 
 @Table({
   tableName: "UserInfo",
@@ -51,9 +51,6 @@ export default class UserInfo extends Model {
 
   @BelongsTo(() => User)
   user: User;
-
-  @HasOne(() => Badge)
-  badges: Badge[];
 
   @HasMany(() => Generation)
   generations: Generation[];

@@ -9,7 +9,7 @@ import {
   BelongsTo,
   ForeignKey,
 } from "sequelize-typescript";
-import { UserInfo } from ".";
+import { User } from ".";
 
 @Table({
   tableName: "Badge",
@@ -20,7 +20,7 @@ import { UserInfo } from ".";
 })
 export default class Badge extends Model {
   @PrimaryKey
-  @ForeignKey(() => UserInfo)
+  @ForeignKey(() => User)
   @AutoIncrement
   @Unique
   @Column
@@ -82,6 +82,6 @@ export default class Badge extends Model {
   @Column
   challengeBadge: number;
 
-  @BelongsTo(() => UserInfo)
-  userInfo: UserInfo;
+  @BelongsTo(() => User)
+  user: User;
 }
