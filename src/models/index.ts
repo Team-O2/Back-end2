@@ -1,7 +1,6 @@
 import { Sequelize } from "sequelize-typescript";
 import dotenv from "dotenv";
 import User from "./User";
-import UserInfo from "./UserInfo";
 import Admin from "./Admin";
 import Badge from "./Badge";
 import Challenge from "./Challenge";
@@ -45,7 +44,6 @@ sequelize.addModels([
   PostInterest,
   Scrap,
   User,
-  UserInfo,
   UserInterest,
   Comment,
 ]);
@@ -62,7 +60,6 @@ export {
   PostInterest,
   Scrap,
   User,
-  UserInfo,
   UserInterest,
   Comment,
 };
