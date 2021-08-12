@@ -43,6 +43,116 @@ const postChallengeController = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ *  @챌린지_회고_댓글_등록
+ *  @route Post /challenge/comment/:challengeID
+ *  @desc 챌린치 댓글 달기
+ *  @access private
+ */
+
+const postCommentController = async (req: Request, res: Response) => {
+  try {
+    const reqData: challengeDTO.postCommentReqDTO = req.body;
+    const resData: challengeDTO.postCommentResDTO | -1 | -2 | -3 =
+      await challengeService.postComment(
+        Number(req.params.challengeID),
+        req.body.userID.id,
+        reqData
+      );
+
+    // 회고 id가 잘못된 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 올바르지 않습니다"
+      );
+    }
+    //  요청 바디가 부족한 경우
+    if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // 부모 댓글 id가 잘못된 경우
+    if (resData === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "부모 댓글 id가 올바르지 않습니다"
+      );
+    }
+    // 댓글 등록 성공
+    response.dataResponse(res, returnCode.OK, "댓글 등록 성공", resData);
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
+
+// /**
+//  *  @챌린지_회고_좋아요_등록
+//  *  @route Post /challenge/like/:challengeID
+//  *  @access private
+//  */
+
+// router.post("/like/:id", auth, async (req: Request, res: Response) => {
+//   try {
+//     const data = await postChallengeLike(req.params.id, req.body.userID.id);
+
+//     // 회고 id가 잘못된 경우
+//     if (data === -1) {
+//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+//     }
+//     // 이미 좋아요 한 글일 경우
+//     if (data === -2) {
+//       response(res, returnCode.BAD_REQUEST, "이미 좋아요 한 글입니다");
+//     }
+//     // 좋아요 등록 성공
+//     const challengeID = data;
+//     dataResponse(res, returnCode.OK, "좋아요 등록 성공", challengeID);
+//   } catch (err) {
+//     console.error(err.message);
+//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//   }
+// });
+
+// /**
+//  *  @유저_챌린지_회고_스크랩하기
+//  *  @route Post /challenge/scrap/:challengeID
+//  *  @access private
+//  */
+// router.post("/scrap/:id", auth, async (req: Request, res: Response) => {
+//   try {
+//     const data = await postChallengeScrap(req.params.id, req.body.userID.id);
+
+//     // 회고 id가 잘못된 경우
+//     if (data === -1) {
+//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+//     }
+//     // 이미 유저가 스크랩한 글일 경우
+//     if (data === -2) {
+//       response(res, returnCode.BAD_REQUEST, "이미 스크랩 된 글입니다");
+//     }
+
+//     // 자신의 회고인 경우
+//     if (data === -3) {
+//       response(
+//         res,
+//         returnCode.BAD_REQUEST,
+//         "자신의 글은 스크랩 할 수 없습니다"
+//       );
+//     }
+//     // 회고 스크랩 성공
+//     dataResponse(res, returnCode.OK, "회고 스크랩 성공", data);
+//   } catch (err) {
+//     console.error(err.message);
+//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//   }
+// });
+
 // /**
 //  *  @챌린지_회고_전체_가져오기
 //  *  @route Get /challenge
@@ -180,69 +290,6 @@ const postChallengeController = async (req: Request, res: Response) => {
 // });
 
 // /**
-//  *  @챌린지_회고_댓글_등록
-//  *  @route Post /challenge/comment/:challengeID
-//  *  @access private
-//  */
-
-// router.post("/comment/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const reqData: commentReqDTO = req.body;
-//     const data = await postChallengeComment(
-//       req.params.id,
-//       req.body.userID.id,
-//       reqData
-//     );
-
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     //  요청 바디가 부족한 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
-//     // 부모 댓글 id가 잘못된 경우
-//     if (data === -3) {
-//       response(res, returnCode.BAD_REQUEST, "부모 댓글 id가 올바르지 않습니다");
-//     }
-//     // 댓글 등록 성공
-//     const challengeID = data;
-//     dataResponse(res, returnCode.OK, "댓글 등록 성공", challengeID);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
-// /**
-//  *  @챌린지_회고_좋아요_등록
-//  *  @route Post /challenge/like/:challengeID
-//  *  @access private
-//  */
-
-// router.post("/like/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await postChallengeLike(req.params.id, req.body.userID.id);
-
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 이미 좋아요 한 글일 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "이미 좋아요 한 글입니다");
-//     }
-//     // 좋아요 등록 성공
-//     const challengeID = data;
-//     dataResponse(res, returnCode.OK, "좋아요 등록 성공", challengeID);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
-// /**
 //  *  @챌린지_회고_좋아요_삭제하기
 //  *  @route Delete /challenge/like/:challengeID
 //  *  @access private
@@ -262,40 +309,6 @@ const postChallengeController = async (req: Request, res: Response) => {
 //     // 좋아요 삭제 성공
 //     const challengeID = data;
 //     dataResponse(res, returnCode.OK, "좋아요 삭제 성공", challengeID);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
-// /**
-//  *  @유저_챌린지_회고_스크랩하기
-//  *  @route Post /challenge/scrap/:challengeID
-//  *  @access private
-//  */
-// router.post("/scrap/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await postChallengeScrap(req.params.id, req.body.userID.id);
-
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 이미 유저가 스크랩한 글일 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "이미 스크랩 된 글입니다");
-//     }
-
-//     // 자신의 회고인 경우
-//     if (data === -3) {
-//       response(
-//         res,
-//         returnCode.BAD_REQUEST,
-//         "자신의 글은 스크랩 할 수 없습니다"
-//       );
-//     }
-//     // 회고 스크랩 성공
-//     dataResponse(res, returnCode.OK, "회고 스크랩 성공", data);
 //   } catch (err) {
 //     console.error(err.message);
 //     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
@@ -329,6 +342,7 @@ const postChallengeController = async (req: Request, res: Response) => {
 
 const challengeController = {
   postChallengeController,
+  postCommentController,
 };
 
 export default challengeController;

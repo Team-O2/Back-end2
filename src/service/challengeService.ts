@@ -2,6 +2,7 @@
 import {
   Badge,
   Challenge,
+  Comment,
   Like,
   Post,
   PostInterest,
@@ -104,6 +105,214 @@ export const postChallenge = async (
 
   return resData;
 };
+
+/**
+ *  @챌린지_회고_댓글_등록
+ *  @route POST /challenge/:challengeID/comment
+ *  @body parentID, text
+ *  @error
+ *      1. 회고록 id 잘못됨
+ *      2. 요청 바디 부족
+ *      3. 부모 댓글 id 값이 유효하지 않을 경우
+ */
+
+export const postComment = async (
+  challengeID: number,
+  userID: number,
+  reqData: challengeDTO.postCommentReqDTO
+) => {
+  const { parentID, text } = reqData;
+
+  // 1. 회고록 id 잘못됨
+  const challenge = await Challenge.findOne({
+    where: { id: challengeID },
+    include: [Post],
+  });
+
+  if (!challenge || challenge.post.isDeleted) {
+    return -1;
+  }
+
+  // 2. 요청 바디 부족
+  if (!text) {
+    return -2;
+  }
+
+  let comment;
+  // 대댓글인 경우
+  if (parentID) {
+    const parentComment = await Comment.findOne({ where: { id: parentID } });
+
+    // 3. 부모 댓글 id 값이 유효하지 않을 경우
+    if (!parentComment) {
+      return -3;
+    }
+
+    // 대댓글 생성
+    comment = await Comment.create({
+      userID,
+      postID: challengeID,
+      text,
+      level: 1,
+      order: parentComment.groupNum,
+    });
+    await Comment.increment("groupNum", { by: 1, where: { id: parentID } });
+
+    // 첫 답글 작성 시 뱃지 추가
+    const badge = await Badge.findOne({ where: { id: userID } });
+    if (!badge.firstReplyBadge) {
+      badge.firstReplyBadge = true;
+      await badge.save();
+    }
+  } else {
+    // 댓글인 경우
+    comment = await Comment.create({
+      userID,
+      postID: challengeID,
+      text,
+      order: 0,
+    });
+  }
+
+  const commentData = await Comment.findOne({
+    where: { id: comment.id },
+    include: [
+      {
+        model: User,
+        attributes: ["img", "nickname"],
+      },
+    ],
+  });
+
+  // 댓글 1개 작성 시 뱃지 추가
+  const badge = await Badge.findOne({ where: { id: userID } });
+  if (!badge.oneCommentBadge) {
+    badge.oneCommentBadge = true;
+    await badge.save();
+  }
+  // 댓글 5개 작성 시 뱃지 추가
+  const user = await User.findOne({
+    where: { id: userID },
+    include: [Comment],
+  });
+  if (!badge.fiveCommentBadge && user.comments.length > 4) {
+    badge.fiveCommentBadge = true;
+    await badge.save();
+  }
+
+  const resData: challengeDTO.postCommentResDTO = {
+    id: commentData.id,
+    userID: commentData.userID,
+    nickname: commentData.user.nickname,
+    img: commentData.user.img,
+    text: commentData.text,
+    createdAt: commentData.createdAt,
+    updatedAt: commentData.updatedAt,
+  };
+
+  return resData;
+};
+
+// /**
+//  *  @챌린지_회고_좋아요_등록
+//  *  @route POST /challenge/like/:challengeID
+//  *  @error
+//  *      1. 회고록 id 잘못됨
+//  *      2. 이미 좋아요 한 글일 경우
+//  */
+// export const postChallengeLike = async (challengeID, userID) => {
+//   // 1. 회고록 id 잘못됨
+//   const challenge = await Challenge.findById(challengeID);
+
+//   if (!challenge || challenge.isDeleted) {
+//     return -1;
+//   }
+
+//   const user = await User.findById(userID);
+
+//   // 2. 이미 좋아요 한 글일 경우
+//   if (user.likes.challengeLikes.includes(challengeID)) {
+//     return -2;
+//   }
+
+//   // 챌린지 글의 like 1 증가
+//   await Challenge.findOneAndUpdate(
+//     { _id: challengeID },
+//     {
+//       $inc: { likes: 1 },
+//     }
+//   );
+//   // 유저 likes 필드에 챌린지 id 추가
+//   user.likes.challengeLikes.push(challengeID);
+//   await user.save();
+
+//   // 좋아요 1개 누를 시 뱃지 추가
+//   const badge = await Badge.findOne({ user: userID });
+//   if (!badge.oneLikeBadge) {
+//     badge.oneLikeBadge = true;
+//     await badge.save();
+//   }
+
+//   // 좋아요 5개 누를 시 뱃지 추가
+//   if (
+//     !badge.fiveLikeBadge &&
+//     user.likes.challengeLikes.length + user.likes.concertLikes.length === 5
+//   ) {
+//     badge.fiveLikeBadge = true;
+//     await badge.save();
+//   }
+
+//   return { _id: challengeID };
+// };
+
+// /**
+//  *  @유저_챌린지_회고_스크랩하기
+//  *  @route Post /user/challenge/:challengeID
+//  *  @error
+//  *      1. 회고록 id 잘못됨
+//  *      2. 이미 스크랩 한 회고일 경우
+//  *      3. 자기 자신의 글인 경우
+//  */
+// export const postChallengeScrap = async (challengeID, userID) => {
+//   // 1. 회고 id 잘못됨
+//   let challenge = await Challenge.findById(challengeID);
+//   if (!challenge || challenge.isDeleted) {
+//     return -1;
+//   }
+
+//   const user = await User.findById(userID);
+
+//   // 2. 이미 스크랩 한 회고인 경우
+//   if (user.scraps.challengeScraps.includes(challengeID)) {
+//     return -2;
+//   }
+
+//   // 3. 자신의 회고인 경우
+//   if (challenge.user.toString() === user._id.toString()) {
+//     console.log("dd");
+//     return -3;
+//   }
+
+//   user.scraps.challengeScraps.push(challengeID);
+//   await user.save();
+
+//   // 게시글 스크랩 수 1 증가
+//   await Challenge.findOneAndUpdate(
+//     { _id: challengeID },
+//     {
+//       $inc: { scrapNum: 1 },
+//     }
+//   );
+
+//   // 게시글 첫 스크랩 시 배지 추가
+//   const badge = await Badge.findOne({ user: userID });
+//   if (!badge.learnMySelfScrapBadge) {
+//     badge.learnMySelfScrapBadge = true;
+//     await badge.save();
+//   }
+
+//   return { _id: challengeID };
+// };
 
 // /**
 //  *  @챌린지_회고_전체_가져오기
@@ -435,165 +644,6 @@ export const postChallenge = async (
 // };
 
 // /**
-//  *  @챌린지_회고_댓글_등록
-//  *  @route POST /challenge/comment/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 요청 바디 부족
-//  *      3. 부모 댓글 id 값이 유효하지 않을 경우
-//  */
-// export const postChallengeComment = async (
-//   challengeID,
-//   userID,
-//   reqData: commentReqDTO
-// ) => {
-//   const { parentID, text } = reqData;
-
-//   // 1. 회고록 id 잘못됨
-//   const challenge = await Challenge.findById(challengeID);
-
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
-//   // 2. 요청 바디 부족
-//   if (!text) {
-//     return -2;
-//   }
-
-//   let comment;
-//   // 답글인 경우
-//   if (parentID) {
-//     const parentComment = await Comment.findById(parentID);
-
-//     // 3. 부모 댓글 id 값이 유효하지 않을 경우
-//     if (!parentComment) {
-//       return -3;
-//     }
-
-//     comment = new Comment({
-//       postModel: "Challenge",
-//       post: challengeID,
-//       userID: userID,
-//       parentComment: parentID,
-//       text,
-//     });
-//     await comment.save();
-
-//     await parentComment.childrenComment.push(comment._id);
-//     await parentComment.save();
-
-//     // 첫 답글 작성 시 뱃지 추가
-//     const badge = await Badge.findOne({ user: userID });
-//     if (!badge.firstReplyBadge) {
-//       badge.firstReplyBadge = true;
-//       await badge.save();
-//     }
-//   } else {
-//     // 댓글인 경우
-//     comment = new Comment({
-//       postModel: "Challenge",
-//       post: challengeID,
-//       userID: userID,
-//       text,
-//     });
-
-//     await comment.save();
-//     challenge.comments.push(comment._id);
-//     await challenge.save();
-
-//     // 댓글 1개 작성 시 뱃지 추가
-//     const badge = await Badge.findOne({ user: userID });
-//     if (!badge.oneCommentBadge) {
-//       badge.oneCommentBadge = true;
-//       await badge.save();
-//     }
-//     // 댓글 5개 작성 시 뱃지 추가
-//     const user = await User.findById(userID);
-//     if (!badge.fiveCommentBadge && user.commentCNT === 4) {
-//       badge.fiveCommentBadge = true;
-//       await badge.save();
-//     }
-
-//     // 유저 댓글 수 1 증가
-//     await user.update({
-//       commentCNT: user.commentCNT + 1,
-//     });
-//   }
-
-//   // 게시글 댓글 수 1 증가
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { commentNum: 1 },
-//     }
-//   );
-
-//   const user = await User.findById(userID);
-
-//   return {
-//     _id: comment._id,
-//     nickname: user.nickname,
-//     text: text,
-//     img: user.img,
-//     createdAt: comment.createdAt,
-//   };
-
-//   return;
-// };
-
-// /**
-//  *  @챌린지_회고_좋아요_등록
-//  *  @route POST /challenge/like/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 이미 좋아요 한 글일 경우
-//  */
-// export const postChallengeLike = async (challengeID, userID) => {
-//   // 1. 회고록 id 잘못됨
-//   const challenge = await Challenge.findById(challengeID);
-
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
-
-//   const user = await User.findById(userID);
-
-//   // 2. 이미 좋아요 한 글일 경우
-//   if (user.likes.challengeLikes.includes(challengeID)) {
-//     return -2;
-//   }
-
-//   // 챌린지 글의 like 1 증가
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { likes: 1 },
-//     }
-//   );
-//   // 유저 likes 필드에 챌린지 id 추가
-//   user.likes.challengeLikes.push(challengeID);
-//   await user.save();
-
-//   // 좋아요 1개 누를 시 뱃지 추가
-//   const badge = await Badge.findOne({ user: userID });
-//   if (!badge.oneLikeBadge) {
-//     badge.oneLikeBadge = true;
-//     await badge.save();
-//   }
-
-//   // 좋아요 5개 누를 시 뱃지 추가
-//   if (
-//     !badge.fiveLikeBadge &&
-//     user.likes.challengeLikes.length + user.likes.concertLikes.length === 5
-//   ) {
-//     badge.fiveLikeBadge = true;
-//     await badge.save();
-//   }
-
-//   return { _id: challengeID };
-// };
-
-// /**
 //  *  @챌린지_회고_좋아요_삭제
 //  *  @route DELETE /challenge/like/:challengeID
 //  *  @error
@@ -625,55 +675,6 @@ export const postChallenge = async (
 //   const idx = user.likes.challengeLikes.indexOf(challengeID);
 //   user.likes.challengeLikes.splice(idx, 1);
 //   await user.save();
-
-//   return { _id: challengeID };
-// };
-
-// /**
-//  *  @유저_챌린지_회고_스크랩하기
-//  *  @route Post /user/challenge/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 이미 스크랩 한 회고일 경우
-//  *      3. 자기 자신의 글인 경우
-//  */
-// export const postChallengeScrap = async (challengeID, userID) => {
-//   // 1. 회고 id 잘못됨
-//   let challenge = await Challenge.findById(challengeID);
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
-
-//   const user = await User.findById(userID);
-
-//   // 2. 이미 스크랩 한 회고인 경우
-//   if (user.scraps.challengeScraps.includes(challengeID)) {
-//     return -2;
-//   }
-
-//   // 3. 자신의 회고인 경우
-//   if (challenge.user.toString() === user._id.toString()) {
-//     console.log("dd");
-//     return -3;
-//   }
-
-//   user.scraps.challengeScraps.push(challengeID);
-//   await user.save();
-
-//   // 게시글 스크랩 수 1 증가
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { scrapNum: 1 },
-//     }
-//   );
-
-//   // 게시글 첫 스크랩 시 배지 추가
-//   const badge = await Badge.findOne({ user: userID });
-//   if (!badge.learnMySelfScrapBadge) {
-//     badge.learnMySelfScrapBadge = true;
-//     await badge.save();
-//   }
 
 //   return { _id: challengeID };
 // };
@@ -716,6 +717,7 @@ export const postChallenge = async (
 
 const challengeService = {
   postChallenge,
+  postComment,
 };
 
 export default challengeService;

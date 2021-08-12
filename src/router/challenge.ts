@@ -7,9 +7,13 @@ import { authMiddleware } from "../middleware";
 const router = Router();
 
 router.post("", authMiddleware, challengeController.postChallengeController);
-// router.post("/comment/:challengeID");
-// router.post("/like/:challengeID");
-// router.post("/scrap/:challengeID");
+router.post(
+  "/:challengeID/comment",
+  authMiddleware,
+  challengeController.postCommentController
+);
+router.post("/:challengeID/like", authMiddleware);
+router.post("/:challengeID/scrap", authMiddleware);
 // router.get("");
 // router.get("/search");
 // router.get("/:challengeID");
