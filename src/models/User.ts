@@ -36,6 +36,12 @@ export default class User extends Model {
   @Column
   password: string;
 
+  @Default(
+    "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg"
+  )
+  @Column
+  img: string;
+
   @Column
   nickname: string;
 

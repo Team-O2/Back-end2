@@ -47,7 +47,7 @@ export const postChallenge = async (
     good: good.toLowerCase(),
     bad: bad.toLowerCase(),
     learn: learn.toLowerCase(),
-    generation: generation,
+    generation,
   });
   interest.map(
     async (it) =>
@@ -62,8 +62,10 @@ export const postChallenge = async (
 
   // 첫 챌린지 회고 작성 시 배지 추가
   const badge = await Badge.findOne({ where: { id: userID } });
-  if (!badge.firstWriteBadge) badge.firstWriteBadge = true;
-  badge.save();
+  if (!badge.firstWriteBadge) {
+    badge.firstWriteBadge = true;
+    await badge.save();
+  }
 
   // table join
   const challengeData = await Post.findOne({
@@ -75,8 +77,7 @@ export const postChallenge = async (
       Challenge,
       {
         model: User,
-        attributes: ["nickname"],
-        include: [{ model: UserInfo, attributes: ["img"] }],
+        attributes: ["nickname", "img"],
       },
       Like,
       Scrap,
@@ -96,7 +97,7 @@ export const postChallenge = async (
     isDeleted: challengeData.isDeleted,
     userID: challengeData.userID,
     nickname: challengeData.user.nickname,
-    img: challengeData.user.userInfos.img,
+    img: challengeData.user.img,
     createdAt: challengeData.createdAt,
     updatedAt: challengeData.updatedAt,
   };
