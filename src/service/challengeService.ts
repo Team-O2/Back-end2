@@ -15,7 +15,7 @@ import { challengeDTO } from "../DTO";
 
 /**
  *  @챌린지_회고_등록
- *  @route Post /challenge
+ *  @route Post /
  *  @body author, good, bad, learn, interest, generation
  *  @error
  *      1. 요청 바디 부족
@@ -109,7 +109,7 @@ export const postChallenge = async (
 
 /**
  *  @챌린지_회고_댓글_등록
- *  @route POST /challenge/:challengeID/comment
+ *  @route POST /:challengeID/comment
  *  @body parentID, text
  *  @error
  *      1. 챌린지 id 잘못됨
@@ -215,7 +215,7 @@ export const postComment = async (
 
 /**
  *  @챌린지_회고_좋아요_등록
- *  @route POST /challenge/like/:challengeID
+ *  @route /:challengeID/like
  *  @error
  *      1. 챌린지 id 잘못됨
  *      2. 이미 좋아요 한 글일 경우
@@ -266,7 +266,7 @@ export const postLike = async (challengeID: number, userID: number) => {
 
 /**
  *  @유저_챌린지_회고_스크랩하기
- *  @route Post /user/challenge/:challengeID
+ *  @route Post /:challengeID/scrap
  *  @error
  *      1. 챌린지 id 잘못됨
  *      2. 이미 스크랩 한 글일 경우

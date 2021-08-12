@@ -8,7 +8,7 @@ import { challengeDTO } from "../DTO";
 
 /**
  *  @챌린지_회고_등록
- *  @route Post /challenge
+ *  @route Post /
  *  @desc 회고 등록
  *  @access private
  */
@@ -52,7 +52,7 @@ const postChallengeController = async (req: Request, res: Response) => {
 
 /**
  *  @챌린지_회고_댓글_등록
- *  @route Post /challenge/comment/:challengeID
+ *  @route Post /comment/:challengeID
  *  @desc 챌린치 댓글 달기
  *  @access private
  */
@@ -103,7 +103,7 @@ const postCommentController = async (req: Request, res: Response) => {
 
 /**
  *  @챌린지_회고_좋아요_등록
- *  @route Post /challenge/:challengeID/like
+ *  @route Post /:challengeID/like
  *  @desc 챌린치 좋아요 등록하기
  *  @access private
  */
@@ -143,7 +143,7 @@ const postLikeController = async (req: Request, res: Response) => {
 
 /**
  *  @유저_챌린지_회고_스크랩하기
- *  @route Post /challenge/:challengeID/scrap
+ *  @route Post /:challengeID/scrap
  *  @desc 챌린치 좋아요 등록하기
  *  @access private
  */
