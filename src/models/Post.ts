@@ -21,6 +21,7 @@ import {
   PostInterest,
   Like,
   Hashtag,
+  Comment,
 } from ".";
 
 @Table({
@@ -66,6 +67,9 @@ export default class Post extends Model {
 
   @HasMany(() => Hashtag)
   hashtags: Hashtag[];
+
+  @HasMany(() => Comment)
+  comments: Comment[];
 
   @HasMany(() => Like)
   likes: Like[];

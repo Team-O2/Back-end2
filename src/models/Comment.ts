@@ -11,7 +11,7 @@ import {
   BelongsTo,
   ForeignKey,
 } from "sequelize-typescript";
-import { User } from ".";
+import { User, Post } from ".";
 
 @Table({
   tableName: "Comment",
@@ -39,9 +39,11 @@ export default class Comment extends Model {
   @Column
   text: string;
 
+  @ForeignKey(() => Post)
   @Column
   postID: number;
 
+  @Default(1)
   @Column
   groupNum: number;
 
@@ -60,4 +62,7 @@ export default class Comment extends Model {
 
   @BelongsTo(() => User)
   user: User;
+
+  @BelongsTo(() => Post)
+  post: Post;
 }
