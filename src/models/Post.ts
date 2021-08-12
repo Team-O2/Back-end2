@@ -53,6 +53,10 @@ export default class Post extends Model {
   @Column
   isDeleted: Boolean;
 
+  @Default(0)
+  @Column
+  generation: number;
+
   @BelongsTo(() => User)
   user: User;
 

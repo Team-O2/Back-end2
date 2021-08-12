@@ -8,8 +8,6 @@ import {
   AllowNull,
   ForeignKey,
   BelongsTo,
-  CreatedAt,
-  UpdatedAt,
 } from "sequelize-typescript";
 import { User, Post } from ".";
 
@@ -17,7 +15,7 @@ import { User, Post } from ".";
   tableName: "Concert",
   freezeTableName: true,
   underscored: false,
-  timestamps: true,
+  timestamps: false,
   charset: "utf8", // 한국어 설정
   collate: "utf8_general_ci", // 한국어 설정
 })
@@ -51,12 +49,6 @@ export default class Concert extends Model {
   @Default(false)
   @Column
   isNotice: Boolean;
-
-  @CreatedAt
-  createdAt!: Date;
-
-  @UpdatedAt
-  updatedAt!: Date;
 
   @BelongsTo(() => Post)
   post: Post;
