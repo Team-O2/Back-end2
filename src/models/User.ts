@@ -16,7 +16,8 @@ import Comment from "./Comment";
 import Like from "./Like";
 import Post from "./Post";
 import Scrap from "./Scrap";
-import UserInfo from "./UserInfo";
+import Badge from "./Badge";
+import Generation from "./Generation";
 import UserInterest from "./UserInterest";
 
 @Table({
@@ -48,10 +49,6 @@ export default class User extends Model {
   @Column
   isMarketing: Boolean;
 
-  @Default(2)
-  @Column
-  gender: number;
-
   @AllowNull
   @Column
   emailCode!: string;
@@ -62,8 +59,17 @@ export default class User extends Model {
   @UpdatedAt
   updatedAt!: Date;
 
-  @HasOne(() => UserInfo)
-  userInfos: UserInfo;
+  @Default(false)
+  @Column
+  isAdmin: Boolean;
+
+  @Default(false)
+  @Column
+  isChallenge: Boolean;
+
+  @Default(false)
+  @Column
+  isRegist: Boolean;
 
   @HasMany(() => Like)
   likes: Like[];
@@ -79,4 +85,10 @@ export default class User extends Model {
 
   @HasMany(() => Comment)
   comments: Comment[];
+
+  @HasOne(() => Badge)
+  badges: Badge[];
+
+  @HasMany(() => Generation)
+  generations: Generation[];
 }

@@ -576,7 +576,6 @@ export const getUserInfo = async (userID) => {
     email: user.email,
     nickname: user.nickname,
     interest: user.interest,
-    gender: user.gender,
     marpolicy: user.marpolicy,
     _id: user.id,
   };
@@ -590,7 +589,7 @@ export const getUserInfo = async (userID) => {
  */
 export const patchInfo = async (userID, body, url) => {
   var imgUrl = url.img;
-  const { nickname, gender, marpolicy } = body;
+  const { nickname, marpolicy } = body;
   let rawInterest = body.interest;
   var interest;
   if (rawInterest !== "") {
@@ -604,7 +603,6 @@ export const patchInfo = async (userID, body, url) => {
   if (
     nickname === undefined ||
     interest === undefined ||
-    gender === undefined ||
     marpolicy === undefined
   ) {
     return -1;
@@ -629,9 +627,7 @@ export const patchInfo = async (userID, body, url) => {
   if (interest !== "") {
     await user.update({ $set: { interest: interest } });
   }
-  if (gender !== "") {
-    await user.update({ $set: { gender: gender } });
-  }
+
   if (marpolicy !== "") {
     await user.update({ $set: { marpolicy: marpolicy } });
   }
