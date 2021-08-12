@@ -41,11 +41,11 @@ export const postChallenge = async (
   }
 
   // challenge 생성
-  const postData = await Post.create({
+  const newPost = await Post.create({
     userID,
   });
   await Challenge.create({
-    id: postData.id,
+    id: newPost.id,
     good: good.toLowerCase(),
     bad: bad.toLowerCase(),
     learn: learn.toLowerCase(),
@@ -54,7 +54,7 @@ export const postChallenge = async (
   interest.map(
     async (it) =>
       await PostInterest.create({
-        postID: postData.id,
+        postID: newPost.id,
         interest: it.toLowerCase(),
       })
   );
@@ -70,9 +70,9 @@ export const postChallenge = async (
   }
 
   // table join
-  const challengeData = await Post.findOne({
+  const challenge = await Post.findOne({
     where: {
-      id: postData.id,
+      id: newPost.id,
     },
     include: [
       PostInterest,
@@ -88,20 +88,20 @@ export const postChallenge = async (
 
   // data 형식에 맞게 변경
   const resData: challengeDTO.postChallengeResDTO = {
-    id: challengeData.id,
-    good: challengeData.challenge.good,
-    bad: challengeData.challenge.bad,
-    learn: challengeData.challenge.learn,
-    interest: challengeData.interests.map((i) => i.interest),
-    generation: challengeData.challenge.generation,
-    likeNum: challengeData.likes.length,
-    scrapNum: challengeData.scraps.length,
-    isDeleted: challengeData.isDeleted,
-    userID: challengeData.userID,
-    nickname: challengeData.user.nickname,
-    img: challengeData.user.img,
-    createdAt: challengeData.createdAt,
-    updatedAt: challengeData.updatedAt,
+    id: challenge.id,
+    good: challenge.challenge.good,
+    bad: challenge.challenge.bad,
+    learn: challenge.challenge.learn,
+    interest: challenge.interests.map((i) => i.interest),
+    generation: challenge.challenge.generation,
+    likeNum: challenge.likes.length,
+    scrapNum: challenge.scraps.length,
+    isDeleted: challenge.isDeleted,
+    userID: challenge.userID,
+    nickname: challenge.user.nickname,
+    img: challenge.user.img,
+    createdAt: challenge.createdAt,
+    updatedAt: challenge.updatedAt,
   };
 
   return resData;
@@ -139,7 +139,7 @@ export const postComment = async (
     return -2;
   }
 
-  let comment;
+  let newComment;
   // 대댓글인 경우
   if (parentID) {
     const parentComment = await Comment.findOne({ where: { id: parentID } });
@@ -150,7 +150,7 @@ export const postComment = async (
     }
 
     // 대댓글 생성
-    comment = await Comment.create({
+    newComment = await Comment.create({
       userID,
       postID: challengeID,
       text,
@@ -167,7 +167,7 @@ export const postComment = async (
     }
   } else {
     // 댓글인 경우
-    comment = await Comment.create({
+    newComment = await Comment.create({
       userID,
       postID: challengeID,
       text,
@@ -175,8 +175,8 @@ export const postComment = async (
     });
   }
 
-  const commentData = await Comment.findOne({
-    where: { id: comment.id },
+  const comment = await Comment.findOne({
+    where: { id: newComment.id },
     include: [
       {
         model: User,
@@ -201,13 +201,13 @@ export const postComment = async (
   }
 
   const resData: challengeDTO.postCommentResDTO = {
-    id: commentData.id,
-    userID: commentData.userID,
-    nickname: commentData.user.nickname,
-    img: commentData.user.img,
-    text: commentData.text,
-    createdAt: commentData.createdAt,
-    updatedAt: commentData.updatedAt,
+    id: comment.id,
+    userID: comment.userID,
+    nickname: comment.user.nickname,
+    img: comment.user.img,
+    text: comment.text,
+    createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt,
   };
 
   return resData;
@@ -296,7 +296,7 @@ export const postScrap = async (challengeID: number, userID: number) => {
     return -3;
   }
 
-  const newPost = await Scrap.create({
+  await Scrap.create({
     postID: challengeID,
     userID,
   });
