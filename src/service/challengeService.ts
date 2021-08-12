@@ -33,8 +33,9 @@ export const postChallenge = async (
     return -1;
   }
 
-  // 2. 유저 id 잘못됨
   const user = await User.findOne({ where: { id: userID } });
+
+  // 2. 유저 id 잘못됨
   if (!user) {
     return -2;
   }
@@ -185,17 +186,16 @@ export const postComment = async (
   });
 
   // 댓글 1개 작성 시 뱃지 추가
-  const badge = await Badge.findOne({ where: { id: userID } });
+  const badge = await Badge.findOne({
+    where: { id: userID },
+    include: [{ model: User, include: [Comment] }],
+  });
   if (!badge.oneCommentBadge) {
     badge.oneCommentBadge = true;
     await badge.save();
   }
   // 댓글 5개 작성 시 뱃지 추가
-  const user = await User.findOne({
-    where: { id: userID },
-    include: [Comment],
-  });
-  if (!badge.fiveCommentBadge && user.comments.length > 4) {
+  if (!badge.fiveCommentBadge && badge.user.comments.length > 4) {
     badge.fiveCommentBadge = true;
     await badge.save();
   }
@@ -213,57 +213,56 @@ export const postComment = async (
   return resData;
 };
 
-// /**
-//  *  @챌린지_회고_좋아요_등록
-//  *  @route POST /challenge/like/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 이미 좋아요 한 글일 경우
-//  */
-// export const postChallengeLike = async (challengeID, userID) => {
-//   // 1. 회고록 id 잘못됨
-//   const challenge = await Challenge.findById(challengeID);
+/**
+ *  @챌린지_회고_좋아요_등록
+ *  @route POST /challenge/like/:challengeID
+ *  @error
+ *      1. 회고록 id 잘못됨
+ *      2. 이미 좋아요 한 글일 경우
+ */
 
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+export const postLike = async (challengeID: number, userID: number) => {
+  const challenge = await Challenge.findOne({
+    where: { id: challengeID },
+    include: [Post],
+  });
 
-//   const user = await User.findById(userID);
+  // 1. 회고록 id 잘못됨
+  if (!challenge || challenge.post.isDeleted) {
+    return -1;
+  }
 
-//   // 2. 이미 좋아요 한 글일 경우
-//   if (user.likes.challengeLikes.includes(challengeID)) {
-//     return -2;
-//   }
+  const like = await Like.findOne({ where: { postID: challengeID, userID } });
 
-//   // 챌린지 글의 like 1 증가
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { likes: 1 },
-//     }
-//   );
-//   // 유저 likes 필드에 챌린지 id 추가
-//   user.likes.challengeLikes.push(challengeID);
-//   await user.save();
+  // 2. 이미 좋아요 한 글일 경우
+  if (like) {
+    return -2;
+  }
 
-//   // 좋아요 1개 누를 시 뱃지 추가
-//   const badge = await Badge.findOne({ user: userID });
-//   if (!badge.oneLikeBadge) {
-//     badge.oneLikeBadge = true;
-//     await badge.save();
-//   }
+  // 좋아요 등록
+  await Like.create({
+    postID: challengeID,
+    userID,
+  });
 
-//   // 좋아요 5개 누를 시 뱃지 추가
-//   if (
-//     !badge.fiveLikeBadge &&
-//     user.likes.challengeLikes.length + user.likes.concertLikes.length === 5
-//   ) {
-//     badge.fiveLikeBadge = true;
-//     await badge.save();
-//   }
+  // 좋아요 1개 누를 시 뱃지 추가
+  const badge = await Badge.findOne({
+    where: { id: userID },
+    include: [{ model: User, include: [Like] }],
+  });
+  if (!badge.oneLikeBadge) {
+    badge.oneLikeBadge = true;
+    await badge.save();
+  }
 
-//   return { _id: challengeID };
-// };
+  // 좋아요 5개 누를 시 뱃지 추가
+  if (!badge.fiveLikeBadge && badge.user.likes.length > 4) {
+    badge.fiveLikeBadge = true;
+    await badge.save();
+  }
+
+  return;
+};
 
 // /**
 //  *  @유저_챌린지_회고_스크랩하기
@@ -718,6 +717,7 @@ export const postComment = async (
 const challengeService = {
   postChallenge,
   postComment,
+  postLike,
 };
 
 export default challengeService;

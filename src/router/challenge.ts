@@ -12,7 +12,11 @@ router.post(
   authMiddleware,
   challengeController.postCommentController
 );
-router.post("/:challengeID/like", authMiddleware);
+router.post(
+  "/:challengeID/like",
+  authMiddleware,
+  challengeController.postLikeController
+);
 router.post("/:challengeID/scrap", authMiddleware);
 // router.get("");
 // router.get("/search");
