@@ -5,7 +5,6 @@ namespace authDTO {
     nickname?: string;
     interest?: [string];
     isMarketing?: Boolean;
-    gender?: number;
   }
 
   export interface signinReqDTO {

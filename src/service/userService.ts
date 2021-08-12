@@ -53,6 +53,7 @@ const getMypageInfo = async (userID: number) => {
   // FROM Badge
   // WHERE id = userID
 
+<<<<<<< HEAD
   // const mypageInfoData: userDTO.mypageInfoResDTO = {
   //   nickname,
   //   learnMyselfAchieve,
@@ -61,6 +62,80 @@ const getMypageInfo = async (userID: number) => {
   // }
 };
 
+=======
+export const getUserInfo = async (userID) => {
+  const user = await User.findById(userID);
+  const resData: userInfoResDTO = {
+    img: user.img,
+    email: user.email,
+    nickname: user.nickname,
+    interest: user.interest,
+    marpolicy: user.marpolicy,
+    _id: user.id,
+  };
+  return resData;
+};
+
+/**
+ *  @마이페이지_회원정보_수정
+ *  @route Patch user/userInfo
+ *  @access private
+ */
+export const patchInfo = async (userID, body, url) => {
+  var imgUrl = url.img;
+  const { nickname, marpolicy } = body;
+  let rawInterest = body.interest;
+  var interest;
+  if (rawInterest !== "") {
+    interest = stringToArray(rawInterest);
+  } else {
+    interest = rawInterest;
+  }
+  const user = await User.findById(userID);
+
+  // 1. 요청 바디 부족
+  if (
+    nickname === undefined ||
+    interest === undefined ||
+    marpolicy === undefined
+  ) {
+    return -1;
+  }
+
+  if (user.nickname !== nickname) {
+    // 3. 닉네임 중복
+    let checkNickname = await User.findOne({ nickname });
+    if (checkNickname) {
+      return -2;
+    }
+  }
+
+  if (imgUrl !== "") {
+    await user.update({ $set: { img: imgUrl } });
+  }
+
+  if (nickname !== "") {
+    await user.update({ $set: { nickname: nickname } });
+  }
+
+  if (interest !== "") {
+    await user.update({ $set: { interest: interest } });
+  }
+
+  if (marpolicy !== "") {
+    await user.update({ $set: { marpolicy: marpolicy } });
+  }
+
+  // 마케팅 동의(marpolicy == true) 시 뱃지 발급
+  if (marpolicy) {
+    await Badge.findOneAndUpdate(
+      { user: user.id },
+      { $set: { marketingBadge: true } }
+    );
+  }
+  return;
+};
+>>>>>>> d2aa41cc4869df6481452387d38124a612d6dd2e
 
 
 

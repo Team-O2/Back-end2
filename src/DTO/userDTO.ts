@@ -14,20 +14,20 @@ namespace userDTO {
     title: string;
   }
 
-    export interface ICouponBook {
-      welcomeBadge: Boolean;
-      firstJoinBadge: Boolean;
-      firstWriteBadge: Boolean;
-      oneCommentBadge: Boolean;
-      fiveCommentBadge: Boolean;
-      oneLikeBadge: Boolean;
-      fiveLikeBadge: Boolean;
-      loginBadge: Boolean;
-      marketingBadge: Boolean;
-      learnMySelfScrapBadge: Boolean;
-      firstReplyBadge: Boolean;
-      concertScrapBadge: Boolean;
-      challengeBadge: number;
+  export interface ICouponBook {
+    welcomeBadge: Boolean;
+    firstJoinBadge: Boolean;
+    firstWriteBadge: Boolean;
+    oneCommentBadge: Boolean;
+    fiveCommentBadge: Boolean;
+    oneLikeBadge: Boolean;
+    fiveLikeBadge: Boolean;
+    loginBadge: Boolean;
+    marketingBadge: Boolean;
+    learnMySelfScrapBadge: Boolean;
+    firstReplyBadge: Boolean;
+    concertScrapBadge: Boolean;
+    challengeBadge: number;
   }
   
   export interface mypageInfoResDTO {
@@ -95,6 +95,21 @@ export default userDTO;
 //   shareTogether: IShareTogether[] | null;
 //   couponBook: ICouponBook;
 // }
+// export interface userInfoResDTO {
+//   interest: string[];
+//   marpolicy: Boolean;
+//   img?: string;
+//   _id: mongoose.Schema.Types.ObjectId;
+//   email: string;
+//   nickname?: string;
+// }
+
+// export interface userInfoReqDTO {
+//   interest: string;
+//   marpolicy: string;
+//   img?: File;
+//   nickname?: string;
+// }
 
 // export interface concertScrapResDTO {
 //   mypageConcertScrap: IConcertDTO[];
@@ -121,25 +136,6 @@ export default userDTO;
 // export interface delMyCommentReqDTO {
 //   userID: { id: mongoose.Schema.Types.ObjectId };
 //   commentID: mongoose.Schema.Types.ObjectId[];
-// }
-
-// export interface userInfoResDTO {
-//   interest: string[];
-//   marpolicy: Boolean;
-//   img?: string;
-//   _id: mongoose.Schema.Types.ObjectId;
-//   email: string;
-//   nickname?: string;
-//   gender: number;
-// }
-
-// export interface userInfoReqDTO {
-//   interest: string;
-//   marpolicy: string;
-//   img?: File;
-//   nickname?: string;
-//   gender: string;
-// }
 
 // export interface newPwReqDTO {
 //   password: string;
