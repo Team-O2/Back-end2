@@ -55,7 +55,7 @@ export default class Admin extends Model {
     "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg"
   )
   @Column
-  img!: string;
+  img?: string;
 
   @CreatedAt
   @Default(Sequelize.fn("NOW"))
