@@ -13,12 +13,16 @@ import {
   HasOne,
   HasMany,
 } from "sequelize-typescript";
-import User from "./User";
-import Concert from "./Concert";
-import Challenge from "./Challenge";
-import PostInterest from "./PostInterest";
-import Hashtag from "./Hashtag";
-import Like from "./Like";
+import {
+  Scrap,
+  User,
+  Concert,
+  Challenge,
+  PostInterest,
+  Like,
+  Hashtag,
+  Comment,
+} from ".";
 
 @Table({
   tableName: "Post",
@@ -49,6 +53,10 @@ export default class Post extends Model {
   @Column
   isDeleted: Boolean;
 
+  @Default(0)
+  @Column
+  generation: number;
+
   @BelongsTo(() => User)
   user: User;
 
@@ -64,6 +72,12 @@ export default class Post extends Model {
   @HasMany(() => Hashtag)
   hashtags: Hashtag[];
 
+  @HasMany(() => Comment)
+  comments: Comment[];
+
   @HasMany(() => Like)
   likes: Like[];
+
+  @HasMany(() => Scrap)
+  scraps: Scrap[];
 }
