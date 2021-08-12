@@ -188,33 +188,51 @@ const postScrapController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @챌린지_회고_전체_가져오기
-//  *  @route Get /challenge
-//  *  @access public
-//  */
+/**
+ *  @챌린지_회고_전체_가져오기
+ *  @route Get /
+ *  @access public
+ */
 
-// router.get("/", publicAuth, async (req: Request, res: Response) => {
-//   try {
-//     const data: IChallengeDTO[] | -1 = await getChallengeAll(
-//       req.body.userID,
-//       req.query.generation,
-//       req.query.offset,
-//       req.query.limit
-//     );
+const getChallengeAllController = async (req: Request, res: Response) => {
+  try {
+    const resData = await challengeService.getChallengeAll(
+      req.body.userID.id,
+      Number(req.query.generation),
+      Number(req.query.offset),
+      Number(req.query.limit)
+    );
 
-//     // limit 없을 때
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 회고 전체 불러오기 성공
-//     const challengeAll = data;
-//     dataResponse(res, returnCode.OK, "회고 전체 불러오기 성공", challengeAll);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // limit 없을 때
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "잘못된 limit 값입니다"
+      );
+    }
+    // generation 없을 때
+    else if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "잘못된 generation 값입니다"
+      );
+    }
+    // 회고 전체 불러오기 성공
+    else {
+      response.dataResponse(
+        res,
+        returnCode.OK,
+        "회고 전체 불러오기 성공",
+        resData
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 // /**
 //  *  @챌린지_회고_검색_또는_필터
@@ -380,6 +398,7 @@ const challengeController = {
   postCommentController,
   postLikeController,
   postScrapController,
+  getChallengeAllController,
 };
 
 export default challengeController;

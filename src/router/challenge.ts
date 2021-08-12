@@ -2,7 +2,7 @@ import { Router } from "express";
 // controller
 import { challengeController } from "../controller";
 // middleware
-import { authMiddleware } from "../middleware";
+import { authMiddleware, publicAuthMiddleware } from "../middleware";
 
 const router = Router();
 
@@ -22,7 +22,11 @@ router.post(
   authMiddleware,
   challengeController.postScrapController
 );
-// router.get("");
+router.get(
+  "",
+  publicAuthMiddleware,
+  challengeController.getChallengeAllController
+);
 // router.get("/search");
 // router.get("/:challengeID");
 // router.patch("/:challengeID");

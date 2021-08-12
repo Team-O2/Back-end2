@@ -1,26 +1,6 @@
-namespace challengeDTO {
-  // export interface IChallengeDTO {
-  //   id: number;
-  //   createdAt?: Date;
-  //   updatedAt?: Date;
-  //   userID: number;
-  //   nickname: string;
-  //   img: string;
-  //   // user: userHeaderDTO;
-  //   good: string;
-  //   learn: string;
-  //   bad: string;
-  //   likes: number | Number;
-  //   commentNum: number | Number;
-  //   scrapNum: number | Number;
-  //   generation: number | Number;
-  //   interest: string[];
-  //   isDeleted?: Boolean;
-  //   comments?: typeof mongoose.Schema.Types.ObjectId[];
-  //   isLike?: boolean;
-  //   isScrap?: boolean;
-  // }
+import { commentDTO } from ".";
 
+namespace challengeDTO {
   export interface postChallengeReqDTO {
     good: string;
     bad: string;
@@ -46,19 +26,24 @@ namespace challengeDTO {
     updatedAt: Date;
   }
 
-  export interface postCommentReqDTO {
-    parentID?: number;
-    text: string;
-  }
-
-  export interface postCommentResDTO {
+  export interface getChallengeAllResDTO {
     id: number;
+    generation: number;
+    createdAt: Date;
+    updatedAt: Date;
     userID: number;
     nickname: string;
     img: string;
-    text: string;
-    createdAt: Date;
-    updatedAt: Date;
+    good: string;
+    bad: string;
+    learn: string;
+    interest: string[];
+    likeNum: number;
+    scrapNum: number;
+    commentNum: number;
+    comment: commentDTO.IComment[];
+    isLike?: Boolean;
+    isScrap?: Boolean;
   }
 }
 
