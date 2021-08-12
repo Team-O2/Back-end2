@@ -112,7 +112,7 @@ export const postChallenge = async (
  *  @route POST /challenge/:challengeID/comment
  *  @body parentID, text
  *  @error
- *      1. 회고록 id 잘못됨
+ *      1. 챌린지 id 잘못됨
  *      2. 요청 바디 부족
  *      3. 부모 댓글 id 값이 유효하지 않을 경우
  */
@@ -217,7 +217,7 @@ export const postComment = async (
  *  @챌린지_회고_좋아요_등록
  *  @route POST /challenge/like/:challengeID
  *  @error
- *      1. 회고록 id 잘못됨
+ *      1. 챌린지 id 잘못됨
  *      2. 이미 좋아요 한 글일 경우
  */
 
@@ -264,57 +264,55 @@ export const postLike = async (challengeID: number, userID: number) => {
   return;
 };
 
-// /**
-//  *  @유저_챌린지_회고_스크랩하기
-//  *  @route Post /user/challenge/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 이미 스크랩 한 회고일 경우
-//  *      3. 자기 자신의 글인 경우
-//  */
-// export const postChallengeScrap = async (challengeID, userID) => {
-//   // 1. 회고 id 잘못됨
-//   let challenge = await Challenge.findById(challengeID);
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+/**
+ *  @유저_챌린지_회고_스크랩하기
+ *  @route Post /user/challenge/:challengeID
+ *  @error
+ *      1. 챌린지 id 잘못됨
+ *      2. 이미 스크랩 한 글일 경우
+ *      3. 자신이 작성한 글인 경우
+ */
 
-//   const user = await User.findById(userID);
+export const postScrap = async (challengeID: number, userID: number) => {
+  const challenge = await Challenge.findOne({
+    where: { id: challengeID },
+    include: [Post],
+  });
 
-//   // 2. 이미 스크랩 한 회고인 경우
-//   if (user.scraps.challengeScraps.includes(challengeID)) {
-//     return -2;
-//   }
+  // 1. 챌린지 id 잘못됨
+  if (!challenge || challenge.post.isDeleted) {
+    return -1;
+  }
 
-//   // 3. 자신의 회고인 경우
-//   if (challenge.user.toString() === user._id.toString()) {
-//     console.log("dd");
-//     return -3;
-//   }
+  const scrap = await Scrap.findOne({ where: { postID: challengeID, userID } });
 
-//   user.scraps.challengeScraps.push(challengeID);
-//   await user.save();
+  // 2. 이미 스크랩 한 글인 경우
+  if (scrap) {
+    return -2;
+  }
 
-//   // 게시글 스크랩 수 1 증가
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { scrapNum: 1 },
-//     }
-//   );
+  // 3. 자신의 글인 경우
+  if (challenge.post.userID === userID) {
+    return -3;
+  }
 
-//   // 게시글 첫 스크랩 시 배지 추가
-//   const badge = await Badge.findOne({ user: userID });
-//   if (!badge.learnMySelfScrapBadge) {
-//     badge.learnMySelfScrapBadge = true;
-//     await badge.save();
-//   }
+  const newPost = await Scrap.create({
+    postID: challengeID,
+    userID,
+  });
 
-//   return { _id: challengeID };
-// };
+  // 게시글 첫 스크랩 시 배지 추가
+  const badge = await Badge.findOne({ where: { id: userID } });
+  if (!badge.learnMySelfScrapBadge) {
+    badge.learnMySelfScrapBadge = true;
+    await badge.save();
+  }
+
+  return;
+};
 
 // /**
-//  *  @챌린지_회고_전체_가져오기
+//  *  @챌린지_전체_가져오기
 //  *  @route Get /challenge
 //  */
 // export const getChallengeAll = async (userID, gen, offset, limit) => {
@@ -718,6 +716,7 @@ const challengeService = {
   postChallenge,
   postComment,
   postLike,
+  postScrap,
 };
 
 export default challengeService;

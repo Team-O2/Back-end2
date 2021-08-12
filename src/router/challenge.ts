@@ -17,7 +17,11 @@ router.post(
   authMiddleware,
   challengeController.postLikeController
 );
-router.post("/:challengeID/scrap", authMiddleware);
+router.post(
+  "/:challengeID/scrap",
+  authMiddleware,
+  challengeController.postScrapController
+);
 // router.get("");
 // router.get("/search");
 // router.get("/:challengeID");
