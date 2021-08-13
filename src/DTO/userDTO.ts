@@ -87,7 +87,6 @@ export interface userInfoResDTO {
   _id: mongoose.Schema.Types.ObjectId;
   email: string;
   nickname?: string;
-  gender: number;
 }
 
 export interface userInfoReqDTO {
@@ -95,7 +94,6 @@ export interface userInfoReqDTO {
   marpolicy: string;
   img?: File;
   nickname?: string;
-  gender: string;
 }
 
 export interface newPwReqDTO {

@@ -8,9 +8,9 @@ import {
   AllowNull,
   ForeignKey,
   BelongsTo,
+  Default,
 } from "sequelize-typescript";
-import { UserInfo } from ".";
-
+import { User } from ".";
 @Table({
   tableName: "Generation",
   freezeTableName: true,
@@ -30,10 +30,23 @@ export default class Generation extends Model {
   @Column
   generation: number;
 
-  @ForeignKey(() => UserInfo)
+  @Default(0)
+  @Column
+  challengeNum: number;
+
+  @Default(0)
+  @Column
+  conditionNum: number;
+
+  @Default(0)
+  @Column
+  writingNum: number;
+
+
+  @ForeignKey(() => User)
   @Column
   userID: number;
 
-  @BelongsTo(() => UserInfo)
-  userInfo: UserInfo;
+  @BelongsTo(() => User)
+  user: User;
 }

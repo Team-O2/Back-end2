@@ -49,10 +49,6 @@ export default class User extends Model {
   @Column
   isMarketing: Boolean;
 
-  @Default(2)
-  @Column
-  gender: number;
-
   @AllowNull
   @Column
   emailCode!: string;
@@ -63,8 +59,17 @@ export default class User extends Model {
   @UpdatedAt
   updatedAt!: Date;
 
-  @HasOne(() => UserInfo)
-  userInfos: UserInfo;
+  @Default(false)
+  @Column
+  isAdmin: Boolean;
+
+  @Default(false)
+  @Column
+  isChallenge: Boolean;
+
+  @Default(false)
+  @Column
+  isRegist: Boolean;
 
   @HasMany(() => Like)
   likes: Like[];
@@ -83,4 +88,7 @@ export default class User extends Model {
 
   @HasOne(() => Badge)
   badge: Badge;
+
+  @HasMany(() => Generation)
+  generations: Generation[];
 }

@@ -8,7 +8,6 @@ import bcrypt from "bcryptjs";
 import config from "../config";
 import { emailSender } from "../library";
 import ejs from "ejs";
-import { UserInfo } from "../models";
 import sequelize from "sequelize";
 
 /**
@@ -22,7 +21,7 @@ import sequelize from "sequelize";
  */
 
 const postSignup = async (data: authDTO.signupReqDTO) => {
-  const { email, password, nickname, gender, isMarketing, interest } = data;
+  const { email, password, nickname, isMarketing, interest } = data;
 
   // 1. 요청 바디 부족
   if (!email || !password || !nickname || !interest) {
@@ -51,7 +50,6 @@ const postSignup = async (data: authDTO.signupReqDTO) => {
     email,
     password: hashPassword,
     nickname,
-    gender,
     isMarketing,
   });
 
@@ -65,14 +63,9 @@ const postSignup = async (data: authDTO.signupReqDTO) => {
     return interestOne;
   });
 
-  // UserInfo 생성
-  const userInfo = await UserInfo.create({
-    id: userID,
-  });
-
   // Badge 생성
   const badge = await Badge.create({
-    id: userInfo.id,
+    id: user.id,
   });
 
   // 마케팅 동의(isMarketing == true) 시 뱃지 발급
@@ -174,13 +167,12 @@ async function postSignin(reqData: authDTO.signinReqDTO) {
 
   // UserState 등록
   // 4-관리자
-  const userInfo = await UserInfo.findOne({ where: { id: user.id } });
-  if (userInfo.isAdmin === true) {
+  if (user.isAdmin === true) {
     userState = 4;
     registGeneration = null;
   }
   // 챌린지 안하는 유저
-  else if (!userInfo.isChallenge) {
+  else if (!user.isChallenge) {
     // 1- 해당 날짜에 신청 가능한 기수가 있음
     if (gen) {
       userState = 1;
