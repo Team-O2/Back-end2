@@ -18,12 +18,9 @@ const mypageInfoController = async (req: Request, res: Response) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
   try {
-    console.log("?");
     const data = await userService.getMypageInfo(req.body.userID.id);
-
-    console.log(data);
+    response.dataResponse(res, returnCode.OK, "마이페이지 유저정보 검색 성공", data);
   } catch (err) {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");

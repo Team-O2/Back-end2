@@ -10,7 +10,7 @@ namespace userDTO {
   }
 
   export interface IShareTogether {
-    _id: number;
+    id: number;
     title: string;
   }
 

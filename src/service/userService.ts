@@ -1,14 +1,15 @@
 // models
-import { Admin, User, Badge, Concert, Challenge, Comment } from "../models";
+import { Admin, User, Badge, Concert, Challenge, Comment, Post } from "../models";
 // library
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import config from "../config";
 import { emailSender } from "../library";
 import ejs from "ejs";
-import sequelize from "sequelize";
+import sequelize, { ConnectionTimedOutError } from "sequelize";
 // DTO
 import { userDTO } from "../DTO";
+import { share } from "rxjs";
 
 /**
  *  @User_마이페이지_Info
@@ -21,12 +22,70 @@ const getMypageInfo = async (userID: number) => {
     where: {
       id: userID
     },
-    attributes: ['nickname']
+    attributes: {
+      include: ['nickname']
+    }
+  }).then(user=> {
+    return user.nickname
   });
 
-  console.log("nickname:", nickname);
+  const admin = await Admin.findOne({
+    where: {
+      challengeStartDT: {
+        [Op.lt]: Date.now()
+      },
 
-  return { nickname };
+    }
+  });
+
+  let learnMyselfAchieve;
+
+  let shareTogether: userDTO.IShareTogether[] | null = await Concert.findAll({
+    where: {
+      userID: userID,
+      isNotice: false
+    },
+    attributes: ['id', 'title'],
+    order: [['id', 'desc']],
+    limit: 5,
+    raw: true
+  });
+
+  if (!shareTogether.length) {
+    shareTogether = null;
+  }
+
+  // let shareTogether = await Concert.findAll({
+  //   where: {
+  //     userID: userID,
+  //     isNotice: false
+  //   },
+  //   include: {
+  //     model: Post,
+  //     attributes: ['createdAt']
+  //   },
+  //   attributes: ['id', 'title'],
+  //   order: [['post', 'createdAt', 'desc']],
+  //   limit: 5
+  // });
+
+
+  const couponBook: userDTO.ICouponBook = await Badge.findOne({
+    where: {
+      id: userID
+    },
+    attributes:{
+      exclude:['id']
+    }
+  });
+
+  const mypageInfoRes: userDTO.mypageInfoResDTO = {
+    nickname, learnMyselfAchieve, shareTogether, couponBook
+  }
+
+
+  return { nickname, shareTogether, couponBook };
+  // return mypageInfoRes;
 };
 
 
