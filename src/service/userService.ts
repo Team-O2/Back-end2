@@ -1,7 +1,5 @@
 // models
-import { User, Post, Challenge, Concert } from "../models";
-// DTO
-import { userDTO } from "../DTO";
+import { Admin, User, Badge, Concert, Challenge, Comment } from "../models";
 // library
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -9,7 +7,8 @@ import config from "../config";
 import { emailSender } from "../library";
 import ejs from "ejs";
 import sequelize from "sequelize";
-
+// DTO
+import { userDTO } from "../DTO";
 
 /**
  *  @User_마이페이지_Info
@@ -18,129 +17,25 @@ import sequelize from "sequelize";
  */
 
 const getMypageInfo = async (userID: number) => {
-
-  // [ nickName SQL query ]
-  // SELECT nickname
-  // FROM User
-  // WHERE id = userID
-  const { nickname } = await User.findOne({
+  const nickname = await User.findOne({
     where: {
       id: userID
     },
     attributes: ['nickname']
   });
 
-  // [ shareTogether SQL query ]
-  // SELECT C.id, title
-  // FROM post P, concert C
-  // WHERE P.id = C.id AND P.userID = userID
-  await Post.findAll({
-    include: [
-      {
-        model: Concert,
-        attributes: ['title', 'id'],
-        required: true
-      }
-    ],
-    where: {
-      userID: userID
-    }
-  });
+  console.log("nickname:", nickname);
 
-
-  // [ couponBook SQL query ]
-  // SELECT id 빼고 모든 column // attributes: { exclude: ['id'] }
-  // FROM Badge
-  // WHERE id = userID
-
-<<<<<<< HEAD
-  // const mypageInfoData: userDTO.mypageInfoResDTO = {
-  //   nickname,
-  //   learnMyselfAchieve,
-  //   shareTogether,
-  //   couponBook
-  // }
+  return { nickname };
 };
 
-=======
-export const getUserInfo = async (userID) => {
-  const user = await User.findById(userID);
-  const resData: userInfoResDTO = {
-    img: user.img,
-    email: user.email,
-    nickname: user.nickname,
-    interest: user.interest,
-    marpolicy: user.marpolicy,
-    _id: user.id,
-  };
-  return resData;
-};
-
-/**
- *  @마이페이지_회원정보_수정
- *  @route Patch user/userInfo
- *  @access private
- */
-export const patchInfo = async (userID, body, url) => {
-  var imgUrl = url.img;
-  const { nickname, marpolicy } = body;
-  let rawInterest = body.interest;
-  var interest;
-  if (rawInterest !== "") {
-    interest = stringToArray(rawInterest);
-  } else {
-    interest = rawInterest;
-  }
-  const user = await User.findById(userID);
-
-  // 1. 요청 바디 부족
-  if (
-    nickname === undefined ||
-    interest === undefined ||
-    marpolicy === undefined
-  ) {
-    return -1;
-  }
-
-  if (user.nickname !== nickname) {
-    // 3. 닉네임 중복
-    let checkNickname = await User.findOne({ nickname });
-    if (checkNickname) {
-      return -2;
-    }
-  }
-
-  if (imgUrl !== "") {
-    await user.update({ $set: { img: imgUrl } });
-  }
-
-  if (nickname !== "") {
-    await user.update({ $set: { nickname: nickname } });
-  }
-
-  if (interest !== "") {
-    await user.update({ $set: { interest: interest } });
-  }
-
-  if (marpolicy !== "") {
-    await user.update({ $set: { marpolicy: marpolicy } });
-  }
-
-  // 마케팅 동의(marpolicy == true) 시 뱃지 발급
-  if (marpolicy) {
-    await Badge.findOneAndUpdate(
-      { user: user.id },
-      { $set: { marketingBadge: true } }
-    );
-  }
-  return;
-};
->>>>>>> d2aa41cc4869df6481452387d38124a612d6dd2e
 
 
-
-
-
+// /**
+//  *  @User_마이페이지_Info
+//  *  @route Get user/mypage/info
+//  *  @access private
+//  */
 // export const getMypageInfo = async (userID) => {
 //   const user = await User.findById(userID);
 //   const userBadge = await Badge.findOne({ user: userID });
@@ -220,43 +115,7 @@ export const patchInfo = async (userID, body, url) => {
 //   return resData;
 // };
 
-// // models
-// import Admin from "../models/Admin";
-// import User from "../models/User";
-// import Badge from "../models/Badge";
-// import Concert from "../models/Concert";
-// import Challenge from "../models/Challenge";
-// import Comment from "../models/Comment";
 
-// // library
-// import { dateToNumber, period } from "../library/date";
-// import { stringToArray } from "../library/array";
-
-// // jwt
-// import bcrypt from "bcryptjs";
-
-// // DTO
-// import mongoose, { Document } from "mongoose";
-// import {
-//   challengeScrapResDTO,
-//   concertScrapResDTO,
-//   ICouponBook,
-//   ILearnMySelfAchieve,
-//   IShareTogether,
-//   registerReqDTO,
-//   mypageInfoResDTO,
-//   myCommentsResDTO,
-//   delMyCommentReqDTO,
-//   userInfoResDTO,
-//   newPwReqDTO,
-// } from "../DTO/userDTO";
-// // interface
-// import { IConcert } from "../interfaces/IConcert";
-// import { IUser } from "../interfaces/IUser";
-// import { IComment } from "../interfaces/IComment";
-// import { IChallenge } from "../interfaces/IChallenge";
-// import { IChallengeDTO } from "../DTO/challengeDTO";
-// import { IConcertDTO } from "../DTO/concertDTO";
 
 // /**
 //  *  @User_챌린지_신청하기
@@ -530,89 +389,6 @@ export const patchInfo = async (userID, body, url) => {
 //   return resData;
 // };
 
-// /**
-//  *  @User_마이페이지_Info
-//  *  @route Get user/mypage/info
-//  *  @access private
-//  */
-// export const getMypageInfo = async (userID) => {
-//   const user = await User.findById(userID);
-//   const userBadge = await Badge.findOne({ user: userID });
-
-//   const couponBook: ICouponBook = {
-//     welcomeBadge: userBadge.welcomeBadge,
-//     firstJoinBadge: userBadge.firstJoinBadge,
-//     firstWriteBadge: userBadge.firstWriteBadge,
-//     oneCommentBadge: userBadge.oneCommentBadge,
-//     fiveCommentBadge: userBadge.fiveCommentBadge,
-//     oneLikeBadge: userBadge.oneLikeBadge,
-//     fiveLikeBadge: userBadge.fiveLikeBadge,
-//     loginBadge: userBadge.loginBadge,
-//     marketingBadge: userBadge.marketingBadge,
-//     learnMySelfScrapBadge: userBadge.learnMySelfScrapBadge,
-//     firstReplyBadge: userBadge.firstReplyBadge,
-//     concertScrapBadge: userBadge.concertScrapBadge,
-//     challengeBadge: userBadge.challengeBadge,
-//   };
-
-//   let shareTogether: IShareTogether[] | null = await Concert.find(
-//     { user: userID, isNotice: false },
-//     { _id: true, title: true },
-//     { sort: { _id: -1 } }
-//   ).limit(5);
-
-//   if (shareTogether.length === 0) {
-//     shareTogether = null;
-//   }
-
-//   const admin = await Admin.findOne({ generation: user.generation });
-
-//   let resData: mypageInfoResDTO;
-//   // ischallenge 가 false 이거나 admin === null 이면 현재기수 참여 x
-//   if (!user.isChallenge || !admin) {
-//     resData = {
-//       nickname: user.nickname,
-//       learnMyselfAchieve: null,
-//       shareTogether,
-//       couponBook,
-//     };
-//   }
-//   // 현재기수 참여
-//   else {
-//     var term = await period(admin.challengeStartDT, admin.challengeEndDT);
-//     if (term < 1) {
-//       term = 1;
-//     }
-//     // 내림을 취해서 최대한 많은 %를 달성할 수 있도록 한다
-//     var totalNum = user.conditionCNT * Math.floor(term / 7);
-
-//     if (totalNum < 1) {
-//       totalNum = 1;
-//     }
-//     // 퍼센트 올림을 취함
-//     var percent = Math.ceil((user.writingCNT / totalNum) * 100);
-//     if (percent > 100) {
-//       percent = 100;
-//     }
-
-//     const learnMyselfAchieve: ILearnMySelfAchieve = {
-//       percent,
-//       totalNum,
-//       completeNum: user.writingCNT,
-//       startDT: admin.challengeStartDT,
-//       endDT: admin.challengeEndDT,
-//       generation: user.generation,
-//     };
-
-//     resData = {
-//       nickname: user.nickname,
-//       learnMyselfAchieve,
-//       shareTogether,
-//       couponBook,
-//     };
-//   }
-//   return resData;
-// };
 
 // /**
 //  *  @User_마이페이지_회고_스크랩_취소토글
@@ -798,7 +574,6 @@ export const patchInfo = async (userID, body, url) => {
 //     email: user.email,
 //     nickname: user.nickname,
 //     interest: user.interest,
-//     gender: user.gender,
 //     marpolicy: user.marpolicy,
 //     _id: user.id,
 //   };
@@ -812,7 +587,7 @@ export const patchInfo = async (userID, body, url) => {
 //  */
 // export const patchInfo = async (userID, body, url) => {
 //   var imgUrl = url.img;
-//   const { nickname, gender, marpolicy } = body;
+//   const { nickname, marpolicy } = body;
 //   let rawInterest = body.interest;
 //   var interest;
 //   if (rawInterest !== "") {
@@ -826,7 +601,6 @@ export const patchInfo = async (userID, body, url) => {
 //   if (
 //     nickname === undefined ||
 //     interest === undefined ||
-//     gender === undefined ||
 //     marpolicy === undefined
 //   ) {
 //     return -1;
@@ -851,9 +625,7 @@ export const patchInfo = async (userID, body, url) => {
 //   if (interest !== "") {
 //     await user.update({ $set: { interest: interest } });
 //   }
-//   if (gender !== "") {
-//     await user.update({ $set: { gender: gender } });
-//   }
+
 //   if (marpolicy !== "") {
 //     await user.update({ $set: { marpolicy: marpolicy } });
 //   }
@@ -899,3 +671,9 @@ export const patchInfo = async (userID, body, url) => {
 
 //   return;
 // };
+
+const userService = {
+  getMypageInfo
+};
+
+export default userService;
