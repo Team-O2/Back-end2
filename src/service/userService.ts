@@ -6,10 +6,12 @@ import bcrypt from "bcryptjs";
 import config from "../config";
 import { emailSender } from "../library";
 import ejs from "ejs";
-import sequelize, { ConnectionTimedOutError } from "sequelize";
+import { ConnectionTimedOutError, QueryTypes } from "sequelize";
 // DTO
+import sequelize from "../models";
 import { userDTO } from "../DTO";
 import { share } from "rxjs";
+import { getModels } from "sequelize-typescript";
 
 /**
  *  @User_마이페이지_Info
@@ -18,42 +20,81 @@ import { share } from "rxjs";
  */
 
 const getMypageInfo = async (userID: number) => {
-  const nickname = await User.findOne({
-    where: {
-      id: userID
-    },
-    attributes: {
-      include: ['nickname']
-    }
-  }).then(user=> {
-    return user.nickname
-  });
 
-  const admin = await Admin.findOne({
-    where: {
-      challengeStartDT: {
-        [Op.lt]: Date.now()
-      },
+  const nicknameQuery = `SELECT nickname
+  FROM User
+  WHERE id=${userID}`
+  const nickname =  await sequelize.query(nicknameQuery, { type: QueryTypes.SELECT });
 
-    }
-  });
+  // const shareTogetherQuery = `SELECT C.id, title
+  // FROM Post AS P, Concert As C
+  // WHERE C.userID = ${userID} AND P.id = C.id
+  // ORDER BY createdAt DESC LIMIT 5`
+  
+  const shareTogetherQuery = `SELECT P.id, title
+  FROM Post AS P
+  INNER JOIN Concert As C ON P.id = C.id
+  WHERE C.userID = ${userID} 
+  ORDER BY createdAt DESC LIMIT 5`
 
-  let learnMyselfAchieve;
+  const shareTogether =  await sequelize.query(shareTogetherQuery, { type: QueryTypes.SELECT });
 
-  let shareTogether: userDTO.IShareTogether[] | null = await Concert.findAll({
-    where: {
-      userID: userID,
-      isNotice: false
-    },
-    attributes: ['id', 'title'],
-    order: [['id', 'desc']],
-    limit: 5,
-    raw: true
-  });
+  const couponBookQuery = `SELECT *
+  FROM Badge
+  WHERE id=${userID}`
 
-  if (!shareTogether.length) {
-    shareTogether = null;
-  }
+  const couponBook = await sequelize.query(couponBookQuery, { type: QueryTypes.SELECT });
+  // const couponBook: userDTO.ICouponBook = await Badge.findOne({
+  //   where: {
+  //     id: userID
+  //   },
+  //   attributes:{
+  //     exclude:['id']
+  //   }
+  // });
+
+  const learnMyselfQuery = `SELECT *
+  FROM Admin
+  WHERE ChallengeStartDT<date.format(now())`
+
+  // const nickname = await User.findOne({
+  //   where: {
+  //     id: userID
+  //   },
+  //   attributes: {
+  //     include: ['nickname']
+  //   }
+  // }).then(user=> {
+  //   return user.nickname
+  // });
+
+  // const admin = await Admin.findOne({
+  //   where: {
+  //     challengeStartDT: {
+  //       [Op.lt]: Date.now()
+  //     },
+
+  //   }
+  // });
+
+  // let learnMyselfAchieve;
+
+  // let shareTogether: userDTO.IShareTogether[] | null = await Concert.findAll({
+  //   where: {
+  //     userID: userID,
+  //     isNotice: false
+  //   },
+  //   attributes: ['id', 'title'],
+  //   order: [['id', 'desc']],
+  //   limit: 5,
+  //   raw: true
+  // });
+
+  // if (!shareTogether.length) {
+  //   shareTogether = null;
+  // }
+
+
 
   // let shareTogether = await Concert.findAll({
   //   where: {
@@ -69,19 +110,11 @@ const getMypageInfo = async (userID: number) => {
   //   limit: 5
   // });
 
+ 
 
-  const couponBook: userDTO.ICouponBook = await Badge.findOne({
-    where: {
-      id: userID
-    },
-    attributes:{
-      exclude:['id']
-    }
-  });
-
-  const mypageInfoRes: userDTO.mypageInfoResDTO = {
-    nickname, learnMyselfAchieve, shareTogether, couponBook
-  }
+  // const mypageInfoRes: userDTO.mypageInfoResDTO = {
+  //   nickname, learnMyselfAchieve, shareTogether, couponBook
+  // }
 
 
   return { nickname, shareTogether, couponBook };
