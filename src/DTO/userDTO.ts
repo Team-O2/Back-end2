@@ -1,5 +1,18 @@
 namespace userDTO {
 
+  export interface IMypageUser {
+    nickname: string;
+    isAdmin: Boolean;
+  }
+
+  export interface IMyPageLearnMySelf {
+    conditionNum: number;
+    writingNum: number;
+    challengeStartDT: Date;
+    challengeEndDT: Date;
+    generation: number;
+  }
+
   export interface ILearnMySelfAchieve {
     percent: number;
     totalNum: number;
@@ -15,6 +28,23 @@ namespace userDTO {
   }
 
   export interface ICouponBook {
+    welcomeBadge: Boolean;
+    firstJoinBadge: Boolean;
+    firstWriteBadge: Boolean;
+    oneCommentBadge: Boolean;
+    fiveCommentBadge: Boolean;
+    oneLikeBadge: Boolean;
+    fiveLikeBadge: Boolean;
+    loginBadge: Boolean;
+    marketingBadge: Boolean;
+    learnMySelfScrapBadge: Boolean;
+    firstReplyBadge: Boolean;
+    concertScrapBadge: Boolean;
+    challengeBadge: number;
+  }
+
+  export interface IBadge {
+    id: number;
     welcomeBadge: Boolean;
     firstJoinBadge: Boolean;
     firstWriteBadge: Boolean;

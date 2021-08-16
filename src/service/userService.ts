@@ -1,6 +1,7 @@
 // models
 import { Admin, User, Badge, Concert, Challenge, Comment, Post } from "../models";
 // library
+import period from "../library/date";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import config from "../config";
@@ -21,104 +22,116 @@ import { getModels } from "sequelize-typescript";
 
 const getMypageInfo = async (userID: number) => {
 
-  const nicknameQuery = `SELECT nickname
+  const userQuery = `SELECT nickname, isAdmin
   FROM User
-  WHERE id=${userID}`
-  const nickname =  await sequelize.query(nicknameQuery, { type: QueryTypes.SELECT });
+  WHERE id= :userID`
 
-  // const shareTogetherQuery = `SELECT C.id, title
-  // FROM Post AS P, Concert As C
-  // WHERE C.userID = ${userID} AND P.id = C.id
-  // ORDER BY createdAt DESC LIMIT 5`
+  const user: userDTO.IMypageUser[] =  await sequelize.query(userQuery, { 
+    type: QueryTypes.SELECT,
+    replacements: { userID: userID},
+    raw: true,
+  });
+
+  const learnMyselfQuery = `SELECT G.conditionNum, G.writingNum, A.challengeStartDT, A.challengeEndDT, A.generation
+  FROM Generation as G
+  INNER JOIN Admin as A ON (G.generation = A.generation)
+  WHERE G.userID = :userID
+    AND day(A.challengeStartDT) <= day(curdate())
+    AND day(A.challengeEndDT) >= day(curdate())
+  `
+
+  const learnMyself: userDTO.IMyPageLearnMySelf[] = await sequelize.query(learnMyselfQuery, { 
+    type: QueryTypes.SELECT,
+    replacements: { userID: userID },
+    raw: true,
+  });
+
+  let learnMyselfAchieve: userDTO.ILearnMySelfAchieve | null;
+
+  // 현재기수 참여 X or 관리자
+  if (!learnMyself.length || user[0].isAdmin) {
+    learnMyselfAchieve = null;
+  }
+  // 현재기수 참여
+  else {
+    let term = await period.period(learnMyself[0].challengeStartDT, learnMyself[0].challengeEndDT);
+    if (term < 1) {
+      term = 1;
+    }
+    // 내림을 취해서 최대한 많은 %를 달성할 수 있도록 한다
+    let totalNum = learnMyself[0].conditionNum * Math.floor(term/7);
+
+    if (totalNum < 1) {
+      totalNum = 1;
+    }
+
+    // 퍼센트 올림을 취함
+    var percent = Math.ceil((learnMyself[0].writingNum / totalNum) * 100);
+
+    if (percent > 100) {
+      percent = 100;
+    }
+
+    learnMyselfAchieve = {
+      percent,
+      totalNum,
+      completeNum: learnMyself[0].writingNum,
+      startDT: learnMyself[0].challengeStartDT,
+      endDT: learnMyself[0].challengeEndDT,
+      generation: learnMyself[0].generation
+    }
+  }
   
   const shareTogetherQuery = `SELECT P.id, title
   FROM Post AS P
   INNER JOIN Concert As C ON P.id = C.id
-  WHERE C.userID = ${userID} 
+  WHERE C.userID = :userID 
   ORDER BY createdAt DESC LIMIT 5`
 
-  const shareTogether =  await sequelize.query(shareTogetherQuery, { type: QueryTypes.SELECT });
+  let shareTogether: userDTO.IShareTogether[] | null =  await sequelize.query(shareTogetherQuery, { 
+    type: QueryTypes.SELECT,
+    replacements: { userID: userID },
+    raw: true,
+  });
 
+  if (!shareTogether.length) {
+    shareTogether = null;
+  } 
+  
   const couponBookQuery = `SELECT *
-  FROM Badge
-  WHERE id=${userID}`
-
-  const couponBook = await sequelize.query(couponBookQuery, { type: QueryTypes.SELECT });
-  // const couponBook: userDTO.ICouponBook = await Badge.findOne({
-  //   where: {
-  //     id: userID
-  //   },
-  //   attributes:{
-  //     exclude:['id']
-  //   }
-  // });
-
-  const learnMyselfQuery = `SELECT *
-  FROM Admin
-  WHERE ChallengeStartDT<date.format(now())`
-
-  // const nickname = await User.findOne({
-  //   where: {
-  //     id: userID
-  //   },
-  //   attributes: {
-  //     include: ['nickname']
-  //   }
-  // }).then(user=> {
-  //   return user.nickname
-  // });
-
-  // const admin = await Admin.findOne({
-  //   where: {
-  //     challengeStartDT: {
-  //       [Op.lt]: Date.now()
-  //     },
-
-  //   }
-  // });
-
-  // let learnMyselfAchieve;
-
-  // let shareTogether: userDTO.IShareTogether[] | null = await Concert.findAll({
-  //   where: {
-  //     userID: userID,
-  //     isNotice: false
-  //   },
-  //   attributes: ['id', 'title'],
-  //   order: [['id', 'desc']],
-  //   limit: 5,
-  //   raw: true
-  // });
-
-  // if (!shareTogether.length) {
-  //   shareTogether = null;
-  // }
-
-
-
-  // let shareTogether = await Concert.findAll({
-  //   where: {
-  //     userID: userID,
-  //     isNotice: false
-  //   },
-  //   include: {
-  //     model: Post,
-  //     attributes: ['createdAt']
-  //   },
-  //   attributes: ['id', 'title'],
-  //   order: [['post', 'createdAt', 'desc']],
-  //   limit: 5
-  // });
-
+   FROM Badge
+   WHERE id= :userID`
  
+  const badge: userDTO.IBadge[] = await sequelize.query(couponBookQuery, { 
+     type: QueryTypes.SELECT,
+     replacements: { userID: userID },
+     raw: true,
+  });
 
-  // const mypageInfoRes: userDTO.mypageInfoResDTO = {
-  //   nickname, learnMyselfAchieve, shareTogether, couponBook
-  // }
+  const couponBook: userDTO.ICouponBook = {
+    welcomeBadge: !!(badge[0].welcomeBadge),
+    firstJoinBadge: !!(badge[0].firstJoinBadge),
+    firstWriteBadge: !!(badge[0].firstWriteBadge),
+    oneCommentBadge: !!(badge[0].oneCommentBadge),
+    fiveCommentBadge: !!(badge[0].fiveCommentBadge),
+    oneLikeBadge: !!(badge[0].oneLikeBadge),
+    fiveLikeBadge: !!(badge[0].fiveLikeBadge),
+    loginBadge: !!(badge[0].loginBadge),
+    marketingBadge: !!(badge[0].marketingBadge),
+    learnMySelfScrapBadge: !!(badge[0].learnMySelfScrapBadge),
+    firstReplyBadge: !!(badge[0].firstReplyBadge),
+    concertScrapBadge: !!(badge[0].concertScrapBadge),
+    challengeBadge: badge[0].challengeBadge
+  }
 
+  const mypageInfoRes: userDTO.mypageInfoResDTO = {
+    nickname: user[0].nickname,
+    learnMyselfAchieve,
+    shareTogether,
+    couponBook
+  };
 
-  return { nickname, shareTogether, couponBook };
-  // return mypageInfoRes;
+  return  mypageInfoRes;
 };
 
 
