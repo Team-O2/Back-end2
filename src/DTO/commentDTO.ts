@@ -1,19 +1,29 @@
-import mongoose from "mongoose";
 import { userHeaderDTO } from "./userDTO";
 
-export interface commentResDTO {
-  postModel: String;
-  post: mongoose.Schema.Types.ObjectId;
-  userID: userHeaderDTO;
-  parentComment: commentResDTO;
-  childrenComment: commentResDTO[];
-  text: string;
-  isDeleted: Boolean;
-  createdAt: Date;
-  updatedAt: Date;
+namespace commentDTO {
+  export interface IComment {
+    id: number;
+    userID: number;
+    nickname: string;
+    img: string;
+    text: string;
+    children?: IComment[];
+  }
+
+  export interface postCommentReqDTO {
+    parentID?: number;
+    text: string;
+  }
+
+  export interface postCommentResDTO {
+    id: number;
+    userID: number;
+    nickname: string;
+    img: string;
+    text: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }
 }
 
-export interface commentReqDTO {
-  parentID?: string;
-  text: string;
-}
+export default commentDTO;

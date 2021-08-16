@@ -8,12 +8,13 @@ import {
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
-import Post from "./Post";
+import { Post } from ".";
 
 @Table({
   tableName: "PostInterest",
   freezeTableName: true,
   underscored: false,
+  timestamps: false,
   charset: "utf8", // 한국어 설정
   collate: "utf8_general_ci", // 한국어 설정
 })

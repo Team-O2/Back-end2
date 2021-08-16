@@ -8,12 +8,13 @@ import {
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
-import User from "./User";
+import { User } from ".";
 
 @Table({
   tableName: "UserInterest",
   freezeTableName: true,
   underscored: false,
+  timestamps: false,
   charset: "utf8", // 한국어 설정
   collate: "utf8_general_ci", // 한국어 설정
 })

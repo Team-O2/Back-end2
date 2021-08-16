@@ -8,8 +8,7 @@ import {
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
-import User from "./User";
-import Post from "./Post";
+import { User, Post } from ".";
 
 @Table({
   tableName: "Scrap",
