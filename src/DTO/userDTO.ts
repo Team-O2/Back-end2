@@ -66,6 +66,15 @@ namespace userDTO {
     shareTogether: IShareTogether[] | null;
     couponBook: ICouponBook;
   }
+
+  export interface userInfoResDTO {
+    interest: string[];
+    isMarketing: Boolean;
+    img: string;
+    id: number;
+    email: string;
+    nickname: string;
+  }
 }
 
 export default userDTO;

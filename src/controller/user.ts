@@ -27,28 +27,107 @@ const mypageInfoController = async (req: Request, res: Response) => {
   }
 };
 
-const userController = {
-  mypageInfoController
-};
 
-export default userController;
+
+/**
+ *  @마이페이지_회원정보_조회
+ *  @route Get user/userInfo
+ *  @access private
+ */
+ const userInfoController = async(req: Request, res:Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  try {
+    const data = await userService.getUserInfo(req.body.userID.id);
+
+    // 유저정보 조회 성공
+    response.dataResponse(res, returnCode.OK, "유저정보 조회 성공", data);
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+}
+
+
 
 // /**
-//  *  @User_마이페이지_Info
-//  *  @route Get user/mypage/info
+//  *  @User_마이페이지_콘서트_스크랩
+//  *  @route Get user/mypage/concert
+//  *  @access Public
+//  */
+
+// const mypageConcertController = async (req: Request, res: Response) => {
+//   const errors = validationResult(req);
+//   if (!errors.isEmpty()) {
+//     return res.status(400).json({ errors: errors.array() });
+//   }
+//   try {
+//     const data = await userService.getMypageConcert(req.body.userID.id, req.query.offset, req.query.limit);
+//     response.dataResponse(res, returnCode.OK, "Share Together 스크랩 조회 성공", data);
+//   } catch (err) {
+//     console.error(err.message);
+//     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//   }
+// }
+
+
+// /**
+//  *  @마이페이지_회원정보_조회
+//  *  @route Get user/userInfo
 //  *  @access private
 //  */
-// router.get("/mypage/info", auth, async (req: Request, res: Response) => {
+// router.get("/userInfo", auth, async (req: Request, res: Response) => {
 //   try {
-//     const data: mypageInfoResDTO = await getMypageInfo(req.body.userID.id);
+//     const data: userInfoResDTO = await getUserInfo(req.body.userID.id);
 
 //     // 유저정보 조회 성공
-//     dataResponse(res, returnCode.OK, "마이페이지 유저정보 검색 성공", data);
+//     dataResponse(res, returnCode.OK, "유저정보 조회 성공", data);
 //   } catch (err) {
 //     console.error(err.message);
 //     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
 //   }
 // });
+
+// /**
+//  *  @User_마이페이지_콘서트_스크랩
+//  *  @route Get user/mypage/concert
+//  *  @access Public
+//  */
+
+// router.get("/mypage/concert", auth, async (req: Request, res: Response) => {
+//   try {
+//     const data: concertScrapResDTO | -1 | -2 = await getMypageConcert(
+//       req.body.userID.id,
+//       req.query.offset,
+//       req.query.limit
+//     );
+
+//     // 1. no content
+//     if (data == -1) {
+//       response(
+//         res,
+//         returnCode.NO_CONTENT,
+//         "스크랩한 Share Together가 없습니다."
+//       );
+//     }
+
+//     // 2. limit 없을 때
+//     if (data === -2) {
+//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+//     }
+
+//     // 마이페이지 콘서트 조회 성공
+//     else {
+//       dataResponse(res, returnCode.OK, "Share Together 스크랩 조회 성공", data);
+//     }
+//   } catch (err) {
+//     console.error(err.message);
+//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//   }
+// });
+
 
 
 // import { Router, Request, Response } from "express";
@@ -137,22 +216,6 @@ export default userController;
 //   }
 // });
 
-// /**
-//  *  @마이페이지_회원정보_조회
-//  *  @route Get user/userInfo
-//  *  @access private
-//  */
-// router.get("/userInfo", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data: userInfoResDTO = await getUserInfo(req.body.userID.id);
-
-//     // 유저정보 조회 성공
-//     dataResponse(res, returnCode.OK, "유저정보 조회 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
 
 // /**
 //  *  @마이페이지_회원정보_수정
@@ -216,43 +279,6 @@ export default userController;
 //   }
 // });
 
-// /**
-//  *  @User_마이페이지_콘서트_스크랩
-//  *  @route Get user/mypage/concert
-//  *  @access Public
-//  */
-
-// router.get("/mypage/concert", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data: concertScrapResDTO | -1 | -2 = await getMypageConcert(
-//       req.body.userID.id,
-//       req.query.offset,
-//       req.query.limit
-//     );
-
-//     // 1. no content
-//     if (data == -1) {
-//       response(
-//         res,
-//         returnCode.NO_CONTENT,
-//         "스크랩한 Share Together가 없습니다."
-//       );
-//     }
-
-//     // 2. limit 없을 때
-//     if (data === -2) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-
-//     // 마이페이지 콘서트 조회 성공
-//     else {
-//       dataResponse(res, returnCode.OK, "Share Together 스크랩 조회 성공", data);
-//     }
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
 
 // /**
 //  *  @User_마이페이지_회고_스크랩
@@ -399,3 +425,9 @@ export default userController;
 // module.exports = router;
 
 
+const userController = {
+  mypageInfoController,
+  userInfoController
+};
+
+export default userController;

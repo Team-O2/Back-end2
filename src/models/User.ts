@@ -12,13 +12,7 @@ import {
   HasMany,
   HasOne,
 } from "sequelize-typescript";
-import Comment from "./Comment";
-import Like from "./Like";
-import Post from "./Post";
-import Scrap from "./Scrap";
-import Badge from "./Badge";
-import Generation from "./Generation";
-import UserInterest from "./UserInterest";
+import { Comment, Like, Scrap, Post, UserInterest, Badge, Generation } from ".";
 
 @Table({
   tableName: "User",
@@ -41,6 +35,10 @@ export default class User extends Model {
   @Unique
   @Column
   password: string;
+
+  @Default("https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg")
+  @Column
+  img: string;
 
   @Column
   nickname: string;
@@ -87,7 +85,7 @@ export default class User extends Model {
   comments: Comment[];
 
   @HasOne(() => Badge)
-  badges: Badge[];
+  badge: Badge;
 
   @HasMany(() => Generation)
   generations: Generation[];

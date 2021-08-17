@@ -1,5 +1,5 @@
 // models
-import { Admin, User, Badge, Concert, Challenge, Comment, Post } from "../models";
+import { Admin, User, Badge, Concert, Challenge, Comment, Post, UserInterest } from "../models";
 // library
 import period from "../library/date";
 import jwt from "jsonwebtoken";
@@ -13,6 +13,7 @@ import sequelize from "../models";
 import { userDTO } from "../DTO";
 import { share } from "rxjs";
 import { getModels } from "sequelize-typescript";
+import { userInfo } from "os";
 
 /**
  *  @User_마이페이지_Info
@@ -134,170 +135,64 @@ const getMypageInfo = async (userID: number) => {
   return  mypageInfoRes;
 };
 
+/**
+ *  @마이페이지_회원정보_조회
+ *  @route Get user/userInfo
+ *  @access private
+ */
+
+const getUserInfo = async (userID: number) => {
+  const user = await User.findOne({
+    where: {
+      id: userID
+    },
+    include: {
+      model: UserInterest,
+      attributes: ['interest'],
+    },
+    attributes: ['isMarketing', 'img', 'id', 'email', 'nickname']
+  });
+
+  const interest = user.userInterests.map((interest) => interest.interest)
+
+  const userInfoRes: userDTO.userInfoResDTO = {
+    interest,
+    isMarketing: user.isMarketing,
+    img: user.img,
+    id: user.id,
+    email: user.email,
+    nickname: user.nickname
+  }
+
+  
+  return userInfoRes;
+//  const interest = await UserInterest.findAll({
+//    where: {
+//      userID: userID
+//    },
+//    attributes: ['interest']
+//  });
+
+}
 
 
 // /**
-//  *  @User_마이페이지_Info
-//  *  @route Get user/mypage/info
+//  *  @마이페이지_회원정보_조회
+//  *  @route Get user/userInfo
 //  *  @access private
 //  */
-// export const getMypageInfo = async (userID) => {
+
+// export const getUserInfo = async (userID) => {
 //   const user = await User.findById(userID);
-//   const userBadge = await Badge.findOne({ user: userID });
-
-//   const couponBook: ICouponBook = {
-//     welcomeBadge: userBadge.welcomeBadge,
-//     firstJoinBadge: userBadge.firstJoinBadge,
-//     firstWriteBadge: userBadge.firstWriteBadge,
-//     oneCommentBadge: userBadge.oneCommentBadge,
-//     fiveCommentBadge: userBadge.fiveCommentBadge,
-//     oneLikeBadge: userBadge.oneLikeBadge,
-//     fiveLikeBadge: userBadge.fiveLikeBadge,
-//     loginBadge: userBadge.loginBadge,
-//     marketingBadge: userBadge.marketingBadge,
-//     learnMySelfScrapBadge: userBadge.learnMySelfScrapBadge,
-//     firstReplyBadge: userBadge.firstReplyBadge,
-//     concertScrapBadge: userBadge.concertScrapBadge,
-//     challengeBadge: userBadge.challengeBadge,
+//   const resData: userInfoResDTO = {
+//     img: user.img,
+//     email: user.email,
+//     nickname: user.nickname,
+//     interest: user.interest,
+//     marpolicy: user.marpolicy,
+//     _id: user.id,
 //   };
-
-//   let shareTogether: IShareTogether[] | null = await Concert.find(
-//     { user: userID, isNotice: false },
-//     { _id: true, title: true },
-//     { sort: { _id: -1 } }
-//   ).limit(5);
-
-//   if (shareTogether.length === 0) {
-//     shareTogether = null;
-//   }
-
-//   const admin = await Admin.findOne({ generation: user.generation });
-
-//   let resData: mypageInfoResDTO;
-//   // ischallenge 가 false 이거나 admin === null 이면 현재기수 참여 x
-//   if (!user.isChallenge || !admin) {
-//     resData = {
-//       nickname: user.nickname,
-//       learnMyselfAchieve: null,
-//       shareTogether,
-//       couponBook,
-//     };
-//   }
-//   // 현재기수 참여
-//   else {
-//     var term = await period(admin.challengeStartDT, admin.challengeEndDT);
-//     if (term < 1) {
-//       term = 1;
-//     }
-//     // 내림을 취해서 최대한 많은 %를 달성할 수 있도록 한다
-//     var totalNum = user.conditionCNT * Math.floor(term / 7);
-
-//     if (totalNum < 1) {
-//       totalNum = 1;
-//     }
-//     // 퍼센트 올림을 취함
-//     var percent = Math.ceil((user.writingCNT / totalNum) * 100);
-//     if (percent > 100) {
-//       percent = 100;
-//     }
-
-//     const learnMyselfAchieve: ILearnMySelfAchieve = {
-//       percent,
-//       totalNum,
-//       completeNum: user.writingCNT,
-//       startDT: admin.challengeStartDT,
-//       endDT: admin.challengeEndDT,
-//       generation: user.generation,
-//     };
-
-//     resData = {
-//       nickname: user.nickname,
-//       learnMyselfAchieve,
-//       shareTogether,
-//       couponBook,
-//     };
-//   }
 //   return resData;
-// };
-
-
-
-// /**
-//  *  @User_챌린지_신청하기
-//  *  @route Post user/register
-//  *  @body challengeCNT
-//  *  @access private
-//  */
-
-// export const postRegister = async (userID, body: registerReqDTO) => {
-//   const challengeCNT = body.challengeCNT;
-
-//   // 1. 요청 바디 부족
-//   if (!challengeCNT) {
-//     return -1;
-//   }
-
-//   // 2. 유저 id가 관리자 아이디임
-//   let user = await User.findById(userID);
-//   if (user.userType === 1) {
-//     return -2;
-//   }
-
-//   // 신청 기간을 확인
-//   let dateNow = new Date();
-//   const admin = await Admin.findOne({
-//     $and: [
-//       { registerStartDT: { $lte: dateNow } },
-//       { registerEndDT: { $gte: dateNow } },
-//     ],
-//   });
-
-//   // 3. 신청 기간이 아님
-//   if (!admin) {
-//     return -3;
-//   }
-
-//   // 4. 이미 신청이 완료된 사용자
-//   if (user.isRegist) {
-//     return -4;
-//   }
-
-//   // 5. 신청 인원을 초과함
-//   if (admin.applyNum > admin.limitNum) {
-//     return -5;
-//   }
-
-//   // 신청 성공
-//   // applyNum 증가
-//   await Admin.findOneAndUpdate(
-//     {
-//       $and: [
-//         { registerStartDT: { $lte: dateNow } },
-//         { registerEndDT: { $gte: dateNow } },
-//       ],
-//     },
-//     {
-//       $inc: { applyNum: 1 },
-//     }
-//   );
-
-//   // isRegist true
-//   await user.update({ $set: { isRegist: true } });
-//   await user.update({ $set: { challengeCNT: challengeCNT } });
-
-//   // 첫 챌린지 참여 시 뱃지 부여
-//   const badge = await Badge.findOne(
-//     { user: userID },
-//     { firstJoinBadge: true, _id: false }
-//   );
-
-//   if (!badge.firstJoinBadge) {
-//     await Badge.findOneAndUpdate(
-//       { user: userID },
-//       { $set: { firstJoinBadge: true } }
-//     );
-//   }
-//   return;
 // };
 
 // /**
@@ -395,6 +290,86 @@ const getMypageInfo = async (userID: number) => {
 //     totalScrapNum: mypageConcert.length,
 //   };
 //   return resData;
+// };
+
+
+
+// /**
+//  *  @User_챌린지_신청하기
+//  *  @route Post user/register
+//  *  @body challengeCNT
+//  *  @access private
+//  */
+
+// export const postRegister = async (userID, body: registerReqDTO) => {
+//   const challengeCNT = body.challengeCNT;
+
+//   // 1. 요청 바디 부족
+//   if (!challengeCNT) {
+//     return -1;
+//   }
+
+//   // 2. 유저 id가 관리자 아이디임
+//   let user = await User.findById(userID);
+//   if (user.userType === 1) {
+//     return -2;
+//   }
+
+//   // 신청 기간을 확인
+//   let dateNow = new Date();
+//   const admin = await Admin.findOne({
+//     $and: [
+//       { registerStartDT: { $lte: dateNow } },
+//       { registerEndDT: { $gte: dateNow } },
+//     ],
+//   });
+
+//   // 3. 신청 기간이 아님
+//   if (!admin) {
+//     return -3;
+//   }
+
+//   // 4. 이미 신청이 완료된 사용자
+//   if (user.isRegist) {
+//     return -4;
+//   }
+
+//   // 5. 신청 인원을 초과함
+//   if (admin.applyNum > admin.limitNum) {
+//     return -5;
+//   }
+
+//   // 신청 성공
+//   // applyNum 증가
+//   await Admin.findOneAndUpdate(
+//     {
+//       $and: [
+//         { registerStartDT: { $lte: dateNow } },
+//         { registerEndDT: { $gte: dateNow } },
+//       ],
+//     },
+//     {
+//       $inc: { applyNum: 1 },
+//     }
+//   );
+
+//   // isRegist true
+//   await user.update({ $set: { isRegist: true } });
+//   await user.update({ $set: { challengeCNT: challengeCNT } });
+
+//   // 첫 챌린지 참여 시 뱃지 부여
+//   const badge = await Badge.findOne(
+//     { user: userID },
+//     { firstJoinBadge: true, _id: false }
+//   );
+
+//   if (!badge.firstJoinBadge) {
+//     await Badge.findOneAndUpdate(
+//       { user: userID },
+//       { $set: { firstJoinBadge: true } }
+//     );
+//   }
+//   return;
 // };
 
 // /**
@@ -666,24 +641,6 @@ const getMypageInfo = async (userID: number) => {
 //   return;
 // };
 
-// /**
-//  *  @마이페이지_회원정보_조회
-//  *  @route Get user/userInfo
-//  *  @access private
-//  */
-
-// export const getUserInfo = async (userID) => {
-//   const user = await User.findById(userID);
-//   const resData: userInfoResDTO = {
-//     img: user.img,
-//     email: user.email,
-//     nickname: user.nickname,
-//     interest: user.interest,
-//     marpolicy: user.marpolicy,
-//     _id: user.id,
-//   };
-//   return resData;
-// };
 
 // /**
 //  *  @마이페이지_회원정보_수정
@@ -778,7 +735,8 @@ const getMypageInfo = async (userID: number) => {
 // };
 
 const userService = {
-  getMypageInfo
+  getMypageInfo,
+  getUserInfo
 };
 
 export default userService;
