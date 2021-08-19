@@ -42,8 +42,20 @@ router.patch(
   authMiddleware,
   challengeController.patchChallengeController
 );
-// router.delete("/:challengeID");
-// router.delete("/like/:challengeID");
-// router.delete("/scrap/:challengeID");
+router.delete(
+  "/:challengeID",
+  authMiddleware,
+  challengeController.deleteChallengeController
+);
+router.delete(
+  "/:challengeID/like",
+  authMiddleware,
+  challengeController.deleteLikeController
+);
+router.delete(
+  "/:challengeID/scrap",
+  authMiddleware,
+  challengeController.deleteScrapController
+);
 
 export default router;

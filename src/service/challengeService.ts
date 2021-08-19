@@ -12,6 +12,7 @@ import {
 // DTO
 import { challengeDTO, commentDTO } from "../DTO";
 import { Op } from "sequelize";
+import sequelize from "sequelize";
 
 /**
  *  @챌린지_회고_등록
@@ -677,19 +678,18 @@ const patchChallenge = async (
   // 데이터 업데이트
   challenge.interest = interest.join();
   await challenge.save();
-  const originChallenge = await Challenge.findOne({
-    where: { id: challengeID },
-  });
-  originChallenge.good = good;
-  originChallenge.bad = bad;
-  originChallenge.learn = learn;
-  await originChallenge.save();
+  await Challenge.update(
+    { good, bad, learn },
+    {
+      where: { id: challengeID },
+    }
+  );
 
   const returnData: challengeDTO.patchChallengeResDTO = {
     id: challenge.id,
-    good: originChallenge.good,
-    bad: originChallenge.bad,
-    learn: originChallenge.learn,
+    good,
+    bad,
+    learn,
     interest: challenge.interest.split(","),
     generation: challenge.generation,
     likeNum: challenge.likes.length,
@@ -705,106 +705,72 @@ const patchChallenge = async (
   return returnData;
 };
 
-// /**
-//  *  @챌린지_회고_삭제
-//  *  @route DELETE api/challenge/:challengeId
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  */
-// export const deleteChallenge = async (userID, challengeID) => {
-//   // 1. 회고록 id 잘못됨
-//   const challenge = await Challenge.findById(challengeID);
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+/**
+ *  @챌린지_회고_삭제
+ *  @route DELETE /challenge/:challengeId
+ *  @error
+ *      1. 회고록 id 잘못됨
+ */
 
-//   await Challenge.findByIdAndUpdate(
-//     { _id: challengeID },
-//     { $set: { isDeleted: true } }
-//   );
+const deleteChallenge = async (challengeID: number) => {
+  const challenge = await Post.findOne({ where: { id: challengeID } });
 
-//   // 유저의 writingCNT 감소
-//   await User.findOneAndUpdate(
-//     { _id: userID },
-//     {
-//       $inc: { writingCNT: 1 },
-//     }
-//   );
+  // 1. 회고록 id 잘못됨
+  if (!challenge || challenge.isDeleted) {
+    return -1;
+  }
 
-//   return { _id: challenge._id };
-// };
+  challenge.isDeleted = true;
+  await challenge.save();
 
-// /**
-//  *  @챌린지_회고_좋아요_삭제
-//  *  @route DELETE /challenge/like/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 좋아요 개수가 0
-//  */
-// export const deleteChallengeLike = async (challengeID, userID) => {
-//   const challenge = await Challenge.findById(challengeID);
+  // 유저의 writingNum 감소
+  await Generation.update(
+    { writingNum: sequelize.literal("writingNum - 1") },
+    { where: { userID: challenge.userID, generation: challenge.generation } }
+  );
 
-//   // 1. 회고록 id 잘못됨
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+  return undefined;
+};
 
-//   // 2. 좋아요 개수가 0
-//   if (challenge.likes === 0) {
-//     return -2;
-//   }
+/**
+ *  @챌린지_회고_좋아요_삭제
+ *  @route DELETE /challenge/:challengeID/like
+ *  @error
+ *      1. 회고록 id 잘못됨
+ */
 
-//   // 챌린지 글의 like 1 감소
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { likes: -1 },
-//     }
-//   );
-//   // 유저 likes 필드에 챌린지 id 삭제
-//   const user = await User.findById(userID);
-//   const idx = user.likes.challengeLikes.indexOf(challengeID);
-//   user.likes.challengeLikes.splice(idx, 1);
-//   await user.save();
+const deleteLike = async (challengeID: number, userID: number) => {
+  const like = await Like.destroy({
+    where: { postID: challengeID, userID },
+  });
 
-//   return { _id: challengeID };
-// };
+  // 1. 회고록 id 잘못됨
+  if (!like) {
+    return -1;
+  }
 
-// /**
-//  *  @유저_챌린지_회고_스크랩_취소하기
-//  *  @route Delete /user/challenge/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 스크랩 하지 않은 글일 경우
-//  */
-// export const deleteChallengeScrap = async (challengeID, userID) => {
-//   // 1. 회고 id 잘못됨
-//   let challenge = await Challenge.findById(challengeID);
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+  return undefined;
+};
 
-//   const user = await User.findById(userID);
-//   // 2. 스크랩하지 않은 글일 경우
-//   if (!user.scraps.challengeScraps.includes(challengeID)) {
-//     return -2;
-//   }
+/**
+ *  @챌린지_회고_스크랩_삭제
+ *  @route Delete /challenge/:challengeID
+ *  @error
+ *      1. 회고록 id 잘못됨
+ */
 
-//   // 유저 scraps 필드에 챌린지 id 삭제
-//   const idx = user.scraps.challengeScraps.indexOf(challengeID);
-//   user.scraps.challengeScraps.splice(idx, 1);
-//   await user.save();
+const deleteScrap = async (challengeID: number, userID: number) => {
+  const scrap = await Scrap.destroy({
+    where: { postID: challengeID, userID },
+  });
 
-//   // 게시글 스크랩 수 1 감소
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { scrapNum: -1 },
-//     }
-//   );
+  // 1. 회고록 id 잘못됨
+  if (!scrap) {
+    return -1;
+  }
 
-//   return { _id: challengeID };
-// };
+  return undefined;
+};
 
 const challengeService = {
   postChallenge,
@@ -815,6 +781,9 @@ const challengeService = {
   getChallengeSearch,
   getChallengeOne,
   patchChallenge,
+  deleteChallenge,
+  deleteLike,
+  deleteScrap,
 };
 
 export default challengeService;

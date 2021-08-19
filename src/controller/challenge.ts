@@ -363,79 +363,101 @@ const patchChallengeController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @챌린지_회고_삭제
-//  *  @route Delete /challenge/:challengeId
-//  *  @access private
-//  */
+/**
+ *  @챌린지_회고_삭제
+ *  @route Delete /challenge/:challengeId
+ *  @access private
+ */
 
-// router.delete("/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteChallenge(req.body.userID.id, req.params.id);
+const deleteChallengeController = async (req: Request, res: Response) => {
+  try {
+    const resData: number | undefined = await challengeService.deleteChallenge(
+      Number(req.params.challengeID)
+    );
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 회고 삭제 성공
-//     const challengeID = data;
-//     dataResponse(res, returnCode.OK, "회고 삭제 성공", challengeID);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 회고 id가 잘못된 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 존재하지 않습니다"
+      );
+    }
+    // 회고 삭제 성공
+    else {
+      response.basicResponse(res, returnCode.NO_CONTENT, "회고 삭제 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// /**
-//  *  @챌린지_회고_좋아요_삭제하기
-//  *  @route Delete /challenge/like/:challengeID
-//  *  @access private
-//  */
+/**
+ *  @챌린지_회고_좋아요_삭제
+ *  @route Delete /challenge/like/:challengeID
+ *  @access private
+ */
 
-// router.delete("/like/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteChallengeLike(req.params.id, req.body.userID.id);
+const deleteLikeController = async (req: Request, res: Response) => {
+  try {
+    const resData: number | undefined = await challengeService.deleteLike(
+      Number(req.params.challengeID),
+      Number(req.body.userID.id)
+    );
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     } // 좋아요 한 개수가 0인 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "좋아요 개수가 0");
-//     }
-//     // 좋아요 삭제 성공
-//     const challengeID = data;
-//     dataResponse(res, returnCode.OK, "좋아요 삭제 성공", challengeID);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 회고 id가 잘못된 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 존재하지 않습니다"
+      );
+    }
+    // 좋아요 삭제 성공
+    else {
+      response.basicResponse(res, returnCode.NO_CONTENT, "좋아요 취소 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// /**
-//  *  @유저_챌린지_회고_스크랩_취소하기
-//  *  @route Delete /challenge/scrap/:challengeID
-//  *  @access private
-//  */
-// router.delete("/scrap/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteChallengeScrap(req.params.id, req.body.userID.id);
+/**
+ *  @챌린지_회고_스크랩_삭제
+ *  @route Delete /challenge/:challengeID/scrap
+ *  @access private
+ */
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 아이디가 올바르지 않습니다");
-//     }
-//     // 스크랩 하지 않은 글일 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "스크랩 하지 않은 글입니다");
-//     }
-//     // 스크랩 취소 성공
-//     dataResponse(res, returnCode.OK, "회고 스크랩 취소 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+const deleteScrapController = async (req: Request, res: Response) => {
+  try {
+    const data: number | undefined = await challengeService.deleteScrap(
+      Number(req.params.challengeID),
+      Number(req.body.userID.id)
+    );
+
+    // 회고 id가 잘못된 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 존재하지 않습니다"
+      );
+    }
+    // 스크랩 취소 성공
+    else {
+      response.basicResponse(
+        res,
+        returnCode.NO_CONTENT,
+        "회고 스크랩 취소 성공"
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 const challengeController = {
   postChallengeController,
@@ -446,6 +468,9 @@ const challengeController = {
   getChallengeSearchController,
   getChallengeOneController,
   patchChallengeController,
+  deleteChallengeController,
+  deleteLikeController,
+  deleteScrapController,
 };
 
 export default challengeController;
