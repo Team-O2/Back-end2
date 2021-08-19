@@ -11,6 +11,7 @@ import {
   Default,
 } from "sequelize-typescript";
 import { User } from ".";
+
 @Table({
   tableName: "Generation",
   freezeTableName: true,
@@ -41,7 +42,6 @@ export default class Generation extends Model {
   @Default(0)
   @Column
   writingNum: number;
-
 
   @ForeignKey(() => User)
   @Column
