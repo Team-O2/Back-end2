@@ -12,7 +12,7 @@ import {
   HasMany,
   HasOne,
 } from "sequelize-typescript";
-import { Comment, UserInfo, Like, Scrap, Post, UserInterest, Badge } from ".";
+import { Comment, Like, Scrap, Post, UserInterest, Badge, Generation } from ".";
 
 @Table({
   tableName: "User",
