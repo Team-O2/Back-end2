@@ -1,3 +1,4 @@
+import sequelize, { Op } from "sequelize";
 // models
 import {
   Badge,
@@ -11,8 +12,6 @@ import {
 } from "../models";
 // DTO
 import { challengeDTO, commentDTO } from "../DTO";
-import { Op } from "sequelize";
-import sequelize from "sequelize";
 
 /**
  *  @챌린지_회고_등록
@@ -346,7 +345,7 @@ const getChallengeAll = async (
       generation,
     },
     include: [
-      Challenge,
+      { model: Challenge, required: true },
       User,
       { model: Comment, include: [User] },
       Like,
