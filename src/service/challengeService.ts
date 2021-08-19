@@ -674,17 +674,22 @@ const patchChallenge = async (
     return -2;
   }
 
-  challenge.challenge.good = good;
-  challenge.challenge.bad = bad;
-  challenge.challenge.learn = learn;
+  // 데이터 업데이트
   challenge.interest = interest.join();
   await challenge.save();
+  const originChallenge = await Challenge.findOne({
+    where: { id: challengeID },
+  });
+  originChallenge.good = good;
+  originChallenge.bad = bad;
+  originChallenge.learn = learn;
+  await originChallenge.save();
 
   const returnData: challengeDTO.patchChallengeResDTO = {
     id: challenge.id,
-    good: challenge.challenge.good,
-    bad: challenge.challenge.bad,
-    learn: challenge.challenge.learn,
+    good: originChallenge.good,
+    bad: originChallenge.bad,
+    learn: originChallenge.learn,
     interest: challenge.interest.split(","),
     generation: challenge.generation,
     likeNum: challenge.likes.length,
