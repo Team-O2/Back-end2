@@ -27,9 +27,21 @@ router.get(
   publicAuthMiddleware,
   challengeController.getChallengeAllController
 );
-// router.get("/search");
-// router.get("/:challengeID");
-// router.patch("/:challengeID");
+router.get(
+  "/search",
+  publicAuthMiddleware,
+  challengeController.getChallengeSearchController
+);
+router.get(
+  "/:challengeID",
+  authMiddleware,
+  challengeController.getChallengeOneController
+);
+router.patch(
+  "/:challengeID",
+  authMiddleware,
+  challengeController.patchChallengeController
+);
 // router.delete("/:challengeID");
 // router.delete("/like/:challengeID");
 // router.delete("/scrap/:challengeID");
