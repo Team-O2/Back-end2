@@ -7,5 +7,10 @@ import { authMiddleware, publicAuthMiddleware } from "../middleware";
 const router = Router();
 
 router.get("", publicAuthMiddleware, concertController.getConcertAllController);
+router.get(
+  "/:concertID",
+  publicAuthMiddleware,
+  concertController.getConcertDetailController
+);
 
 export default router;
