@@ -1,7 +1,7 @@
 import { commentDTO } from ".";
 
 namespace concertDTO {
-  export interface getConcertAllResDTO {
+  export interface getConcertResDTO {
     id: number;
     createdAt: Date;
     updatedAt: Date;
@@ -10,6 +10,7 @@ namespace concertDTO {
     authorNickname: string;
     title: string;
     videoLink: string;
+    img: string;
     imgThumbnail: string;
     text: string;
     interest: string[];
@@ -47,8 +48,8 @@ namespace concertDTO {
     isScrap?: boolean;
   }
 
-  export interface concertResDTO {
-    concerts: getConcertAllResDTO[];
+  export interface concertAllResDTO {
+    concerts: getConcertResDTO[];
     totalConcertNum: number;
   }
 }
