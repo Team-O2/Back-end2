@@ -46,9 +46,16 @@ export default class Concert extends Model {
   @Column
   text!: string;
 
+  @Unique
+  @Column
+  authorNickname: string;
+
   @Default(false)
   @Column
   isNotice: Boolean;
+
+  @Column
+  hashtag: string;
 
   @BelongsTo(() => Post)
   post: Post;
