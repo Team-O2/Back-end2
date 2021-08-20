@@ -302,7 +302,10 @@ const getChallengeSearchController = async (req: Request, res: Response) => {
 const getChallengeOneController = async (req: Request, res: Response) => {
   try {
     const resData: challengeDTO.getChallengeResDTO | -1 =
-      await challengeService.getChallengeOne(Number(req.params.challengeID));
+      await challengeService.getChallengeOne(
+        Number(req.params.challengeID),
+        Number(req.body.userID.id)
+      );
 
     // challengeID가 없을 때
     if (resData === -1) {

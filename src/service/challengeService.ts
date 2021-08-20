@@ -583,7 +583,7 @@ const getChallengeSearch = async (
  *    1. challenge id가 없을 때
  */
 
-const getChallengeOne = async (challengeID: number) => {
+const getChallengeOne = async (challengeID: number, userID: number) => {
   // isDelete = fasle 인 애들만 가져오기
   const challenge = await Post.findOne({
     where: { isDeleted: false, "$challenge.id$": challengeID },
@@ -623,6 +623,13 @@ const getChallengeOne = async (challengeID: number) => {
     }
   });
 
+  const isLike = await Like.findOne({
+    where: { userID, postID: challenge.id },
+  });
+  const isScrap = await Scrap.findOne({
+    where: { postID: challenge.id },
+  });
+
   const returnData: challengeDTO.getChallengeResDTO = {
     id: challenge.id,
     generation: challenge.generation,
@@ -639,6 +646,8 @@ const getChallengeOne = async (challengeID: number) => {
     scrapNum: challenge.scraps.length,
     commentNum: challenge.comments.length,
     comment,
+    isLike: isLike ? true : false,
+    isScrap: isScrap ? true : false,
   };
 
   return returnData;
