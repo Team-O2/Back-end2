@@ -52,7 +52,7 @@ export const getConcertAll = async (userID, offset, limit) => {
   const totalConcertNum = totalConcert.length;
   const concertListArr = Object.values(concertList);
 
-  const concerts: concertDTO.getConcertAllResDTO[] = await Promise.all(
+  const concerts: concertDTO.getConcertResDTO[] = await Promise.all(
     concertListArr.map(async (concert) => {
       // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
@@ -118,7 +118,7 @@ export const getConcertAll = async (userID, offset, limit) => {
     })
   );
 
-  const resData: concertDTO.concertResDTO = {
+  const resData: concertDTO.concertAllResDTO = {
     concerts,
     totalConcertNum,
   };
@@ -126,63 +126,97 @@ export const getConcertAll = async (userID, offset, limit) => {
   return resData;
 };
 
-// /**
-//  *  @오투콘서트_Detail
-//  *  @route Get /concert/:concertID
-//  */
-// export const getConcertOne = async (userID, concertID) => {
-//   // 댓글, 답글 populate
-//   // isDelete = true 인 애들만 가져오기
-//   let concert;
-//   concert = await Concert.findById(concertID)
-//     .populate("user", ["nickname", "img"])
-//     .populate({
-//       path: "comments",
-//       select: { userID: 1, text: 1, isDeleted: 1 },
-//       options: { sort: { _id: -1 } },
-//       populate: [
-//         {
-//           path: "childrenComment",
-//           select: { userID: 1, text: 1, isDeleted: 1 },
-//           options: { sort: { _id: -1 } },
-//           populate: {
-//             path: "userID",
-//             select: ["nickname", "img"],
-//           },
-//         },
-//         {
-//           path: "userID",
-//           select: ["nickname", "img"],
-//         },
-//       ],
-//     });
+/**
+ *  @오투콘서트_Detail
+ *  @route Get /concert/:concertID
+ *  @access public
+ *  @error
+ *    1. concertID가 없을 경우
+ */
+export const getConcertOne = async (userID, concertID) => {
+  // 1. concertID가 없을 경우
+  if (!concertID) {
+    return -1;
+  }
+  // 댓글, 답글 join
+  // isDeleted = false
+  // isNotice = false
+  const concert = await Post.findOne({
+    order: [["createdAt", "DESC"]],
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [
+      { model: Concert, required: true, where: { isNotice: false } },
+      User,
+      { model: Comment, include: [User] },
+      Like,
+      Scrap,
+    ],
+  });
 
-//   let resData: IConcertDTO;
-//   if (userID) {
-//     // 좋아요, 스크랩 여부 추가
-//     const user = await User.findById(userID.id);
-//     if (
-//       user.scraps.concertScraps.includes(concertID) &&
-//       user.likes.concertLikes.includes(concertID)
-//     ) {
-//       resData = { ...concert._doc, isLike: true, isScrap: true };
-//     } else if (user.scraps.concertScraps.includes(concertID)) {
-//       resData = { ...concert._doc, isLike: false, isScrap: true };
-//     } else if (user.likes.concertLikes.includes(concertID)) {
-//       resData = { ...concert._doc, isLike: true, isScrap: false };
-//     } else {
-//       resData = {
-//         ...concert._doc,
-//         isLike: false,
-//         isScrap: false,
-//       };
-//     }
-//   } else {
-//     resData = concert;
-//   }
+  let comment: commentDTO.IComment[] = [];
+  concert.comments.forEach((c) => {
+    if (c.level === 0) {
+      comment.unshift({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children: [],
+      });
+    } else if (!c.isDeleted) {
+      comment[comment.length - 1].children.unshift({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+      });
+    }
+  });
 
-//   return resData;
-// };
+  const resData: concertDTO.getConcertResDTO = {
+    id: concert.id,
+    createdAt: concert.createdAt,
+    updatedAt: concert.updatedAt,
+    userID: concert.userID,
+    nickname: concert.user.nickname,
+    img: concert.user.img,
+    authorNickname: concert.concert.authorNickname,
+    title: concert.concert.title,
+    videoLink: concert.concert.videoLink,
+    imgThumbnail: concert.concert.imgThumbnail,
+    text: concert.concert.text,
+    interest: concert.interest.split(","),
+    hashtag: concert.concert.hashtag.slice(1).split("#"),
+    likeNum: concert.likes.length,
+    scrapNum: concert.scraps.length,
+    commentNum: concert.comments.length,
+    comment,
+    isDeleted: concert.isDeleted,
+    isNotice: concert.concert.isNotice,
+  };
+
+  if (userID) {
+    const isLike = await Like.findOne({
+      where: { userID, postID: concert.id },
+    });
+    const isScrap = await Scrap.findOne({
+      where: { postID: concert.id },
+    });
+
+    return {
+      ...resData,
+      isLike: isLike ? true : false,
+      isScrap: isScrap ? true : false,
+    };
+  }
+
+  return resData;
+};
 
 // /**
 //  *  @오투콘서트_검색_또는_필터
@@ -583,6 +617,6 @@ export const getConcertAll = async (userID, offset, limit) => {
 //   return { _id: concertID };
 // };
 
-const concertService = { getConcertAll };
+const concertService = { getConcertAll, getConcertOne };
 
 export default concertService;

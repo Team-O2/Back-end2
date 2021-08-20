@@ -71,26 +71,39 @@ const getConcertAllController = async (req: Request, res: Response) => {
 //   }
 // });
 
-// /**
-//  *  @오투콘서트_Detail
-//  *  @route Get /concert/:concertID
-//  */
-// router.get("/:id", publicAuth, async (req: Request, res: Response) => {
-//   try {
-//     // const data: IConcrtDTO = await getConcertOne(req.params.id);
-//     const data = await getConcertOne(req.body.userID, req.params.id);
-//     const concert = data;
-//     dataResponse(
-//       res,
-//       returnCode.OK,
-//       "해당 콘서트 게시글 불러오기 성공",
-//       concert
-//     );
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+/**
+ *  @오투콘서트_Detail
+ *  @route Get /concert/:concertID
+ *  @access public
+ *  @error
+ *    1. 올바르지 않은 게시글
+ */
+const getConcertDetailController = async (req: Request, res: Response) => {
+  try {
+    const concert = await concertService.getConcertOne(
+      req.body.userID?.id,
+      Number(req.params.concertID)
+    );
+
+    if (concert === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "존재하지 않는 게시글입니다"
+      );
+    } else {
+      response.dataResponse(
+        res,
+        returnCode.OK,
+        "해당 콘서트 게시글 불러오기 성공",
+        concert
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 // /**
 //  *  @콘서트_댓글_등록
@@ -243,5 +256,8 @@ const getConcertAllController = async (req: Request, res: Response) => {
 //   }
 // });
 
-const concertController = { getConcertAllController };
+const concertController = {
+  getConcertAllController,
+  getConcertDetailController,
+};
 export default concertController;
