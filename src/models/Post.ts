@@ -20,7 +20,6 @@ import {
   Challenge,
   PostInterest,
   Like,
-  Hashtag,
   Comment,
 } from ".";
 
@@ -71,9 +70,6 @@ export default class Post extends Model {
 
   @HasMany(() => PostInterest)
   interests: PostInterest[];
-
-  @HasMany(() => Hashtag)
-  hashtags: Hashtag[];
 
   @HasMany(() => Comment)
   comments: Comment[];
