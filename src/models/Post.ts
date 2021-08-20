@@ -57,6 +57,9 @@ export default class Post extends Model {
   @Column
   generation: number;
 
+  @Column
+  interest: string;
+
   @BelongsTo(() => User)
   user: User;
 
