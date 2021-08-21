@@ -8,6 +8,11 @@ const router = Router();
 
 router.get("", publicAuthMiddleware, concertController.getConcertAllController);
 router.get(
+  "/search",
+  publicAuthMiddleware,
+  concertController.getConcertSearchController
+);
+router.get(
   "/:concertID",
   publicAuthMiddleware,
   concertController.getConcertDetailController
