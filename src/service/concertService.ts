@@ -358,112 +358,96 @@ export const getConcertSearch = async (
   return resData;
 };
 
-// /**
-//  *  @콘서트_댓글_등록
-//  *  @route Post /concert/comment/:concertID
-//  *  @access Private
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 요청 바디 부족
-//  *      3. 부모 댓글 id 값이 유효하지 않을 경우
-//  */
-// export const postConcertComment = async (
-//   concertID,
-//   userID,
-//   reqData: commentReqDTO
-// ) => {
-//   const { parentID, text } = reqData;
+/**
+ *  @콘서트_댓글_등록
+ *  @route Post /concert/comment/:concertID
+ *  @access private
+ *  @error
+ *      1. 회고록 id 잘못됨
+ *      2. 요청 바디 부족
+ *      3. 부모 댓글 id 값이 유효하지 않을 경우
+ */
+export const postConcertComment = async (
+  concertID,
+  userID,
+  reqData: commentDTO.postCommentReqDTO
+) => {
+  const { parentID, text } = reqData;
+  // 1. 회고록 id 잘못됨
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
 
-//   // 1. 회고록 id 잘못됨
-//   const concert = await Concert.findById(concertID);
+  if (!concert || concert.isDeleted) {
+    return -1;
+  }
 
-//   if (!concert || concert.isDeleted) {
-//     return -1;
-//   }
-//   // 2. 요청 바디 부족
-//   if (!text) {
-//     return -2;
-//   }
+  // 2. 요청 바디 부족
+  if (!text) {
+    return -2;
+  }
 
-//   let comment;
-//   // 답글인 경우
-//   if (parentID) {
-//     const parentComment = await Comment.findById(parentID);
+  let comment;
+  // 답글인 경우
+  if (parentID) {
+    const parentComment = await Comment.findOne({ where: { id: parentID } });
 
-//     // 3. 부모 댓글 id 값이 유효하지 않을 경우
-//     if (!parentComment) {
-//       return -3;
-//     }
+    // 3. 부모 댓글 id 값이 유효하지 않을 경우
+    if (!parentComment) {
+      return -3;
+    }
 
-//     comment = new Comment({
-//       postModel: "Concert",
-//       post: concertID,
-//       userID: userID,
-//       parentComment: parentID,
-//       text,
-//     });
-//     await comment.save();
+    comment = await Comment.create({
+      userID,
+      postID: concertID,
+      text,
+      level: 1,
+      order: parentComment.groupNum,
+    });
 
-//     await parentComment.childrenComment.push(comment._id);
-//     await parentComment.save();
+    // 첫 답글 작성 시 뱃지 추가
+    const badge = await Badge.findOne({ where: { id: userID } });
+    if (!badge.firstReplyBadge) {
+      badge.firstReplyBadge = true;
+      await badge.save();
+    }
+  } else {
+    // 댓글인 경우
+    comment = await Comment.create({
+      userID,
+      postID: concertID,
+      text,
+      order: 0,
+    });
 
-//     // 첫 답글 작성 시 뱃지 추가
-//     const badge = await Badge.findOne({ user: userID });
-//     if (!badge.firstReplyBadge) {
-//       badge.firstReplyBadge = true;
-//       await badge.save();
-//     }
-//   } else {
-//     // 댓글인 경우
-//     comment = new Comment({
-//       postModel: "Concert",
-//       post: concertID,
-//       userID: userID,
-//       text,
-//     });
+    await comment.increment("groupNum", { by: 1, where: { id: parentID } });
 
-//     await comment.save();
-//     await concert.comments.push(comment._id);
-//     await concert.save();
+    // 댓글 1개 작성 시 뱃지 추가
+    const badge = await Badge.findOne({ where: { id: userID } });
+    if (!badge.oneCommentBadge) {
+      badge.oneCommentBadge = true;
+      await badge.save();
+    }
 
-//     // 댓글 1개 작성 시 뱃지 추가
-//     const badge = await Badge.findOne({ user: userID });
-//     if (!badge.oneCommentBadge) {
-//       badge.oneCommentBadge = true;
-//       await badge.save();
-//     }
-//     // 댓글 5개 작성 시 뱃지 추가
-//     const user = await User.findById(userID);
-//     if (!badge.fiveCommentBadge && user.commentCNT === 4) {
-//       badge.fiveCommentBadge = true;
-//       await badge.save();
-//     }
+    // 댓글 5개 작성 시 뱃지 추가
+    const user = await User.findOne({
+      where: { id: userID },
+      include: [Comment],
+    });
 
-//     // 유저 댓글 수 1 증가
-//     await user.update({
-//       commentCNT: user.commentCNT + 1,
-//     });
-//   }
+    // 댓글 5개 작성 시 뱃지 추가
+    if (!badge.fiveCommentBadge && user.comments.length > 4) {
+      badge.fiveCommentBadge = true;
+      await badge.save();
+    }
 
-//   // 게시글 댓글 수 1 증가
-//   await Concert.findOneAndUpdate(
-//     { _id: concertID },
-//     {
-//       $inc: { commentNum: 1 },
-//     }
-//   );
-
-//   const user = await User.findById(userID);
-
-//   return {
-//     _id: comment._id,
-//     nickname: user.nickname,
-//     text: text,
-//     createdAt: comment.createdAt,
-//   };
-
-//   return;
-// };
+    return 1;
+  }
+};
 
 // /**
 //  *  @오투콘서트_좋아요_등록
@@ -644,6 +628,11 @@ export const getConcertSearch = async (
 //   return { _id: concertID };
 // };
 
-const concertService = { getConcertAll, getConcertOne, getConcertSearch };
+const concertService = {
+  getConcertAll,
+  getConcertOne,
+  getConcertSearch,
+  postConcertComment,
+};
 
 export default concertService;

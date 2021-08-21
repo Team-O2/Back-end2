@@ -109,41 +109,53 @@ const getConcertDetailController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @콘서트_댓글_등록
-//  *  @route Post /concert/comment/:concertID
-//  *  @access Private
-//  */
+/**
+ *  @콘서트_댓글_등록
+ *  @route Post /concert/comment/:concertID
+ *  @access private
+ */
 
-// router.post("/comment/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const reqData: commentReqDTO = req.body;
-//     const data = await postConcertComment(
-//       req.params.id,
-//       req.body.userID.id,
-//       reqData
-//     );
+const postConcertCommentController = async (req: Request, res: Response) => {
+  try {
+    const reqData: commentDTO.postCommentReqDTO = req.body;
+    const data = await concertService.postConcertComment(
+      Number(req.params.concertID),
+      req.body.userID.id,
+      reqData
+    );
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     //  요청 바디가 부족한 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
-//     // 부모 댓글 id가 잘못된 경우
-//     if (data === -3) {
-//       response(res, returnCode.BAD_REQUEST, "부모 댓글 id가 올바르지 않습니다");
-//     }
-//     // 댓글 등록 성공
-//     const concertComment = data;
-//     dataResponse(res, returnCode.OK, "댓글 등록 성공", concertComment);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 회고 id가 잘못된 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
+    }
+    //  요청 바디가 부족한 경우
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // 부모 댓글 id가 잘못된 경우
+    else if (data === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "부모 댓글 id가 올바르지 않습니다"
+      );
+    } else {
+      // 댓글 등록 성공
+      response.basicResponse(res, returnCode.OK, "댓글 등록 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 // /**
 //  *  @오투콘서트_좋아요_등록
@@ -264,5 +276,6 @@ const concertController = {
   getConcertAllController,
   getConcertDetailController,
   getConcertSearchController,
+  postConcertCommentController,
 };
 export default concertController;
