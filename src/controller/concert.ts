@@ -157,125 +157,172 @@ const postConcertCommentController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @오투콘서트_좋아요_등록
-//  *  @route Post /concert/like/:concertID
-//  *  @access Private
-//  */
+/**
+ *  @오투콘서트_좋아요_등록
+ *  @route Post /concert/like/:concertID
+ *  @access private
+ */
 
-// router.post("/like/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await postConcertLike(req.params.id, req.body.userID.id);
+const postConcertLikeController = async (req: Request, res: Response) => {
+  try {
+    const data = await concertService.postConcertLike(
+      Number(req.params.concertID),
+      req.body.userID.id
+    );
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 이미 좋아요 한 글일 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "이미 좋아요 한 글입니다");
-//     }
-//     // 좋아요 등록 성공
-//     const concert = data;
-//     dataResponse(res, returnCode.OK, "좋아요 등록 성공", concert);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 회고 id가 잘못된 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
+    }
+    // 이미 좋아요 한 글일 경우
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "이미 좋아요 한 글입니다"
+      );
+    } else {
+      // 좋아요 등록 성공
+      response.basicResponse(res, returnCode.OK, "좋아요 등록 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// /**
-//  *  @오투콘서트_좋아요_삭제하기
-//  *  @route Delete /concert/like/:concertID
-//  *  @access Private
-//  */
+/**
+ *  @오투콘서트_좋아요_삭제하기
+ *  @route Delete /concert/like/:concertID
+ *  @access private
+ */
 
-// router.delete("/like/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteConcertLike(req.params.id, req.body.userID.id);
+const deleteConcertLikeController = async (req: Request, res: Response) => {
+  try {
+    const data = await concertService.deleteConcertLike(
+      Number(req.params.concertID),
+      Number(req.body.userID.id)
+    );
 
-//     // 콘서트 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     } // 좋아요 한 개수가 0인 경우
-//     if (data === -2) {
-//       response(
-//         res,
-//         returnCode.BAD_REQUEST,
-//         "해당 게시글을 좋아요하지 않았습니다"
-//       );
-//     }
-//     // 좋아요 삭제 성공
-//     const concert = data;
-//     dataResponse(res, returnCode.OK, "좋아요 삭제 성공", concert);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-// /**
-//  *  @유저_챌린지_회고_스크랩하기
-//  *  @route Post /concert/scrap/:concertID
-//  *  @access Private
-//  */
-// router.post("/scrap/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await postConcertScrap(req.params.id, req.body.userID.id);
+    // 콘서트 id가 잘못된 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
+    } // 좋아요 한 개수가 0인 경우
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "해당 게시글을 좋아요하지 않았습니다"
+      );
+    } else {
+      // 좋아요 삭제 성공
+      response.basicResponse(res, returnCode.OK, "좋아요 삭제 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 이미 유저가 스크랩한 글일 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "이미 스크랩 된 글입니다");
-//     }
+/**
+ *  @유저_챌린지_회고_스크랩하기
+ *  @route Post /concert/scrap/:concertID
+ *  @access private
+ */
+const postConcertScrapController = async (req: Request, res: Response) => {
+  try {
+    const data = await concertService.postConcertScrap(
+      Number(req.params.concertID),
+      Number(req.body.userID.id)
+    );
 
-//     //자신의 회고인 경우
-//     if (data === -3) {
-//       response(
-//         res,
-//         returnCode.BAD_REQUEST,
-//         "자신의 글은 스크랩 할 수 없습니다"
-//       );
-//     }
-//     // 회고 스크랩 성공
-//     dataResponse(res, returnCode.OK, "콘서트 스크랩 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 회고 id가 잘못된 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
+    }
+    // 이미 유저가 스크랩한 글일 경우
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "이미 스크랩 된 글입니다"
+      );
+    }
 
-// /**
-//  *  @오투콘서트_회고_스크랩_취소하기
-//  *  @route Delete /concert/scrap/:concertID
-//  *  @access Private
-//  */
-// router.delete("/scrap/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteConcertScrap(req.params.id, req.body.userID.id);
+    //자신의 회고인 경우
+    else if (data === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "자신의 글은 스크랩 할 수 없습니다"
+      );
+    } else {
+      // 회고 스크랩 성공
+      response.basicResponse(res, returnCode.OK, "콘서트 스크랩 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-//     // 콘서트 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 스크랩 하지 않은 글일 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "스크랩 하지 않은 글입니다");
-//     }
-//     // 스크랩 취소 성공
-//     dataResponse(res, returnCode.OK, "콘서트 스크랩 취소 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+/**
+ *  @오투콘서트_회고_스크랩_취소하기
+ *  @route Delete /concert/scrap/:concertID
+ *  @access private
+ */
+const deleteConcertScrapController = async (req: Request, res: Response) => {
+  try {
+    const data = await concertService.deleteConcertScrap(
+      Number(req.params.concertID),
+      Number(req.body.userID.id)
+    );
+
+    // 콘서트 id가 잘못된 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
+    }
+    // 스크랩 하지 않은 글일 경우
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "스크랩 하지 않은 글입니다"
+      );
+    } else {
+      // 스크랩 취소 성공
+      response.basicResponse(res, returnCode.OK, "콘서트 스크랩 취소 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 const concertController = {
   getConcertAllController,
   getConcertDetailController,
   getConcertSearchController,
   postConcertCommentController,
+  postConcertLikeController,
+  deleteConcertLikeController,
+  postConcertScrapController,
+  deleteConcertScrapController,
 };
 export default concertController;

@@ -449,190 +449,191 @@ export const postConcertComment = async (
   }
 };
 
-// /**
-//  *  @오투콘서트_좋아요_등록
-//  *  @route Post /concert/like/:concertID
-//  *  @error
-//  *      1. 콘서트 id 잘못됨
-//  *      2. 이미 좋아요 한 글일 경우
-//  */
-// export const postConcertLike = async (concertID, userID) => {
-//   // 1. 콘서트 id 잘못됨
-//   const concert = await Concert.findById(concertID);
+/**
+ *  @오투콘서트_좋아요_등록
+ *  @route Post /concert/like/:concertID
+ *  @access private
+ *  @error
+ *      1. 콘서트 id 잘못됨
+ *      2. 이미 좋아요 한 글일 경우
+ */
+export const postConcertLike = async (concertID, userID) => {
+  // 1. 콘서트 id 잘못됨
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
 
-//   if (!concert || concert.isDeleted) {
-//     return -1;
-//   }
+  if (!concert || concert.isDeleted) {
+    return -1;
+  }
 
-//   const user = await User.findById(userID);
-//   // 2. 이미 좋아요 한 글일 경우
-//   if (user.likes.concertLikes.includes(concertID)) {
-//     return -2;
-//   }
+  const like = await Like.findOne({ where: { postID: concertID, userID } });
+  // 2. 이미 좋아요 한 글일 경우
+  if (like) {
+    return -2;
+  }
 
-//   // 챌린지 글의 like 1 증가
-//   await Concert.findOneAndUpdate(
-//     { _id: concertID },
-//     {
-//       $inc: { likes: 1 },
-//     }
-//   );
-//   // 유저 likes 필드에 챌린지 id 추가
-//   user.likes.concertLikes.push(concertID);
-//   await user.save();
+  // 좋아요
+  await Like.create({
+    postID: concertID,
+    userID,
+  });
 
-//   // 좋아요 1개 누를 시 뱃지 추가
-//   const badge = await Badge.findOne({ user: userID });
-//   if (!badge.oneLikeBadge) {
-//     badge.oneLikeBadge = true;
-//     await badge.save();
-//   }
+  // 좋아요 1개 누를 시 뱃지 추가
+  const badge = await Badge.findOne({ where: { id: userID } });
+  if (!badge.oneLikeBadge) {
+    badge.oneLikeBadge = true;
+    await badge.save();
+  }
 
-//   // 좋아요 5개 누를 시 뱃지 추가
-//   if (
-//     !badge.fiveLikeBadge &&
-//     user.likes.challengeLikes.length + user.likes.concertLikes.length === 5
-//   ) {
-//     badge.fiveLikeBadge = true;
-//     await badge.save();
-//   }
+  // 좋아요 5개 누를 시 뱃지 추가
+  // 댓글 5개 작성 시 뱃지 추가
+  const user = await User.findOne({
+    where: { id: userID },
+    include: [Like],
+  });
 
-//   return { _id: concertID };
-// };
+  // 댓글 5개 작성 시 뱃지 추가
+  if (!badge.fiveLikeBadge && user.likes.length > 4) {
+    badge.fiveLikeBadge = true;
+    await badge.save();
+  }
 
-// /**
-//  *  @오투콘서트_좋아요_삭제
-//  *  @route Delete /concert/like/:concertID
-//  *  @error
-//  *      1. 콘서트 id 잘못됨
-//  *      2. 좋아요 개수가 0
-//  */
-// export const deleteConcertLike = async (concertID, userID) => {
-//   const concert = await Concert.findById(concertID);
+  return 1;
+};
 
-//   // 1. 콘서트 id 잘못됨
-//   if (!concert || concert.isDeleted) {
-//     return -1;
-//   }
+/**
+ *  @오투콘서트_좋아요_삭제
+ *  @route Delete /concert/like/:concertID
+ *  @access private
+ *  @error
+ *      1. 콘서트 id 잘못됨
+ *      2. 좋아요 개수가 0
+ */
+export const deleteConcertLike = async (concertID, userID) => {
+  // 1. 콘서트 id 잘못됨
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [
+      { model: Concert, required: true, where: { isNotice: false } },
+      Like,
+    ],
+  });
 
-//   // 2. 좋아요 개수가 0
-//   if (concert.likes === 0) {
-//     return -2;
-//   }
+  if (!concert || concert.isDeleted) {
+    return -1;
+  }
 
-//   // 콘서트 글의 like 1 감소
-//   await Concert.findOneAndUpdate(
-//     { _id: concertID },
-//     {
-//       $inc: { likes: -1 },
-//     }
-//   );
-//   // 유저 likes 필드에 챌린지 id 삭제
-//   const user = await User.findById(userID);
+  // 2. 좋아요 개수가 0
+  if (concert.likes.length === 0) {
+    return -2;
+  }
 
-//   const idx = user.likes.concertLikes.indexOf(concertID);
-//   user.likes.concertLikes.splice(idx, 1);
+  // 콘서트 글의 like 1 감소
+  await Like.destroy({
+    where: { postID: concertID, userID },
+  });
 
-//   await user.save();
+  return 1;
+};
 
-//   return { _id: concertID };
-// };
+/**
+ *  @오투콘서트_스크랩하기
+ *  @route Post /user/concert/:concertID
+ *  @access private
+ *  @error
+ *      1. 콘서트 id 잘못됨
+ *      2. 이미 스크랩 한 회고일 경우
+ */
+export const postConcertScrap = async (concertID, userID) => {
+  // 1. 콘서트 id 잘못됨
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
 
-// /**
-//  *  @오투콘서트_스크랩하기
-//  *  @route Post /user/concert/:concertID
-//  *  @error
-//  *      1. 콘서트 id 잘못됨
-//  *      2. 이미 스크랩 한 회고일 경우
-//  */
-// export const postConcertScrap = async (concertID, userID) => {
-//   // 1. 회고 id 잘못됨
-//   let concert = await Concert.findById(concertID);
-//   if (!concert || concert.isDeleted) {
-//     return -1;
-//   }
+  if (!concert || concert.isDeleted) {
+    return -1;
+  }
 
-//   const user = await User.findById(userID);
+  // 2. 이미 스크랩 한 회고인 경우
+  const scrap = await Scrap.findOne({ where: { postID: concertID, userID } });
+  if (scrap) {
+    return -2;
+  }
 
-//   // 2. 이미 스크랩 한 회고인 경우
-//   if (user.scraps.concertScraps.includes(concertID)) {
-//     return -2;
-//   }
-//   // 3. 자신의 회고인 경우
-//   if (concert.user.toString() === user._id.toString()) {
-//     console.log("dd");
-//     return -3;
-//   }
+  // 3. 자신의 회고인 경우
+  if (concert.concert.userID === userID) {
+    return -3;
+  }
 
-//   // 게시글 스크랩 수 1 증가
-//   await Concert.findOneAndUpdate(
-//     { _id: concertID },
-//     {
-//       $inc: { scrapNum: 1 },
-//     }
-//   );
+  await Scrap.create({
+    postID: concertID,
+    userID,
+  });
 
-//   user.scraps.concertScraps.push(concertID);
-//   await user.save();
+  // 첫 스크랩이면 뱃지 발급
+  const badge = await Badge.findOne({ where: { id: userID } });
+  if (!badge.concertScrapBadge) {
+    badge.concertScrapBadge = true;
+    await badge.save();
+  }
 
-//   // 첫 스크랩이면 뱃지 발급
-//   const badge = await Badge.findOne(
-//     { user: userID },
-//     { concertScrapBadge: true, _id: false }
-//   );
+  return 1;
+};
 
-//   const scrapNum = user.scraps.concertScraps.length;
-//   if (!badge.concertScrapBadge && scrapNum === 1) {
-//     await Badge.findOneAndUpdate(
-//       { user: userID },
-//       { $set: { concertScrapBadge: true } }
-//     );
-//   }
+/**
+ *  @유저_콘서트_스크랩_취소하기
+ *  @route Delete /user/concert/:concertID
+ *  @access private
+ *  @error
+ *      1. 콘서트 id 잘못됨
+ *      2. 스크랩 하지 않은 글일 경우
+ */
+export const deleteConcertScrap = async (concertID, userID) => {
+  // 1. 콘서트 id 잘못됨
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
 
-//   return { _id: concertID };
-// };
+  if (!concert || concert.isDeleted) {
+    return -1;
+  }
 
-// /**
-//  *  @유저_콘서트_스크랩_취소하기
-//  *  @route Delete /user/concert/:concertID
-//  *  @error
-//  *      1. 콘서트 id 잘못됨
-//  *      2. 스크랩 하지 않은 글일 경우
-//  */
-// export const deleteConcertScrap = async (concertID, userID) => {
-//   // 1. 콘서트 id 잘못됨
-//   let concert = await Concert.findById(concertID);
-//   if (!concert || concert.isDeleted) {
-//     return -1;
-//   }
+  // 2. 스크랩하지 않은 글일 경우
+  let scrap = await Scrap.findOne({ where: { postID: concertID, userID } });
+  if (!scrap) {
+    return -2;
+  }
 
-//   const user = await User.findById(userID);
-//   // 2. 스크랩하지 않은 글일 경우
-//   if (!user.scraps.concertScraps.includes(concertID)) {
-//     return -2;
-//   }
+  await Scrap.destroy({ where: { postID: concertID, userID } });
 
-//   // 게시글 스크랩 수 1 감소
-//   await Concert.findOneAndUpdate(
-//     { _id: concertID },
-//     {
-//       $inc: { scrapNum: -1 },
-//     }
-//   );
-
-//   // 유저 likes 필드에 챌린지 id 삭제
-//   const idx = user.scraps.concertScraps.indexOf(concertID);
-//   user.scraps.concertScraps.splice(idx, 1);
-//   await user.save();
-
-//   return { _id: concertID };
-// };
+  return 1;
+};
 
 const concertService = {
   getConcertAll,
   getConcertOne,
   getConcertSearch,
   postConcertComment,
+  postConcertLike,
+  deleteConcertLike,
+  postConcertScrap,
+  deleteConcertScrap,
 };
 
 export default concertService;

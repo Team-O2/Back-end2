@@ -24,4 +24,27 @@ router.post(
   concertController.postConcertCommentController
 );
 
+router.post(
+  "/like/:concertID",
+  authMiddleware,
+  concertController.postConcertLikeController
+);
+
+router.post(
+  "/scrap/:concertID",
+  authMiddleware,
+  concertController.postConcertScrapController
+);
+
+router.delete(
+  "/like/:concertID",
+  authMiddleware,
+  concertController.deleteConcertLikeController
+);
+router.delete(
+  "/scrap/:concertID",
+  authMiddleware,
+  concertController.deleteConcertScrapController
+);
+
 export default router;
