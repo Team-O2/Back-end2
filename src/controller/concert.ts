@@ -41,35 +41,39 @@ const getConcertAllController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @오투콘서트_검색_또는_필터
-//  *  @route Get /concert/search?tag=관심분야&ismine=내글만보기여부&keyword=검색할단어
-//  *  @access public
-//  */
+/**
+ *  @오투콘서트_검색_또는_필터
+ *  @route Get /concert/search?offset=&limit=&tag=&keyword=
+ *  @access public
+ */
 
-// router.get("/search", publicAuth, async (req: Request, res: Response) => {
-//   try {
-//     const data: concertResDTO | -1 = await getConcertSearch(
-//       req.body.userID,
-//       req.query.tag,
-//       req.query.keyword,
-//       req.query.offset,
-//       req.query.limit
-//     );
+const getConcertSearchController = async (req: Request, res: Response) => {
+  try {
+    const data = await concertService.getConcertSearch(
+      Number(req.query.offset),
+      Number(req.query.limit),
+      req.body.userID?.id,
+      req.query.tag ? String(req.query.tag) : undefined,
+      req.query.keyword ? String(req.query.keyword) : undefined
+    );
 
-//     // limit 없을 때
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
+    // limit 없을 때
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
+    }
 
-//     // 검색 불러오기 성공
-//     const concertSearch = data;
-//     dataResponse(res, returnCode.OK, "검색 성공", concertSearch);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 검색 불러오기 성공
+    const concertSearch = data;
+    response.dataResponse(res, returnCode.OK, "검색 성공", concertSearch);
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 /**
  *  @오투콘서트_Detail
@@ -259,5 +263,6 @@ const getConcertDetailController = async (req: Request, res: Response) => {
 const concertController = {
   getConcertAllController,
   getConcertDetailController,
+  getConcertSearchController,
 };
 export default concertController;

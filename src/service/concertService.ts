@@ -1,3 +1,5 @@
+import sequelize, { Op } from "sequelize";
+
 // models
 import { Badge, Concert, Comment, Like, Post, Scrap, User } from "../models";
 
@@ -42,14 +44,7 @@ export const getConcertAll = async (userID, offset, limit) => {
     offset,
   });
 
-  const totalConcert = await Post.findAll({
-    include: [{ model: Concert, required: true, where: { isNotice: false } }],
-    where: {
-      isDeleted: false,
-    },
-  });
-
-  const totalConcertNum = totalConcert.length;
+  const totalConcertNum = concertList.length;
   const concertListArr = Object.values(concertList);
 
   const concerts: concertDTO.getConcertResDTO[] = await Promise.all(
@@ -90,7 +85,9 @@ export const getConcertAll = async (userID, offset, limit) => {
         imgThumbnail: concert.concert.imgThumbnail,
         text: concert.concert.text,
         interest: concert.interest.split(","),
-        hashtag: concert.concert.hashtag.slice(1).split("#"),
+        hashtag: concert.concert.hashtag
+          ? concert.concert.hashtag.slice(1).split("#")
+          : undefined,
         likeNum: concert.likes.length,
         scrapNum: concert.scraps.length,
         commentNum: concert.comments.length,
@@ -191,7 +188,9 @@ export const getConcertOne = async (userID, concertID) => {
     imgThumbnail: concert.concert.imgThumbnail,
     text: concert.concert.text,
     interest: concert.interest.split(","),
-    hashtag: concert.concert.hashtag.slice(1).split("#"),
+    hashtag: concert.concert.hashtag
+      ? concert.concert.hashtag.slice(1).split("#")
+      : undefined,
     likeNum: concert.likes.length,
     scrapNum: concert.scraps.length,
     commentNum: concert.comments.length,
@@ -218,118 +217,146 @@ export const getConcertOne = async (userID, concertID) => {
   return resData;
 };
 
-// /**
-//  *  @오투콘서트_검색_또는_필터
-//  *  @route Get /concert/search?tag=관심분야&ismine=내글만보기여부&keyword=검색할단어
-//  */
-// export const getConcertSearch = async (userID, tag, keyword, offset, limit) => {
-//   // isDelete = true 인 애들만 가져오기
-//   // offset 뒤에서 부터 가져오기
-//   // 최신순으로 정렬
-//   // 댓글, 답글 populate
+/**
+ *  @오투콘서트_검색_또는_필터
+ *  @route Get /concert/search?offset=&limit=&tag=&keyword=
+ *  @error
+ *    1. limit이 없는 경우
+ */
+export const getConcertSearch = async (
+  offset,
+  limit,
+  userID?,
+  tag?,
+  keyword?
+) => {
+  // isDelete = true 인 애들만 가져오기
+  // offset 뒤에서 부터 가져오기
+  // 최신순으로 정렬
+  // 댓글, 답글 populate
+  // tag 검사
+  // keyword 검사
 
-//   if (!limit) {
-//     return -1;
-//   }
-//   if (!offset) {
-//     offset = 0;
-//   }
+  if (!limit) {
+    return -1;
+  }
+  if (!offset) {
+    offset = 0;
+  }
 
-//   let concerts;
+  let where: any = {
+    isDeleted: false,
+  };
 
-//   concerts = await Concert.find({
-//     isDeleted: false,
-//     isNotice: false,
-//   })
-//     .sort({ likes: -1 })
-//     .populate("user", ["nickname", "img"])
-//     .populate({
-//       path: "comments",
-//       select: { userID: 1, text: 1, isDeleted: 1 },
-//       options: { sort: { _id: -1 } },
-//       populate: [
-//         {
-//           path: "childrenComment",
-//           select: { userID: 1, text: 1, isDeleted: 1 },
-//           options: { sort: { _id: -1 } },
-//           populate: {
-//             path: "userID",
-//             select: ["nickname", "img"],
-//           },
-//         },
-//         {
-//           path: "userID",
-//           select: ["nickname", "img"],
-//         },
-//       ],
-//     });
+  if (tag && tag !== "전체") {
+    where = {
+      ...where,
+      interest: { [Op.like]: `%${tag}%` },
+    };
+  }
 
-//   let filteredData = await concerts;
+  if (keyword) {
+    where = {
+      ...where,
+      [Op.or]: [
+        { "$concert.text$": { [Op.like]: `%${keyword}%` } },
+        { "$concert.title$": { [Op.like]: `%${keyword}%` } },
+        { "$concert.hashtag$": { [Op.like]: `%${keyword}%` } },
+      ],
+    };
+  }
 
-//   // 관심분야 필터링
-//   if (tag !== "" && tag && tag !== "전체") {
-//     filteredData = filteredData.filter((fd) => {
-//       if (fd.interest.includes(tag.toLowerCase())) return fd;
-//     });
-//   }
+  const concertList = await Post.findAll({
+    order: [["createdAt", "DESC"]],
+    where,
+    include: [
+      { model: Concert, required: true, where: { isNotice: false } },
+      { model: User, required: true },
+      { model: Comment, include: [User] },
+      Like,
+      Scrap,
+    ],
+    limit,
+    offset,
+  });
 
-//   // 검색 단어 필터링
-//   if (keyword !== "" && keyword) {
-//     filteredData = filteredData.filter((fd) => {
-//       if (
-//         fd.text.includes(keyword.toLowerCase().trim()) ||
-//         fd.title.includes(keyword.toLowerCase().trim()) ||
-//         fd.hashtag.includes(keyword.toLowerCase().trim())
-//       )
-//         return fd;
-//     });
-//   }
+  const totalConcertNum = concertList.length;
+  const concertListArr = Object.values(concertList);
 
-//   var searchData = [];
-//   for (var i = Number(offset); i < Number(offset) + Number(limit); i++) {
-//     if (!filteredData[i]) {
-//       break;
-//     }
-//     searchData.push(filteredData[i]);
-//   }
+  const concerts: concertDTO.getConcertResDTO[] = await Promise.all(
+    concertListArr.map(async (concert) => {
+      // 댓글 형식 변환
+      let comment: commentDTO.IComment[] = [];
+      concert.comments.forEach((c) => {
+        if (c.level === 0) {
+          comment.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+            children: [],
+          });
+        } else if (!c.isDeleted) {
+          comment[comment.length - 1].children.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+          });
+        }
+      });
+      const returnData = {
+        id: concert.id,
+        createdAt: concert.createdAt,
+        updatedAt: concert.updatedAt,
+        userID: concert.userID,
+        nickname: concert.user.nickname,
+        img: concert.user.img,
+        authorNickname: concert.concert.authorNickname,
+        title: concert.concert.title,
+        videoLink: concert.concert.videoLink,
+        imgThumbnail: concert.concert.imgThumbnail,
+        text: concert.concert.text,
+        interest: concert.interest.split(","),
+        hashtag: concert.concert.hashtag
+          ? concert.concert.hashtag.slice(1).split("#")
+          : undefined,
+        likeNum: concert.likes.length,
+        scrapNum: concert.scraps.length,
+        commentNum: concert.comments.length,
+        comment,
+        isDeleted: concert.isDeleted,
+        isNotice: concert.concert.isNotice,
+      };
 
-//   const totalConcertNum = filteredData.length;
-//   let resData: concertResDTO;
-//   if (userID) {
-//     // 좋아요, 스크랩 여부 추가
-//     const user = await User.findById(userID.id);
-//     const newConcert = searchData.map((c) => {
-//       if (
-//         user.scraps.concertScraps.includes(c._id) &&
-//         user.likes.concertLikes.includes(c._id)
-//       ) {
-//         return { ...c._doc, isLike: true, isScrap: true };
-//       } else if (user.scraps.concertScraps.includes(c._id)) {
-//         return { ...c._doc, isLike: false, isScrap: true };
-//       } else if (user.likes.concertLikes.includes(c._id)) {
-//         return { ...c._doc, isLike: true, isScrap: false };
-//       } else {
-//         return {
-//           ...c._doc,
-//           isLike: false,
-//           isScrap: false,
-//         };
-//       }
-//     });
+      if (userID) {
+        const isLike = await Like.findOne({
+          where: { userID, postID: concert.id },
+        });
+        const isScrap = await Scrap.findOne({
+          where: { postID: concert.id },
+        });
 
-//     resData = {
-//       concerts: newConcert,
-//       totalConcertNum,
-//     };
-//   } else {
-//     resData = {
-//       concerts: searchData,
-//       totalConcertNum,
-//     };
-//   }
+        return {
+          ...returnData,
+          isLike: isLike ? true : false,
+          isScrap: isScrap ? true : false,
+        };
+      }
 
-//   return resData;
-// };
+      return returnData;
+    })
+  );
+
+  const resData: concertDTO.concertAllResDTO = {
+    concerts,
+    totalConcertNum,
+  };
+
+  return resData;
+};
 
 // /**
 //  *  @콘서트_댓글_등록
@@ -617,6 +644,6 @@ export const getConcertOne = async (userID, concertID) => {
 //   return { _id: concertID };
 // };
 
-const concertService = { getConcertAll, getConcertOne };
+const concertService = { getConcertAll, getConcertOne, getConcertSearch };
 
 export default concertService;
