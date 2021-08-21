@@ -18,4 +18,10 @@ router.get(
   concertController.getConcertDetailController
 );
 
+router.post(
+  "/comment/:concertID",
+  authMiddleware,
+  concertController.postConcertCommentController
+);
+
 export default router;
