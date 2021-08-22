@@ -168,16 +168,6 @@ const postComment = async (
     });
   }
 
-  const comment = await Comment.findOne({
-    where: { id: newComment.id },
-    include: [
-      {
-        model: User,
-        attributes: ["img", "nickname"],
-      },
-    ],
-  });
-
   // 댓글 1개 작성 시 뱃지 추가
   const badge = await Badge.findOne({
     where: { id: userID },
@@ -193,17 +183,7 @@ const postComment = async (
     await badge.save();
   }
 
-  const resData: commentDTO.postCommentResDTO = {
-    id: comment.id,
-    userID: comment.userID,
-    nickname: comment.user.nickname,
-    img: comment.user.img,
-    text: comment.text,
-    createdAt: comment.createdAt,
-    updatedAt: comment.updatedAt,
-  };
-
-  return resData;
+  return undefined;
 };
 
 /**

@@ -60,7 +60,7 @@ const postChallengeController = async (req: Request, res: Response) => {
 const postCommentController = async (req: Request, res: Response) => {
   try {
     const reqData: commentDTO.postCommentReqDTO = req.body;
-    const resData: commentDTO.postCommentResDTO | -1 | -2 | -3 =
+    const resData: undefined | -1 | -2 | -3 =
       await challengeService.postComment(
         Number(req.params.challengeID),
         req.body.userID.id,
@@ -93,7 +93,7 @@ const postCommentController = async (req: Request, res: Response) => {
     }
     // 댓글 등록 성공
     else {
-      response.dataResponse(res, returnCode.CREATED, "댓글 등록 성공", resData);
+      response.basicResponse(res, returnCode.CREATED, "댓글 등록 성공");
     }
   } catch (err) {
     console.error(err.message);
