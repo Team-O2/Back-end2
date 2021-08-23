@@ -14,11 +14,12 @@ import { concertDTO, commentDTO } from "../DTO";
 
 const getConcertAllController = async (req: Request, res: Response) => {
   try {
-    const resData = await concertService.getConcertAll(
-      req.body.userID?.id,
-      Number(req.query.offset),
-      Number(req.query.limit)
-    );
+    const resData: concertDTO.concertAllResDTO | -1 =
+      await concertService.getConcertAll(
+        req.body.userID?.id,
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
 
     // 요청 데이터가 부족할 때
     if (resData === -1) {
@@ -49,13 +50,14 @@ const getConcertAllController = async (req: Request, res: Response) => {
 
 const getConcertSearchController = async (req: Request, res: Response) => {
   try {
-    const data = await concertService.getConcertSearch(
-      Number(req.query.offset),
-      Number(req.query.limit),
-      req.body.userID?.id,
-      req.query.tag ? String(req.query.tag) : undefined,
-      req.query.keyword ? String(req.query.keyword) : undefined
-    );
+    const data: concertDTO.concertAllResDTO | -1 =
+      await concertService.getConcertSearch(
+        Number(req.query.offset),
+        Number(req.query.limit),
+        req.body.userID?.id,
+        req.query.tag ? String(req.query.tag) : undefined,
+        req.query.keyword ? String(req.query.keyword) : undefined
+      );
 
     // limit 없을 때
     if (data === -1) {
@@ -84,10 +86,11 @@ const getConcertSearchController = async (req: Request, res: Response) => {
  */
 const getConcertDetailController = async (req: Request, res: Response) => {
   try {
-    const concert = await concertService.getConcertOne(
-      req.body.userID?.id,
-      Number(req.params.concertID)
-    );
+    const concert: concertDTO.concertDetailDTO | -1 =
+      await concertService.getConcertOne(
+        req.body.userID?.id,
+        Number(req.params.concertID)
+      );
 
     if (concert === -1) {
       response.basicResponse(
