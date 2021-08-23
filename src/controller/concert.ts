@@ -28,14 +28,15 @@ const getConcertAllController = async (req: Request, res: Response) => {
         returnCode.NOT_FOUND,
         "요청 데이터가 부족합니다."
       );
+    } else {
+      // 회고 전체 불러오기 성공
+      response.dataResponse(
+        res,
+        returnCode.OK,
+        "콘서트 전체 불러오기 성공",
+        resData
+      );
     }
-    // 회고 전체 불러오기 성공
-    response.dataResponse(
-      res,
-      returnCode.OK,
-      "콘서트 전체 불러오기 성공",
-      resData
-    );
   } catch (err) {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
@@ -66,11 +67,11 @@ const getConcertSearchController = async (req: Request, res: Response) => {
         returnCode.NOT_FOUND,
         "요청 경로가 올바르지 않습니다"
       );
+    } else {
+      // 검색 불러오기 성공
+      const concertSearch = data;
+      response.dataResponse(res, returnCode.OK, "검색 성공", concertSearch);
     }
-
-    // 검색 불러오기 성공
-    const concertSearch = data;
-    response.dataResponse(res, returnCode.OK, "검색 성공", concertSearch);
   } catch (err) {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
