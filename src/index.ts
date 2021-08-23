@@ -5,12 +5,12 @@ import { sequelize } from "./models";
 import router from "./router";
 import path from "path";
 
-// sequelize
-//   .sync({ alter: true })
-//   // .sync({ force: false })
-//   .catch((error) => {
-//     console.error(error);
-//   });
+sequelize
+  .sync({ alter: true })
+  // .sync({ force: false })
+  .catch((error) => {
+    console.error(error);
+  });
 
 const app = express();
 const morgan = require("morgan");

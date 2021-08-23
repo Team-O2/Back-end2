@@ -9,9 +9,9 @@ import Generation from "./Generation";
 import Hashtag from "./Hashtag";
 import Like from "./Like";
 import Post from "./Post";
-import PostInterest from "./PostInterest";
+// import PostInterest from "./PostInterest";
 import Scrap from "./Scrap";
-import UserInterest from "./UserInterest";
+// import UserInterest from "./UserInterest";
 import Comment from "./Comment";
 const db = {};
 
@@ -41,10 +41,10 @@ sequelize.addModels([
   Hashtag,
   Like,
   Post,
-  PostInterest,
+  // PostInterest,
   Scrap,
   User,
-  UserInterest,
+  // UserInterest,
   Comment,
 ]);
 
@@ -57,10 +57,10 @@ export {
   Hashtag,
   Like,
   Post,
-  PostInterest,
+  // PostInterest,
   Scrap,
   User,
-  UserInterest,
+  // UserInterest,
   Comment,
 };
 export default sequelize;

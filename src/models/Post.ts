@@ -18,7 +18,7 @@ import {
   User,
   Concert,
   Challenge,
-  PostInterest,
+  // PostInterest,
   Like,
   Hashtag,
   Comment,
@@ -57,6 +57,9 @@ export default class Post extends Model {
   @Column
   generation: number;
 
+  @Column
+  interest: string;
+
   @BelongsTo(() => User)
   user: User;
 
@@ -66,8 +69,8 @@ export default class Post extends Model {
   @HasOne(() => Challenge)
   challenge: Challenge;
 
-  @HasMany(() => PostInterest)
-  interests: PostInterest[];
+  // @HasMany(() => PostInterest)
+  // interests: PostInterest[];
 
   @HasMany(() => Hashtag)
   hashtags: Hashtag[];
@@ -78,6 +81,12 @@ export default class Post extends Model {
   @HasMany(() => Like)
   likes: Like[];
 
+  @HasMany(() => Like)
+  userLikes: Like[];
+
   @HasMany(() => Scrap)
   scraps: Scrap[];
+
+  @HasMany(() => Scrap)
+  userScraps: Scrap[];
 }

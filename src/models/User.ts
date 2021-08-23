@@ -12,7 +12,7 @@ import {
   HasMany,
   HasOne,
 } from "sequelize-typescript";
-import { Comment, Like, Scrap, Post, UserInterest, Badge, Generation } from ".";
+import { Comment, Like, Scrap, Post, Badge, Generation } from ".";
 
 @Table({
   tableName: "User",
@@ -69,17 +69,17 @@ export default class User extends Model {
   @Column
   isRegist: Boolean;
 
+  @Column
+  interest: string;
+
   @HasMany(() => Like)
   likes: Like[];
 
   @HasMany(() => Scrap)
-  scraps: Scrap[];
+  scraps: Scrap[]; 
 
   @HasMany(() => Post)
   posts: Post[];
-
-  @HasMany(() => UserInterest)
-  userInterests: UserInterest[];
 
   @HasMany(() => Comment)
   comments: Comment[];

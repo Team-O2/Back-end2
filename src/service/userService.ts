@@ -1,5 +1,5 @@
 // models
-import { Admin, User, Badge, Concert, Challenge, Comment, Post, UserInterest } from "../models";
+import { Admin, User, Badge, Concert, Challenge, Comment, Post, Scrap, Like } from "../models";
 // library
 import period from "../library/date";
 import jwt from "jsonwebtoken";
@@ -7,11 +7,11 @@ import bcrypt from "bcryptjs";
 import config from "../config";
 import { emailSender } from "../library";
 import ejs from "ejs";
-import { ConnectionTimedOutError, QueryTypes } from "sequelize";
+import { ConnectionTimedOutError, Op, QueryTypes, Sequelize } from "sequelize";
 // DTO
 import sequelize from "../models";
-import { userDTO } from "../DTO";
-import { share } from "rxjs";
+import { userDTO, commentDTO } from "../DTO";
+import { async, share } from "rxjs";
 import { getModels } from "sequelize-typescript";
 import { userInfo } from "os";
 
@@ -21,16 +21,11 @@ import { userInfo } from "os";
  *  @access private
  */
 
-const getMypageInfo = async (userID: number) => {
+export const getMypageInfo = async (userID: number) => {
 
-  const userQuery = `SELECT nickname, isAdmin
-  FROM User
-  WHERE id= :userID`
-
-  const user: userDTO.IMypageUser[] =  await sequelize.query(userQuery, { 
-    type: QueryTypes.SELECT,
-    replacements: { userID: userID},
-    raw: true,
+  const user = await User.findOne({
+    where: { id: userID },
+    attributes: ['nickname', 'isAdmin']
   });
 
   const learnMyselfQuery = `SELECT G.conditionNum, G.writingNum, A.challengeStartDT, A.challengeEndDT, A.generation
@@ -99,34 +94,15 @@ const getMypageInfo = async (userID: number) => {
     shareTogether = null;
   } 
   
-  const couponBookQuery = `SELECT *
-   FROM Badge
-   WHERE id= :userID`
- 
-  const badge: userDTO.IBadge[] = await sequelize.query(couponBookQuery, { 
-     type: QueryTypes.SELECT,
-     replacements: { userID: userID },
-     raw: true,
+  const couponBook = await Badge.findOne({
+    where: { id: userID },
+    attributes: {
+      exclude: ['id']
+    }
   });
 
-  const couponBook: userDTO.ICouponBook = {
-    welcomeBadge: !!(badge[0].welcomeBadge),
-    firstJoinBadge: !!(badge[0].firstJoinBadge),
-    firstWriteBadge: !!(badge[0].firstWriteBadge),
-    oneCommentBadge: !!(badge[0].oneCommentBadge),
-    fiveCommentBadge: !!(badge[0].fiveCommentBadge),
-    oneLikeBadge: !!(badge[0].oneLikeBadge),
-    fiveLikeBadge: !!(badge[0].fiveLikeBadge),
-    loginBadge: !!(badge[0].loginBadge),
-    marketingBadge: !!(badge[0].marketingBadge),
-    learnMySelfScrapBadge: !!(badge[0].learnMySelfScrapBadge),
-    firstReplyBadge: !!(badge[0].firstReplyBadge),
-    concertScrapBadge: !!(badge[0].concertScrapBadge),
-    challengeBadge: badge[0].challengeBadge
-  }
-
   const mypageInfoRes: userDTO.mypageInfoResDTO = {
-    nickname: user[0].nickname,
+    nickname: user.nickname,
     learnMyselfAchieve,
     shareTogether,
     couponBook
@@ -141,65 +117,144 @@ const getMypageInfo = async (userID: number) => {
  *  @access private
  */
 
-const getUserInfo = async (userID: number) => {
+export const getUserInfo = async (userID: number) => {
   const user = await User.findOne({
     where: {
       id: userID
     },
-    include: {
-      model: UserInterest,
-      attributes: ['interest'],
-    },
-    attributes: ['isMarketing', 'img', 'id', 'email', 'nickname']
+    attributes: ['isMarketing', 'img', 'id', 'email', 'nickname', 'interest']
   });
 
-  const interest = user.userInterests.map((interest) => interest.interest)
-
   const userInfoRes: userDTO.userInfoResDTO = {
-    interest,
+    interest: user.interest.split(","),
     isMarketing: user.isMarketing,
     img: user.img,
     id: user.id,
     email: user.email,
     nickname: user.nickname
   }
-
   
   return userInfoRes;
-//  const interest = await UserInterest.findAll({
-//    where: {
-//      userID: userID
-//    },
-//    attributes: ['interest']
-//  });
+}
+
+
+/**
+ *  @User_마이페이지_콘서트_스크랩
+ *  @route GET user/mypage/concert?offset=@&limit=
+ *  @access private
+ */
+
+export const getMypageConcert = async (userID?: number, offset?: number, limit?: number) => {
+
+  if (!offset) {
+    offset = 0;
+  }
+
+  // 요청 부족
+  if (!limit) {
+    return -2;
+  }
+
+  const concertList = await Post.findAll({
+    order: [["createdAt", "DESC"]],
+    include: [
+      { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
+      { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
+      { model: Concert, required: true },
+      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}] },
+      { model: User, attributes: ['id', 'img', 'nickname']},
+      { model: Like, attributes: ['userID'], required: false, as: "likes"},
+      { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
+    ],
+    where: {
+      isDeleted: false
+    },
+    offset,
+    limit
+  });
+
+  // 스크랩한 글이 없을 때
+  if (!concertList) {
+    return -1;
+  }
+
+  const totalScrapNum = concertList.length;
+
+    const concerts: userDTO.getScrapConcertResDTO[] = await Promise.all(
+      concertList.map(async (concert) => {
+      // 댓글 형식 변환
+        let comment: commentDTO.IComment[] = [];
+        concert.comments.forEach((c) => {
+          if (c.level === 0) {
+            comment.unshift({
+              id: c.id,
+              userID: c.userID,
+              nickname: c.user.nickname,
+              img: c.user.img,
+              text: c.text,
+              children: [],
+            });
+          } else if (!c.isDeleted) {
+            comment[comment.length - 1].children.unshift({
+              id: c.id,
+              userID: c.userID,
+              nickname: c.user.nickname,
+              img: c.user.img,
+              text: c.text,
+            });
+          }
+        });
+
+      const returnData = {
+        id: concert.id,
+        createdAt: concert.createdAt,
+        updatedAt: concert.updatedAt,
+        userID: concert.userID,
+        nickname: concert.user.nickname,
+        authorNickname: concert.concert.authorNickname,
+        title: concert.concert.title,
+        videoLink: concert.concert.videoLink,
+        img: concert.user.img,
+        imgThumbnail: concert.concert.imgThumbnail,
+        text: concert.concert.text,
+        interest: concert.interest.split(","),
+        hashtag: concert.concert.hashtag
+          ? concert.concert.hashtag.slice(1).split("#")
+          : undefined,
+        likeNum: concert.likes.length,
+        scrapNum: concert.scraps.length,
+        commentNum: concert.comments.length,
+        comment,
+        isDeleted: concert.isDeleted,
+        isNotice: concert.concert.isNotice,
+      };
+
+
+      if (userID) {
+        const isLike= concert.userLikes.length? true: false;
+        return {
+          ...returnData,
+          isLike,
+          isScrap: true
+        };
+      }
+
+      return returnData;
+    })
+  );
+
+  const resData: userDTO.scrapConcertAllResDTO = {
+    concerts,
+    totalScrapNum,
+  };
+
+  return resData;
 
 }
 
 
-// /**
-//  *  @마이페이지_회원정보_조회
-//  *  @route Get user/userInfo
-//  *  @access private
-//  */
 
-// export const getUserInfo = async (userID) => {
-//   const user = await User.findById(userID);
-//   const resData: userInfoResDTO = {
-//     img: user.img,
-//     email: user.email,
-//     nickname: user.nickname,
-//     interest: user.interest,
-//     marpolicy: user.marpolicy,
-//     _id: user.id,
-//   };
-//   return resData;
-// };
 
-// /**
-//  *  @User_마이페이지_콘서트_스크랩
-//  *  @route Post user/mypage/concert
-//  *  @access private
-//  */
 
 // export const getMypageConcert = async (userID, offset, limit) => {
 //   if (!offset) {
@@ -293,13 +348,17 @@ const getUserInfo = async (userID: number) => {
 // };
 
 
-
 // /**
 //  *  @User_챌린지_신청하기
 //  *  @route Post user/register
 //  *  @body challengeCNT
 //  *  @access private
 //  */
+
+// export const posetRegister = async (userID: number, body: userDTO.registerReqDTO) => {
+
+// }
+
 
 // export const postRegister = async (userID, body: registerReqDTO) => {
 //   const challengeCNT = body.challengeCNT;
@@ -371,6 +430,7 @@ const getUserInfo = async (userID: number) => {
 //   }
 //   return;
 // };
+
 
 // /**
 //  *  @User_마이페이지_회고_스크랩
@@ -736,7 +796,8 @@ const getUserInfo = async (userID: number) => {
 
 const userService = {
   getMypageInfo,
-  getUserInfo
+  getUserInfo,
+  getMypageConcert
 };
 
 export default userService;

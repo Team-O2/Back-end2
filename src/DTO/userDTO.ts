@@ -1,4 +1,34 @@
+import { commentDTO } from ".";
+
 namespace userDTO {
+  export interface getScrapConcertResDTO {
+    id: number;
+    createdAt: Date;
+    updatedAt: Date;
+    userID: number;
+    nickname: string;
+    authorNickname: string;
+    title: string;
+    videoLink: string;
+    img: string;
+    imgThumbnail: string;
+    text: string;
+    interest: string[];
+    hashtag: string[];
+    isDeleted: Boolean;
+    isNotice: Boolean;
+    likeNum: number;
+    scrapNum: number;
+    commentNum: number;
+    comment: commentDTO.IComment[];
+    isLike?: Boolean;
+    isScrap?: Boolean;
+  }
+
+  export interface scrapConcertAllResDTO {
+    concerts: getScrapConcertResDTO[];
+    totalScrapNum: number;
+  }
 
   export interface IMypageUser {
     nickname: string;
@@ -59,13 +89,15 @@ namespace userDTO {
     concertScrapBadge: Boolean;
     challengeBadge: number;
   }
-  
+
   export interface mypageInfoResDTO {
     nickname: string;
     learnMyselfAchieve: ILearnMySelfAchieve | null;
     shareTogether: IShareTogether[] | null;
     couponBook: ICouponBook;
   }
+
+
 
   export interface userInfoResDTO {
     interest: string[];
@@ -74,6 +106,11 @@ namespace userDTO {
     id: number;
     email: string;
     nickname: string;
+  }
+  
+  
+  export interface mypageConcertResDTO {
+
   }
 }
 

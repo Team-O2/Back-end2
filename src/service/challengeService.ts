@@ -8,7 +8,7 @@ import {
   PostInterest,
   Scrap,
   User,
-  UserInfo,
+  Generation,
 } from "../models";
 // DTO
 import { challengeDTO, commentDTO } from "../DTO";
@@ -60,7 +60,7 @@ export const postChallenge = async (
   );
 
   // 유저의 writingCNT 증가
-  await UserInfo.increment("writingNum", { by: 1, where: { id: userID } });
+  await Generation.increment("writingNum", { by: 1, where: { userID } });
 
   // 첫 챌린지 회고 작성 시 배지 추가
   const badge = await Badge.findOne({ where: { id: userID } });
@@ -313,7 +313,7 @@ export const postScrap = async (challengeID: number, userID: number) => {
 
 /**
  *  @챌린지_전체_가져오기
- *  @route Get /
+ *  @route Get ?offset=&limit=&generation=
  *  @error
  *    1. limit이 없는 경우
  *    2. generation이 없는 경우
@@ -328,7 +328,6 @@ export const getChallengeAll = async (
   // isDelete = true 인 애들만 가져오기
   // offset 뒤에서 부터 가져오기
   // 최신순으로 정렬
-  // 댓글, 답글 populate
   // 댓글, 답글 최신순으로 정렬
   // public인 경우 isLike, isScrap 없음
 

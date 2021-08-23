@@ -51,44 +51,50 @@ const mypageInfoController = async (req: Request, res: Response) => {
 }
 
 
+/**
+ *  @User_마이페이지_콘서트_스크랩
+ *  @route Get user/mypage/concert
+ *  @access Private
+ */
 
-// /**
-//  *  @User_마이페이지_콘서트_스크랩
-//  *  @route Get user/mypage/concert
-//  *  @access Public
-//  */
+const mypageConcertController = async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  try {
+    const data: userDTO.scrapConcertAllResDTO | -1 | -2 = await userService.getMypageConcert(
+      req.body.userID.id,
+      Number(req.query.offset),
+      Number(req.query.limit)
+    );
 
-// const mypageConcertController = async (req: Request, res: Response) => {
-//   const errors = validationResult(req);
-//   if (!errors.isEmpty()) {
-//     return res.status(400).json({ errors: errors.array() });
-//   }
-//   try {
-//     const data = await userService.getMypageConcert(req.body.userID.id, req.query.offset, req.query.limit);
-//     response.dataResponse(res, returnCode.OK, "Share Together 스크랩 조회 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// }
+    // 1. No content
+    if (data == -1) {
+      response.basicResponse(
+        res,
+        returnCode.NO_CONTENT,
+        "스크랩한 Share Together가 없습니다."
+      );
+    }
+   // 2. No limit
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다");
+    }
+    // 3. 마이페이지 콘서트 조회 성공
+    else {
+      response.dataResponse(res, returnCode.OK, "Share Together 스크랩 조회 성공", data);
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+}
 
 
-// /**
-//  *  @마이페이지_회원정보_조회
-//  *  @route Get user/userInfo
-//  *  @access private
-//  */
-// router.get("/userInfo", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data: userInfoResDTO = await getUserInfo(req.body.userID.id);
-
-//     // 유저정보 조회 성공
-//     dataResponse(res, returnCode.OK, "유저정보 조회 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
 
 // /**
 //  *  @User_마이페이지_콘서트_스크랩
@@ -427,7 +433,8 @@ const mypageInfoController = async (req: Request, res: Response) => {
 
 const userController = {
   mypageInfoController,
-  userInfoController
+  userInfoController,
+  mypageConcertController
 };
 
 export default userController;
