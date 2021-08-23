@@ -59,7 +59,7 @@ const mypageInfoController = async (req: Request, res: Response) => {
 
 const scrapConcertController = async (req: Request, res: Response) => {
   try {
-    const data: userDTO.scrapConcertAllResDTO | -1 | -2 = await userService.getMypageConcert(
+    const data: userDTO.concertScrapResDTO | -1 | -2 = await userService.getConcertScrap(
       req.body.userID.id,
       Number(req.query.offset),
       Number(req.query.limit)
@@ -86,7 +86,11 @@ const scrapConcertController = async (req: Request, res: Response) => {
     }
   } catch (err) {
     console.error(err.message);
-    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(
+      res, 
+      returnCode.INTERNAL_SERVER_ERROR, 
+      "서버 오류"
+    );
   }
 }
 
@@ -99,7 +103,7 @@ const scrapConcertController = async (req: Request, res: Response) => {
 
 const scrapChallengeController = async (req: Request, res: Response) => {
   try {
-    const data: userDTO.scrapChallengeAllResDTO | -1 | -2 = await userService.getMypageChallenge(
+    const data: userDTO.challengeScrapResDTO | -1 | -2 = await userService.getChallengeScrap(
       req.body.userID.id,
       Number(req.query.offset),
       Number(req.query.limit)
@@ -107,25 +111,96 @@ const scrapChallengeController = async (req: Request, res: Response) => {
 
     // 1. No content
     if (data == -1) {
-      response.basicResponse(res, returnCode.NO_CONTENT, "스크랩한 learn Myself가 없습니다.");
+      response.basicResponse(
+        res,
+        returnCode.NO_CONTENT,
+        "스크랩한 learn Myself가 없습니다."
+      );
     }
 
     // 2. limit 없을 때
     if (data === -2) {
-      response.basicResponse(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+      response.basicResponse(
+        res, 
+        returnCode.NOT_FOUND, 
+        "요청 경로가 올바르지 않습니다"
+      );
     }
 
     // 3.마이페이지 콘서트 조회 성공
     else {
-      response.dataResponse(res, returnCode.OK, "learn Myself 스크랩 조회 성공", data);
+      response.dataResponse(
+        res, 
+        returnCode.OK, 
+        "learn Myself 스크랩 조회 성공", 
+        data
+      );
     }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(
+      res, 
+      returnCode.INTERNAL_SERVER_ERROR, 
+      "서버 오류"
+    );
+  }
+}
+
+
+/**
+ *  @마이페이지_내가_쓴_글
+ *  @route Get user/mypage/write/:userID
+ *  @access Private
+ */
+
+const getMyWritingsController = async (req: Request, res: Response) => {
+    try {
+    const data: userDTO.challengeResDTO[] | -1 | -2 = await userService.getMyWritings(
+      req.body.userID.id,
+      Number(req.query.offset),
+      Number(req.query.limit)
+    );
+
+    // 1. No content
+    if (data == -1) {
+      response.basicResponse(
+        res,
+        returnCode.NO_CONTENT,
+        "작성한 learn Myself가 없습니다."
+      );
+    }
+
+    // 2. No limit
+    if (data === -2) {
+      response.basicResponse(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
+    }
+
+    response.dataResponse(res, returnCode.OK, "내가 쓴 글 가져오기 성공", data);
   } catch (err) {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
 }
 
+// router.get("/mypage/write", auth, async (req: Request, res: Response) => {
+//   try {
+//     const data: IChallengeDTO[] | -1 = await getMyWritings(
+//       req.body.userID.id,
+//       req.query.offset,
+//       req.query.limit
+//     );
 
+//     // limit 없을 때
+//     if (data === -1) {
+//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
+//     }
+
+//     dataResponse(res, returnCode.OK, "내가 쓴 글 가져오기 성공", data);
+//   } catch (err) {
+//     console.error(err.message);
+//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//   }
+// });
 
 
 // import { Router, Request, Response } from "express";
@@ -312,31 +387,6 @@ const scrapChallengeController = async (req: Request, res: Response) => {
 //   }
 // );
 
-// /**
-//  *  @마이페이지_내가_쓴_글
-//  *  @route Get user/mypage/write/:userID
-//  *  @access Private
-//  */
-
-// router.get("/mypage/write", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data: IChallengeDTO[] | -1 = await getMyWritings(
-//       req.body.userID.id,
-//       req.query.offset,
-//       req.query.limit
-//     );
-
-//     // limit 없을 때
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
-//     }
-
-//     dataResponse(res, returnCode.OK, "내가 쓴 글 가져오기 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
 
 // /**
 //  *  @마이페이지_내가_쓴_댓글
@@ -394,7 +444,8 @@ const userController = {
   mypageInfoController,
   userInfoController,
   scrapConcertController,
-  scrapChallengeController
+  scrapChallengeController,
+  getMyWritingsController
 };
 
 export default userController;

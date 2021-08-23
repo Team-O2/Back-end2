@@ -1,7 +1,7 @@
 import { commentDTO } from ".";
 
 namespace userDTO {
-  export interface getScrapChallengeResDTO {
+  export interface challengeResDTO {
     id: number;
     generation: number;
     createdAt: Date;
@@ -21,12 +21,12 @@ namespace userDTO {
     isScrap?: Boolean;
   }
 
-  export interface scrapChallengeAllResDTO {
-    mypageChallengeScrap: getScrapChallengeResDTO[];
+  export interface challengeScrapResDTO {
+    mypageChallengeScrap: challengeResDTO[];
     totalScrapNum: number;
   }
 
-  export interface getScrapConcertResDTO {
+  export interface ConcertResDTO {
     id: number;
     createdAt: Date;
     updatedAt: Date;
@@ -50,8 +50,8 @@ namespace userDTO {
     isScrap?: Boolean;
   }
 
-  export interface scrapConcertAllResDTO {
-    mypageConcertScrap: getScrapConcertResDTO[];
+  export interface concertScrapResDTO {
+    mypageConcertScrap: ConcertResDTO[];
     totalScrapNum: number;
   }
 

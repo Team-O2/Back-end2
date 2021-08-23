@@ -144,7 +144,7 @@ export const getUserInfo = async (userID: number) => {
  *  @access private
  */
 
-export const getMypageConcert = async (userID?: number, offset?: number, limit?: number) => {
+export const getConcertScrap = async (userID?: number, offset?: number, limit?: number) => {
 
   if (!offset) {
     offset = 0;
@@ -180,7 +180,7 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
 
   const totalScrapNum = concertList.length;
 
-  const mypageConcertScrap: userDTO.getScrapConcertResDTO[] = await Promise.all(
+  const mypageConcertScrap: userDTO.ConcertResDTO[] = await Promise.all(
     concertList.map(async (concert) => {
       // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
@@ -235,7 +235,7 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
     })
   );
 
-  const resData: userDTO.scrapConcertAllResDTO = {
+  const resData: userDTO.concertScrapResDTO = {
     mypageConcertScrap,
     totalScrapNum
   };
@@ -251,7 +251,7 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
  *  @access private
 */
 
-export const getMypageChallenge = async (
+export const getChallengeScrap = async (
   userID?: number,
   offset?: number, 
   limit?: number
@@ -282,15 +282,16 @@ export const getMypageChallenge = async (
     offset,
     limit
   });
-  
+
     // 스크랩한 글이 없을 때
   if (!challengeList.length) {
-      return -1;
+    // console.log(challengeList.length);
+    return -1;
   }
 
   const totalScrapNum = challengeList.length;
 
-  const mypageChallengeScrap: userDTO.getScrapChallengeResDTO[] = await Promise.all(
+  const mypageChallengeScrap: userDTO.challengeResDTO[] = await Promise.all(
     challengeList.map(async (challenge) => {
       // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
@@ -339,7 +340,7 @@ export const getMypageChallenge = async (
     })
   );
 
-  const resData: userDTO.scrapChallengeAllResDTO = {
+  const resData: userDTO.challengeScrapResDTO = {
     mypageChallengeScrap,
     totalScrapNum
   };
@@ -347,72 +348,144 @@ export const getMypageChallenge = async (
   return resData;
 }
 
-// export const getMypageChallenge = async (userID, offset, limit) => {
+/**
+ *  @마이페이지_내가_쓴_글
+ *  @route Get user/mypage/write
+ *  @access private
+ */
+
+export const getMyWritings = async (userID?: number, offset?: number, limit?: number) => {
+
+  if (!offset) {
+    offset = 0;
+  }
+
+  // 1. No limit
+  if (!limit) {
+    return -2;
+  }
+
+  const challengeList = await Post.findAll({
+    order: [["createdAt", "DESC"]],
+    include: [
+      { model: Scrap, attributes: ['userID'], required: false, as: "scraps"},
+      { model: Scrap, attributes: ['userID'], where: { userID }, required: false, as: "userScraps"},
+      { model: Challenge, required: true },
+      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}] },
+      { model: User, attributes: ['id', 'img', 'nickname']},
+      { model: Like, attributes: ['userID'], required: false, as: "likes"},
+      { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
+    ],
+    where: {
+      userID,
+      isDeleted: false
+    },
+    offset,
+    limit
+  });
+  
+  // 2. No content
+  if (!challengeList.length) {
+    // console.log(challengeList.length);
+    return -1;
+  }
+
+  const resData: userDTO.challengeResDTO[] = await Promise.all(
+    challengeList.map(async (challenge) => {
+      // 댓글 형식 변환
+      let comment: commentDTO.IComment[] = [];
+      challenge.comments.forEach((c) => {
+        if (c.level === 0) {
+          comment.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+            children: [],
+          });
+        } else if (!c.isDeleted) {
+          comment[comment.length - 1].children.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+          });
+        }
+      });
+
+      const returnData = {
+        id: challenge.id,
+        generation: challenge.generation,
+        createdAt: challenge.createdAt,
+        updatedAt: challenge.updatedAt,
+        userID: challenge.userID,
+        nickname: challenge.user.nickname,
+        img: challenge.user.img,
+        good: challenge.challenge.good,
+        bad: challenge.challenge.bad,
+        learn: challenge.challenge.learn,
+        interest: challenge.interest.split(","),
+        likeNum: challenge.likes.length,
+        scrapNum: challenge.scraps.length,
+        commentNum: challenge.comments.length,
+        comment,
+        isLike: challenge.userLikes.length? true: false,
+        isScrap: challenge.userScraps.length? true: false,
+      };
+
+      return returnData;
+    })
+  );
+  
+  return resData;
+
+}
+
+// export const getMyWritings = async (userID, offset, limit) => {
+//   if (!limit) {
+//     return -1;
+//   }
+
 //   if (!offset) {
 //     offset = 0;
 //   }
 
-//   const user = await User.findById(userID);
+//   let challenges;
 
-//   if (!user.scraps.challengeScraps[0]) {
-//     return -1;
-//   }
-
-//   if (!limit) {
-//     return -2;
-//   }
-
-//   const challengeList: (IChallenge &
-//     Document<IUser, mongoose.Schema.Types.ObjectId> &
-//     Document<IComment, mongoose.Schema.Types.ObjectId>)[][] = await Promise.all(
-//     user.scraps.challengeScraps.map(async function (scrap) {
-//       let challengeScrap: (IChallenge &
-//         Document<IUser, mongoose.Schema.Types.ObjectId> &
-//         Document<IComment, mongoose.Schema.Types.ObjectId>)[] =
-//         await Challenge.find({ _id: scrap }, { isDeleted: false })
-//           .populate("user", ["nickname", "img"])
-//           .populate({
-//             path: "comments",
-//             select: { userID: 1, text: 1, isDeleted: 1 },
-//             options: { sort: { _id: -1 } },
-//             populate: [
-//               {
-//                 path: "childrenComment",
-//                 select: { userID: 1, text: 1, isDeleted: 1 },
-//                 options: { sort: { _id: -1 } },
-//                 populate: {
-//                   path: "userID",
-//                   select: ["nickname", "img"],
-//                 },
-//               },
-//               {
-//                 path: "userID",
-//                 select: ["nickname", "img"],
-//               },
-//             ],
-//           });
-//       return challengeScrap;
-//     })
-//   );
-//   const mypageChallenge: (IChallenge &
-//     Document<IUser, mongoose.Schema.Types.ObjectId> &
-//     Document<IComment, mongoose.Schema.Types.ObjectId>)[][] =
-//     challengeList.sort(function (a, b) {
-//       return dateToNumber(b[0].createdAt) - dateToNumber(a[0].createdAt);
+//   challenges = await Challenge.find({
+//     isDeleted: false,
+//     user: userID,
+//   })
+//     .skip(Number(offset))
+//     .limit(Number(limit))
+//     .sort({ _id: -1 })
+//     .populate("user", ["nickname", "img"])
+//     .populate({
+//       path: "comments",
+//       select: { userID: 1, text: 1, isDeleted: 1 },
+//       options: { sort: { _id: -1 } },
+//       populate: [
+//         {
+//           path: "childrenComment",
+//           select: { userID: 1, text: 1, isDeleted: 1 },
+//           options: { sort: { _id: -1 } },
+//           populate: {
+//             path: "userID",
+//             select: ["nickname", "img"],
+//           },
+//         },
+//         {
+//           path: "userID",
+//           select: ["nickname", "img"],
+//         },
+//       ],
 //     });
 
-//   var challengeScraps = [];
-
-//   for (var i = Number(offset); i < Number(offset) + Number(limit); i++) {
-//     const tmp = mypageChallenge[i];
-//     if (!tmp) {
-//       break;
-//     }
-//     challengeScraps.push(tmp[0]);
-//   }
-
 //   // 좋아요, 스크랩 여부 추가
-//   const mypageChallengeScrap: IChallengeDTO[] = challengeScraps.map((c) => {
+//   const user = await User.findById(userID);
+//   const resData: IChallengeDTO[] = challenges.map((c) => {
 //     if (
 //       user.scraps.challengeScraps.includes(c._id) &&
 //       user.likes.challengeLikes.includes(c._id)
@@ -431,14 +504,8 @@ export const getMypageChallenge = async (
 //     }
 //   });
 
-//   const resData: challengeScrapResDTO = {
-//     mypageChallengeScrap,
-//     totalScrapNum: mypageChallenge.length,
-//   };
 //   return resData;
 // };
-
-
 
 // /**
 //  *  @User_챌린지_신청하기
@@ -551,75 +618,6 @@ export const getMypageChallenge = async (
 //   return;
 // };
 
-// /**
-//  *  @마이페이지_내가_쓴_글
-//  *  @route Get user/mypage/write
-//  *  @error
-//  *    1.
-//  */
-// export const getMyWritings = async (userID, offset, limit) => {
-//   if (!limit) {
-//     return -1;
-//   }
-
-//   if (!offset) {
-//     offset = 0;
-//   }
-
-//   let challenges;
-
-//   challenges = await Challenge.find({
-//     isDeleted: false,
-//     user: userID,
-//   })
-//     .skip(Number(offset))
-//     .limit(Number(limit))
-//     .sort({ _id: -1 })
-//     .populate("user", ["nickname", "img"])
-//     .populate({
-//       path: "comments",
-//       select: { userID: 1, text: 1, isDeleted: 1 },
-//       options: { sort: { _id: -1 } },
-//       populate: [
-//         {
-//           path: "childrenComment",
-//           select: { userID: 1, text: 1, isDeleted: 1 },
-//           options: { sort: { _id: -1 } },
-//           populate: {
-//             path: "userID",
-//             select: ["nickname", "img"],
-//           },
-//         },
-//         {
-//           path: "userID",
-//           select: ["nickname", "img"],
-//         },
-//       ],
-//     });
-
-//   // 좋아요, 스크랩 여부 추가
-//   const user = await User.findById(userID);
-//   const resData: IChallengeDTO[] = challenges.map((c) => {
-//     if (
-//       user.scraps.challengeScraps.includes(c._id) &&
-//       user.likes.challengeLikes.includes(c._id)
-//     ) {
-//       return { ...c._doc, isLike: true, isScrap: true };
-//     } else if (user.scraps.challengeScraps.includes(c._id)) {
-//       return { ...c._doc, isLike: false, isScrap: true };
-//     } else if (user.likes.challengeLikes.includes(c._id)) {
-//       return { ...c._doc, isLike: true, isScrap: false };
-//     } else {
-//       return {
-//         ...c._doc,
-//         isLike: false,
-//         isScrap: false,
-//       };
-//     }
-//   });
-
-//   return resData;
-// };
 
 // /**
 //  *  @마이페이지_내가_쓴_댓글
@@ -791,8 +789,9 @@ export const getMypageChallenge = async (
 const userService = {
   getMypageInfo,
   getUserInfo,
-  getMypageConcert,
-  getMypageChallenge
+  getConcertScrap,
+  getChallengeScrap,
+  getMyWritings,
 };
 
 export default userService;
