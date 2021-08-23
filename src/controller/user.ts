@@ -300,12 +300,9 @@ const patchPWController = async (req: Request, res: Response) => {
 
 const deleteMyCommentsController = async (req: Request, res: Response) => {
   try {
-    const comments: userDTO.deleteCommentsReqDTO = req.body;
+    const body: userDTO.deleteCommentsReqDTO = req.body;
 
-    const data = await userService.deleteMyComments(
-      req.body.userID.id,
-      comments
-    );
+    const data = await userService.deleteMyComments(req.body.userID.id, body);
 
     console.log("data", data);
 
@@ -401,151 +398,115 @@ const deleteChallengeScrapController = async (req: Request, res: Response) => {
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
 };
-// router.delete(
-//   "/mypage/challenge/:id",
-//   auth,
-//   async (req: Request, res: Response) => {
-//     try {
-//       const data = await deleteMypageChallenge(
-//         req.body.userID.id,
-//         req.params.id
-//       );
-//       // 회고 id가 잘못된 경우
-//       if (data === -1) {
-//         response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//       }
-//       // 스크랩 하지 않은 글일 경우
-//       if (data === -2) {
-//         response(res, returnCode.BAD_REQUEST, "스크랩 하지 않은 글입니다");
-//       }
-//       // 마이페이지 회고 스크랩 취소
-//       response(res, returnCode.OK, "스크랩 취소 성공");
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
 
-// /**
-//  *  @마이페이지_회원정보_수정
-//  *  @route Patch user
-//  *  @access private
-//  */
+/**
+ *  @User_챌린지_신청하기
+ *  @route Post user/register
+ *  @body challengeNum: number
+ *  @access private
+ *  @error
+ *    1. 요청 바디 부족
+ *    2. 유저 id가 관리자 id임
+ *    3. 신청 기간이 아님
+ *    4. 이미 신청이 완료된 사용자
+ *    5. 신청 인원 초과
+ */
 
-// router.patch(
-//   "/userInfo",
-//   upload.fields([{ name: "img", maxCount: 1 }]),
-//   auth,
-//   async (req: Request, res: Response) => {
-//     try {
-//       const url = {
-//         img: (req as any).files.img ? (req as any).files.img[0].location : "",
-//       };
-//       const data = await patchInfo(req.body.userID.id, req.body, url);
+const postRegisterController = async (req: Request, res: Response) => {
+  try {
+    const body: userDTO.registerReqDTO = req.body;
+    const data = await userService.postRegister(req.body.userID.id, body);
+    // 1. 요청 바디 부족
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다."
+      );
+    }
+    // 2. 유저 id가 관리자 id임
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "관리자 아이디는 신청할 수 없습니다"
+      );
+    }
+    // 3. 신청 기간이 아님
+    else if (data === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "신청 기간이 아닙니다."
+      );
+    }
+    // 4. 이미 신청이 완료된 사용자
+    else if (data == -4) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "이미 신청이 완료된 사용자."
+      );
+    }
+    // 5. 신청 인원 초과
+    else if (data === -5) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "신청 인원이 초과되었습니다"
+      );
+    }
+    // 챌린지 신청 성공
+    else {
+      response.basicResponse(res, returnCode.OK, "챌린지 신청 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-//       // 요청 바디가 부족할 경우
-//       if (data === -1) {
-//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
-//       } else if (data === -2) {
-//         response(res, returnCode.CONFLICT, "중복된 닉네임 입니다");
-//       }
+/**
+ *  @마이페이지_회원정보_수정
+ *  @route Patch user/userInfo
+ *  @access private
+ *  @error
+ *    1. 요청 바디 부족
+ *    2. 닉네임 중복
+ */
 
-//       dataResponse(res, returnCode.OK, "회원정보 수정 성공", data);
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
+const patchUserInfoController = async (req: Request, res: Response) => {
+  try {
+    const url = {
+      img: (req as any).files.img ? (req as any).files.img[0].location : "",
+    };
+    const data = await userService.patchUserInfo(
+      req.body.userID.id,
+      req.body,
+      url
+    );
 
-// import { Router, Request, Response } from "express";
-// // libraries
-// import { returnCode } from "../library/returnCode";
-// import { response, dataResponse } from "../library/response";
-// // middlewares
-// import auth from "../middleware/auth";
-// import publicAuth from "../middleware/publicAuth";
-// // modules
-// const upload = require("../modules/upload");
-// // services
-// import {
-//   postRegister,
-//   getMypageConcert,
-//   getMypageChallenge,
-//   deleteMypageChallenge,
-//   getMypageInfo,
-//   getMyWritings,
-//   getMyComments,
-//   deleteMyComments,
-//   getUserInfo,
-//   patchInfo,
-//   patchPW,
-// } from "../service/userService";
-// // DTO
-// import mongoose, { Document } from "mongoose";
-// import {
-//   challengeScrapResDTO,
-//   concertScrapResDTO,
-//   myCommentsResDTO,
-//   mypageInfoResDTO,
-//   newPwReqDTO,
-//   registerReqDTO,
-//   userInfoResDTO,
-// } from "../DTO/userDTO";
-// import { IChallengeDTO } from "../DTO/challengeDTO";
-// // interface
-// import { IUser } from "../interfaces/IUser";
-// import { IComment } from "../interfaces/IComment";
-// import { IChallenge } from "../interfaces/IChallenge";
-
-// const router = Router();
-
-// /**
-//  *  @User_챌린지_신청하기
-//  *  @route Post user/register
-//  *  @access Public
-//  */
-
-// router.post("/register", auth, async (req: Request, res: Response) => {
-//   try {
-//     const body: registerReqDTO = req.body;
-//     const data = await postRegister(req.body.userID.id, body);
-
-//     // 요청 바디가 부족할 경우
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
-//     // 유저 id가 관리자 아이디임
-//     else if (data === -2) {
-//       response(
-//         res,
-//         returnCode.BAD_REQUEST,
-//         "관리자 아이디는 신청할 수 없습니다"
-//       );
-//     } else if (data === -3) {
-//       response(res, returnCode.BAD_REQUEST, "신청 기간이 아닙니다.");
-//     }
-//     // 이미 신청된 아이디일 경우
-//     else if (data == -4) {
-//       response(res, returnCode.BAD_REQUEST, "이미 신청이 완료된 사용자.");
-//     }
-//     // 신청 인원이 초과되었을 경우
-//     else if (data === -5) {
-//       response(res, returnCode.BAD_REQUEST, "신청 인원이 초과되었습니다");
-//     }
-
-//     // 챌린지 신청 성공
-//     else {
-//       response(res, returnCode.OK, "챌린지 신청 성공");
-//     }
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
-// module.exports = router;
+    // 1. 요청 바디 부족
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다."
+      );
+    }
+    // 2. 닉네임 중복
+    else if (data === -2) {
+      response.basicResponse(res, returnCode.CONFLICT, "중복된 닉네임 입니다.");
+    }
+    // 회원정보 수정 성공
+    else {
+      response.dataResponse(res, returnCode.OK, "회원정보 수정 성공", data);
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 const userController = {
   mypageInfoController,
@@ -557,6 +518,8 @@ const userController = {
   patchPWController,
   deleteMyCommentsController,
   deleteChallengeScrapController,
+  postRegisterController,
+  patchUserInfoController,
 };
 
 export default userController;

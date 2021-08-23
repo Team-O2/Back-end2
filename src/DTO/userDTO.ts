@@ -77,6 +77,17 @@ namespace userDTO {
     commentID: number[];
   }
 
+  export interface registerReqDTO {
+    challengeNum: number;
+  }
+
+  export interface userInfoReqDTO {
+    nickname: string;
+    interest: string[];
+    isMarketing: Boolean;
+    img?: File;
+  }
+
   export interface IMypageUser {
     nickname: string;
     isAdmin: Boolean;
@@ -170,10 +181,6 @@ export default userDTO;
 //   _id?: mongoose.Schema.Types.ObjectId;
 //   nickname?: string;
 //   img?: string;
-// }
-
-// export interface registerReqDTO {
-//   challengeCNT: number;
 // }
 
 // export interface ILearnMySelfAchieve {

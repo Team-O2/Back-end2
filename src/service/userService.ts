@@ -9,8 +9,10 @@ import {
   Post,
   Scrap,
   Like,
+  Generation,
 } from "../models";
 // library
+import stringToArray from "../library/array";
 import period from "../library/date";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -25,6 +27,7 @@ import { async, share } from "rxjs";
 import { getModels } from "sequelize-typescript";
 import { userInfo } from "os";
 import { CodeArtifact } from "aws-sdk";
+import moment from "moment";
 
 /**
  *  @User_마이페이지_Info
@@ -701,7 +704,7 @@ export const getMyComments = async (
  *    2. 현재 비밀번호와 일치하지 않음
  */
 
-export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
+export const patchPW = async (userID: number, body?: userDTO.newPwReqDTO) => {
   const { password, newPassword } = body;
 
   // 1. 요청 바디 부족
@@ -743,7 +746,7 @@ export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
  */
 
 export const deleteMyComments = async (
-  userID?: number,
+  userID: number,
   comments?: userDTO.deleteCommentsReqDTO
 ) => {
   // 1. 요청 바디가 부족할 경우
@@ -793,7 +796,7 @@ export const deleteMyComments = async (
 
 export const deleteChallengeScrap = async (
   userID: number,
-  challengeID: number
+  challengeID?: number
 ) => {
   // 1. no challengeID
   if (!challengeID) {
@@ -821,184 +824,152 @@ export const deleteChallengeScrap = async (
       where: { postID: challengeID, userID: userID },
     });
   }
-  return challenge;
-
-  // await User.update(
-  //   { password: encrpytPW },
-  //   { where: { id: userID } },
-  // );
+  return;
 };
 
-// export const deleteMypageChallenge = async (userID, challengeID) => {
-//   // 1. 회고 id 잘못됨
-//   let challenge = await Challenge.findById(challengeID);
-//   if (!challenge) {
-//     return -1;
-//   }
+/**
+ *  @User_챌린지_신청하기
+ *  @route Post user/register
+ *  @body challengeNum :number
+ *  @access private
+ *  @error
+ *    1. 요청 바디 부족
+ *    2. 유저 id가 관리자 id임
+ *    3. 신청 기간이 아님
+ *    4. 이미 신청이 완료된 사용자
+ *    5. 신청 인원 초과
+ */
 
-//   const user = await User.findById(userID);
-//   // 2. 스크랩하지 않은 글일 경우
-//   if (!user.scraps.challengeScraps.includes(challengeID)) {
-//     return -2;
-//   }
+export const postRegister = async (
+  userID: number,
+  body?: userDTO.registerReqDTO
+) => {
+  // 1. 요청 바디 부족
+  if (!body.challengeNum) {
+    return -1;
+  }
 
-//   // 유저 scraps 필드에 챌린지 id 삭제
-//   const idx = user.scraps.challengeScraps.indexOf(challengeID);
-//   user.scraps.challengeScraps.splice(idx, 1);
-//   await user.save();
+  const user = await User.findOne({
+    where: { id: userID },
+    attributes: ["isAdmin"],
+  });
 
-//   return;
-// };
+  // 2. 유저 id가 관리자 id임
+  if (user.isAdmin) {
+    return -2;
+  }
 
-// /**
-//  *  @마이페이지_회원정보_수정
-//  *  @route Patch user/userInfo
-//  *  @access private
-//  */
+  // 신청 기간 확인
+  const admin = await Admin.findOne({
+    where: {
+      registerStartDT: {
+        [Op.lte]: moment().toDate(),
+      },
+      registerEndDT: {
+        [Op.gte]: moment().toDate(),
+      },
+    },
+  });
 
-// export const patchInfo = async(userID?: number, body, url) => {
-//   let imgUrl = url.img;
-//   const { nickname, isMarketing } = body;
-//   let rawInterest = body.interest;
-//   let interest;
+  // 3. 신청 기간이 아님
+  if (!admin) {
+    return -3;
+  }
 
-// }
-// export const patchInfo = async (userID, body, url) => {
-//   var imgUrl = url.img;
-//   const { nickname, marpolicy } = body;
-//   let rawInterest = body.interest;
-//   var interest;
-//   if (rawInterest !== "") {
-//     interest = stringToArray(rawInterest);
-//   } else {
-//     interest = rawInterest;
-//   }
-//   const user = await User.findById(userID);
+  const generation = await Generation.findOne({
+    where: { generation: admin.id, userID },
+  });
 
-//   // 1. 요청 바디 부족
-//   if (
-//     nickname === undefined ||
-//     interest === undefined ||
-//     marpolicy === undefined
-//   ) {
-//     return -1;
-//   }
+  // 4. 이미 신청이 완료된 사용자
+  if (generation) {
+    return -4;
+  }
 
-//   if (user.nickname !== nickname) {
-//     // 3. 닉네임 중복
-//     let checkNickname = await User.findOne({ nickname });
-//     if (checkNickname) {
-//       return -2;
-//     }
-//   }
+  await Admin.update(
+    { applyNum: admin.applyNum + 1 },
+    { where: { id: admin.id } }
+  );
 
-//   if (imgUrl !== "") {
-//     await user.update({ $set: { img: imgUrl } });
-//   }
+  // 5. 신청 인원 초과
+  if (admin.applyNum > admin.limitNum) {
+    return -5;
+  }
 
-//   if (nickname !== "") {
-//     await user.update({ $set: { nickname: nickname } });
-//   }
+  await Generation.create({
+    generation: admin.id,
+    userID,
+    challengeNum: body.challengeNum,
+  });
 
-//   if (interest !== "") {
-//     await user.update({ $set: { interest: interest } });
-//   }
+  await Badge.update({ firstJoinBadge: true }, { where: { id: userID } });
+  return;
+};
 
-//   if (marpolicy !== "") {
-//     await user.update({ $set: { marpolicy: marpolicy } });
-//   }
+/**
+ *  @마이페이지_회원정보_수정
+ *  @route Patch user/userInfo
+ *  @access private
+ *  @error
+ *    1. 요청 바디 부족
+ *    2. 닉네임 중복
+ */
 
-//   // 마케팅 동의(marpolicy == true) 시 뱃지 발급
-//   if (marpolicy) {
-//     await Badge.findOneAndUpdate(
-//       { user: user.id },
-//       { $set: { marketingBadge: true } }
-//     );
-//   }
-//   return;
-// };
+export const patchUserInfo = async (
+  userID: number,
+  body: userDTO.userInfoReqDTO,
+  url?
+) => {
+  let { nickname, interest, isMarketing } = body;
 
-// /**
-//  *  @User_챌린지_신청하기
-//  *  @route Post user/register
-//  *  @body challengeCNT
-//  *  @access private
-//  */
+  // 1. 요청 바디 부족
+  if (
+    nickname === undefined ||
+    interest === undefined ||
+    isMarketing === undefined
+  ) {
+    return -1;
+  }
+  const nicknameUser = await User.findOne({
+    where: { nickname, id: { [Op.ne]: userID } },
+  });
+  // 2. 닉네임 중복
+  if (nicknameUser) {
+    return -2;
+  }
 
-// export const posetRegister = async (userID: number, body: userDTO.registerReqDTO) => {
+  let newInterest = "";
+  const user = await User.findOne({
+    where: { id: userID },
+  });
 
-// }
+  // 이미지 변경이 존재하는 경우
+  if (url && url.img !== "") {
+    await User.update(
+      {
+        nickname,
+        interest: interest.join(),
+        isMarketing,
+        img: url.img,
+      },
+      { where: { id: userID } }
+    );
+  } else {
+    await User.update(
+      {
+        nickname,
+        interest: interest.join(),
+        isMarketing,
+      },
+      { where: { id: userID } }
+    );
+  }
 
-// export const postRegister = async (userID, body: registerReqDTO) => {
-//   const challengeCNT = body.challengeCNT;
+  if (isMarketing) {
+    await Badge.update({ marketingBadge: true }, { where: { id: userID } });
+  }
 
-//   // 1. 요청 바디 부족
-//   if (!challengeCNT) {
-//     return -1;
-//   }
-
-//   // 2. 유저 id가 관리자 아이디임
-//   let user = await User.findById(userID);
-//   if (user.userType === 1) {
-//     return -2;
-//   }
-
-//   // 신청 기간을 확인
-//   let dateNow = new Date();
-//   const admin = await Admin.findOne({
-//     $and: [
-//       { registerStartDT: { $lte: dateNow } },
-//       { registerEndDT: { $gte: dateNow } },
-//     ],
-//   });
-
-//   // 3. 신청 기간이 아님
-//   if (!admin) {
-//     return -3;
-//   }
-
-//   // 4. 이미 신청이 완료된 사용자
-//   if (user.isRegist) {
-//     return -4;
-//   }
-
-//   // 5. 신청 인원을 초과함
-//   if (admin.applyNum > admin.limitNum) {
-//     return -5;
-//   }
-
-//   // 신청 성공
-//   // applyNum 증가
-//   await Admin.findOneAndUpdate(
-//     {
-//       $and: [
-//         { registerStartDT: { $lte: dateNow } },
-//         { registerEndDT: { $gte: dateNow } },
-//       ],
-//     },
-//     {
-//       $inc: { applyNum: 1 },
-//     }
-//   );
-
-//   // isRegist true
-//   await user.update({ $set: { isRegist: true } });
-//   await user.update({ $set: { challengeCNT: challengeCNT } });
-
-//   // 첫 챌린지 참여 시 뱃지 부여
-//   const badge = await Badge.findOne(
-//     { user: userID },
-//     { firstJoinBadge: true, _id: false }
-//   );
-
-//   if (!badge.firstJoinBadge) {
-//     await Badge.findOneAndUpdate(
-//       { user: userID },
-//       { $set: { firstJoinBadge: true } }
-//     );
-//   }
-//   return;
-// };
+  return;
+};
 
 const userService = {
   getMypageInfo,
@@ -1010,6 +981,8 @@ const userService = {
   patchPW,
   deleteMyComments,
   deleteChallengeScrap,
+  postRegister,
+  patchUserInfo,
 };
 
 export default userService;
