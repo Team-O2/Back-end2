@@ -13,15 +13,7 @@ import {
   HasOne,
   HasMany,
 } from "sequelize-typescript";
-import {
-  Scrap,
-  User,
-  Concert,
-  Challenge,
-  PostInterest,
-  Like,
-  Comment,
-} from ".";
+import { Scrap, User, Concert, Challenge, Like, Comment } from ".";
 
 @Table({
   tableName: "Post",
@@ -68,15 +60,18 @@ export default class Post extends Model {
   @HasOne(() => Challenge)
   challenge: Challenge;
 
-  @HasMany(() => PostInterest)
-  interests: PostInterest[];
-
   @HasMany(() => Comment)
   comments: Comment[];
 
   @HasMany(() => Like)
   likes: Like[];
 
+  @HasMany(() => Like)
+  userLikes: Like[];
+
   @HasMany(() => Scrap)
   scraps: Scrap[];
+
+  @HasMany(() => Scrap)
+  userScraps: Scrap[];
 }
