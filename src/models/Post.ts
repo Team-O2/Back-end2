@@ -66,11 +66,11 @@ export default class Post extends Model {
   @HasMany(() => Like)
   likes: Like[];
 
-  @HasMany(() => Scrap)
-  scraps: Scrap[];
-
   @HasMany(() => Like)
   userLikes: Like[];
+
+  @HasMany(() => Scrap)
+  scraps: Scrap[];
 
   @HasMany(() => Scrap)
   userScraps: Scrap[];

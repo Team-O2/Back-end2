@@ -83,9 +83,6 @@ export default class User extends Model {
   @HasMany(() => Post)
   posts: Post[];
 
-  // @HasMany(() => UserInterest)
-  // userInterests: UserInterest[];
-
   @HasMany(() => Comment)
   comments: Comment[];
 
