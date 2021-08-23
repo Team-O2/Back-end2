@@ -6,7 +6,6 @@ import Badge from "./Badge";
 import Challenge from "./Challenge";
 import Concert from "./Concert";
 import Generation from "./Generation";
-import Hashtag from "./Hashtag";
 import Like from "./Like";
 import Post from "./Post";
 // import PostInterest from "./PostInterest";
@@ -38,13 +37,10 @@ sequelize.addModels([
   Challenge,
   Concert,
   Generation,
-  Hashtag,
   Like,
   Post,
-  // PostInterest,
   Scrap,
   User,
-  // UserInterest,
   Comment,
 ]);
 
@@ -54,13 +50,10 @@ export {
   Challenge,
   Concert,
   Generation,
-  Hashtag,
   Like,
   Post,
-  // PostInterest,
   Scrap,
   User,
-  // UserInterest,
   Comment,
 };
 export default sequelize;

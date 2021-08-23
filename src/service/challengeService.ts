@@ -57,11 +57,10 @@ const postChallenge = async (
   await Generation.increment("writingNum", { by: 1, where: { userID } });
 
   // 첫 챌린지 회고 작성 시 배지 추가
-  const badge = await Badge.findOne({ where: { id: userID } });
-  if (!badge.firstWriteBadge) {
-    badge.firstWriteBadge = true;
-    await badge.save();
-  }
+  await Badge.update(
+    { firstWriteBadge: true },
+    { where: { id: userID, firstWriteBadge: false } }
+  );
 
   // table join
   const challenge = await Post.findOne({
@@ -132,10 +131,11 @@ const postComment = async (
     return -2;
   }
 
-  let newComment;
   // 대댓글인 경우
   if (parentID) {
-    const parentComment = await Comment.findOne({ where: { id: parentID } });
+    const parentComment = await Comment.findOne({
+      where: { id: parentID, isDeleted: false },
+    });
 
     // 3. 부모 댓글 id 값이 유효하지 않을 경우
     if (!parentComment) {
@@ -143,28 +143,27 @@ const postComment = async (
     }
 
     // 대댓글 생성
-    newComment = await Comment.create({
+    await Comment.create({
       userID,
       postID: challengeID,
+      parentID,
       text,
       level: 1,
-      order: parentComment.groupNum,
     });
-    await Comment.increment("groupNum", { by: 1, where: { id: parentID } });
 
     // 첫 답글 작성 시 뱃지 추가
-    const badge = await Badge.findOne({ where: { id: userID } });
-    if (!badge.firstReplyBadge) {
-      badge.firstReplyBadge = true;
-      await badge.save();
-    }
+    await Badge.update(
+      { firstReplyBadge: true },
+      {
+        where: { id: userID, firstReplyBadge: false },
+      }
+    );
   } else {
     // 댓글인 경우
-    newComment = await Comment.create({
+    await Comment.create({
       userID,
       postID: challengeID,
       text,
-      order: 0,
     });
   }
 
@@ -275,11 +274,10 @@ const postScrap = async (challengeID: number, userID: number) => {
   });
 
   // 게시글 첫 스크랩 시 배지 추가
-  const badge = await Badge.findOne({ where: { id: userID } });
-  if (!badge.learnMySelfScrapBadge) {
-    badge.learnMySelfScrapBadge = true;
-    await badge.save();
-  }
+  await Badge.update(
+    { learnMySelfScrapBadge: true },
+    { where: { id: userID, learnMySelfScrapBadge: false } }
+  );
 
   return;
 };
@@ -318,49 +316,77 @@ const getChallengeAll = async (
     offset = 0;
   }
 
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Challenge, required: true },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
+        {
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
+        },
+      ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
   const challengeList = await Post.findAll({
-    order: [["createdAt", "DESC"]],
+    order: [
+      ["createdAt", "DESC"],
+      ["comments", "id", "DESC"],
+    ],
     where: {
       isDeleted: false,
       generation,
     },
-    include: [
-      { model: Challenge, required: true },
-      User,
-      { model: Comment, include: [User] },
-      Like,
-      Scrap,
-    ],
+    include,
     limit,
     offset,
   });
 
-  const resData: challengeDTO.getChallengeResDTO[] = await Promise.all(
-    challengeList.map(async (challenge) => {
+  const resData: challengeDTO.getChallengeResDTO[] = challengeList.map(
+    (challenge) => {
       // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
       challenge.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+        const children = c.children.map((child) => ({
+          id: child.id,
+          userID: child.userID,
+          nickname: child.user.nickname,
+          img: child.user.img,
+          text: child.text,
+          isDeleted: child.isDeleted,
+        }));
+
+        comment.push({
+          id: c.id,
+          userID: c.userID,
+          nickname: c.user.nickname,
+          img: c.user.img,
+          text: c.text,
+          children,
+          isDeleted: c.isDeleted,
+        });
       });
 
-      const returnData = {
+      let returnData: challengeDTO.getChallengeResDTO = {
         id: challenge.id,
         generation: challenge.generation,
         createdAt: challenge.createdAt,
@@ -378,23 +404,16 @@ const getChallengeAll = async (
         comment,
       };
 
-      if (userID) {
-        const isLike = await Like.findOne({
-          where: { userID, postID: challenge.id },
-        });
-        const isScrap = await Scrap.findOne({
-          where: { postID: challenge.id },
-        });
-
-        return {
+      // userID가 있는 경우
+      if (userID)
+        returnData = {
           ...returnData,
-          isLike: isLike ? true : false,
-          isScrap: isScrap ? true : false,
+          isLike: challenge.userLikes.length ? true : false,
+          isScrap: challenge.userScraps.length ? true : false,
         };
-      }
 
       return returnData;
-    })
+    }
   );
 
   return resData;
@@ -447,7 +466,7 @@ const getChallengeSearch = async (
   }
 
   // where option
-  let where: any = {
+  let where: sequelize.WhereOptions<any> = {
     isDeleted: false,
     generation,
   };
@@ -477,46 +496,75 @@ const getChallengeSearch = async (
       "$user.id$": { [Op.eq]: userID },
     };
 
+  // include option
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Challenge, required: true },
+    { model: User, required: true },
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
+        {
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
+        },
+      ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
   const challengeList = await Post.findAll({
-    order: [["createdAt", "DESC"]],
-    where,
-    include: [
-      { model: Challenge, required: true },
-      { model: User, required: true },
-      { model: Comment, include: [User] },
-      Like,
-      Scrap,
+    order: [
+      ["createdAt", "DESC"],
+      ["comments", "id", "DESC"],
     ],
+    where,
+    include,
     limit,
     offset,
   });
 
-  const resData: challengeDTO.getChallengeResDTO[] = await Promise.all(
-    challengeList.map(async (challenge) => {
+  const resData: challengeDTO.getChallengeResDTO[] = challengeList.map(
+    (challenge) => {
       // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
       challenge.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+        const children = c.children.map((child) => ({
+          id: child.id,
+          userID: child.userID,
+          nickname: child.user.nickname,
+          img: child.user.img,
+          text: child.text,
+          isDeleted: child.isDeleted,
+        }));
+
+        comment.push({
+          id: c.id,
+          userID: c.userID,
+          nickname: c.user.nickname,
+          img: c.user.img,
+          text: c.text,
+          children,
+          isDeleted: c.isDeleted,
+        });
       });
 
-      const returnData = {
+      let returnData: challengeDTO.getChallengeResDTO = {
         id: challenge.id,
         generation: challenge.generation,
         createdAt: challenge.createdAt,
@@ -534,23 +582,16 @@ const getChallengeSearch = async (
         comment,
       };
 
-      if (userID) {
-        const isLike = await Like.findOne({
-          where: { userID, postID: challenge.id },
-        });
-        const isScrap = await Scrap.findOne({
-          where: { postID: challenge.id },
-        });
-
-        return {
+      // userID 있는 경우
+      if (userID)
+        returnData = {
           ...returnData,
-          isLike: isLike ? true : false,
-          isScrap: isScrap ? true : false,
+          isLike: challenge.userLikes.length ? true : false,
+          isScrap: challenge.userScraps.length ? true : false,
         };
-      }
 
       return returnData;
-    })
+    }
   );
 
   return resData;
@@ -567,12 +608,30 @@ const getChallengeOne = async (challengeID: number, userID: number) => {
   // isDelete = fasle 인 애들만 가져오기
   const challenge = await Post.findOne({
     where: { isDeleted: false, "$challenge.id$": challengeID },
+    order: [["comments", "id", "DESC"]],
     include: [
       { model: Challenge, required: true },
       User,
-      { model: Comment, include: [User] },
-      Like,
-      Scrap,
+      {
+        model: Comment,
+        as: "comments",
+        required: false,
+        where: { level: 0 },
+        include: [
+          User,
+          {
+            model: Comment,
+            as: "children",
+            separate: true,
+            order: [["id", "DESC"]],
+            include: [User],
+          },
+        ],
+      },
+      { model: Like, as: "likes", required: false },
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "scraps", required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
     ],
   });
 
@@ -583,34 +642,27 @@ const getChallengeOne = async (challengeID: number, userID: number) => {
 
   let comment: commentDTO.IComment[] = [];
   challenge.comments.forEach((c) => {
-    if (c.level === 0) {
-      comment.unshift({
-        id: c.id,
-        userID: c.userID,
-        nickname: c.user.nickname,
-        img: c.user.img,
-        text: c.text,
-        children: [],
-      });
-    } else if (!c.isDeleted) {
-      comment[comment.length - 1].children.unshift({
-        id: c.id,
-        userID: c.userID,
-        nickname: c.user.nickname,
-        img: c.user.img,
-        text: c.text,
-      });
-    }
+    const children = c.children.map((child) => ({
+      id: child.id,
+      userID: child.userID,
+      nickname: child.user.nickname,
+      img: child.user.img,
+      text: child.text,
+      isDeleted: child.isDeleted,
+    }));
+
+    comment.push({
+      id: c.id,
+      userID: c.userID,
+      nickname: c.user.nickname,
+      img: c.user.img,
+      text: c.text,
+      children,
+      isDeleted: c.isDeleted,
+    });
   });
 
-  const isLike = await Like.findOne({
-    where: { userID, postID: challenge.id },
-  });
-  const isScrap = await Scrap.findOne({
-    where: { postID: challenge.id },
-  });
-
-  const returnData: challengeDTO.getChallengeResDTO = {
+  const returnData = {
     id: challenge.id,
     generation: challenge.generation,
     createdAt: challenge.createdAt,
@@ -624,10 +676,10 @@ const getChallengeOne = async (challengeID: number, userID: number) => {
     interest: challenge.interest.split(","),
     likeNum: challenge.likes.length,
     scrapNum: challenge.scraps.length,
+    isLike: challenge.userLikes.length ? true : false,
+    isScrap: challenge.userScraps.length ? true : false,
     commentNum: challenge.comments.length,
     comment,
-    isLike: isLike ? true : false,
-    isScrap: isScrap ? true : false,
   };
 
   return returnData;
