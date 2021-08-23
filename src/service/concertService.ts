@@ -5,11 +5,11 @@ import { Badge, Concert, Comment, Like, Post, Scrap, User } from "../models";
 
 // DTO
 import { concertDTO, commentDTO } from "../DTO";
-import { NumberAttributeValue } from "aws-sdk/clients/dynamodbstreams";
 
 /**
  *  @오투콘서트_전체_가져오기
  *  @route Get /concert?offset=@&limit=
+ *  @access public
  *  @error
  *    1. limit이 없는 경우
  */
@@ -33,93 +33,109 @@ export const getConcertAll = async (
     offset = 0;
   }
 
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Concert, required: true, where: { isNotice: false } },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
+        {
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
+        },
+      ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
   const concertList = await Post.findAll({
-    order: [["createdAt", "DESC"]],
+    order: [
+      ["createdAt", "DESC"],
+      ["comments", "id", "DESC"],
+    ],
     where: {
       isDeleted: false,
     },
-    include: [
-      { model: Concert, required: true, where: { isNotice: false } },
-      User,
-      { model: Comment, include: [User] },
-      Like,
-      Scrap,
-    ],
+    include,
     limit,
     offset,
   });
 
-  const totalConcertNum = concertList.length;
-  const concertListArr = Object.values(concertList);
+  const concerts: concertDTO.getConcertResDTO[] = concertList.map((concert) => {
+    // 댓글 형식 변환
+    let comment: commentDTO.IComment[] = [];
+    concert.comments.forEach((c) => {
+      const children = c.children.map((child) => ({
+        id: child.id,
+        userID: child.userID,
+        nickname: child.user.nickname,
+        img: child.user.img,
+        text: child.text,
+        isDeleted: child.isDeleted,
+      }));
 
-  const concerts: concertDTO.getConcertResDTO[] = await Promise.all(
-    concertListArr.map(async (concert) => {
-      // 댓글 형식 변환
-      let comment: commentDTO.IComment[] = [];
-      concert.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+      comment.push({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children,
+        isDeleted: c.isDeleted,
       });
+    });
 
-      const returnData = {
-        id: concert.id,
-        createdAt: concert.createdAt,
-        updatedAt: concert.updatedAt,
-        userID: concert.userID,
-        nickname: concert.user.nickname,
-        img: concert.user.img,
-        authorNickname: concert.concert.authorNickname,
-        title: concert.concert.title,
-        videoLink: concert.concert.videoLink,
-        imgThumbnail: concert.concert.imgThumbnail,
-        text: concert.concert.text,
-        interest: concert.interest.split(","),
-        hashtag: concert.concert.hashtag
-          ? concert.concert.hashtag.slice(1).split("#")
-          : undefined,
-        likeNum: concert.likes.length,
-        scrapNum: concert.scraps.length,
-        commentNum: concert.comments.length,
-        comment,
-        isDeleted: concert.isDeleted,
-        isNotice: concert.concert.isNotice,
+    let returnData: concertDTO.getConcertResDTO = {
+      id: concert.id,
+      createdAt: concert.createdAt,
+      updatedAt: concert.updatedAt,
+      userID: concert.userID,
+      nickname: concert.user.nickname,
+      img: concert.user.img,
+      authorNickname: concert.concert.authorNickname,
+      title: concert.concert.title,
+      videoLink: concert.concert.videoLink,
+      imgThumbnail: concert.concert.imgThumbnail,
+      text: concert.concert.text,
+      interest: concert.interest.split(","),
+      hashtag: concert.concert.hashtag
+        ? concert.concert.hashtag.slice(1).split("#")
+        : undefined,
+      likeNum: concert.likes.length,
+      scrapNum: concert.scraps.length,
+      commentNum: concert.comments.length,
+      comment,
+      isDeleted: concert.isDeleted,
+      isNotice: concert.concert.isNotice,
+    };
+
+    // userID가 있는 경우
+    if (userID)
+      returnData = {
+        ...returnData,
+        isLike: concert.userLikes.length ? true : false,
+        isScrap: concert.userScraps.length ? true : false,
       };
 
-      if (userID) {
-        const isLike = await Like.findOne({
-          where: { userID, postID: concert.id },
-        });
-        const isScrap = await Scrap.findOne({
-          where: { postID: concert.id },
-        });
-
-        return {
-          ...returnData,
-          isLike: isLike ? true : false,
-          isScrap: isScrap ? true : false,
-        };
-      }
-
-      return returnData;
-    })
-  );
-
+    return returnData;
+  });
+  const totalConcertNum = concertList.length;
   const resData: concertDTO.concertAllResDTO = {
     concerts,
     totalConcertNum,
@@ -140,47 +156,70 @@ export const getConcertOne = async (userID: number, concertID: number) => {
   if (!concertID) {
     return -1;
   }
+
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Concert, required: true, where: { isNotice: false } },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
+        {
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
+        },
+      ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
   // 댓글, 답글 join
   // isDeleted = false
   // isNotice = false
   const concert = await Post.findOne({
-    order: [["createdAt", "DESC"]],
-    where: {
-      "$concert.id$": concertID,
-      isDeleted: false,
-    },
-    include: [
-      { model: Concert, required: true, where: { isNotice: false } },
-      User,
-      { model: Comment, include: [User] },
-      Like,
-      Scrap,
-    ],
+    where: { isDeleted: false, "$concert.id$": concertID },
+    order: [["comments", "id", "DESC"]],
+    include,
   });
-
+  // 댓글 형식 변환
   let comment: commentDTO.IComment[] = [];
   concert.comments.forEach((c) => {
-    if (c.level === 0) {
-      comment.unshift({
-        id: c.id,
-        userID: c.userID,
-        nickname: c.user.nickname,
-        img: c.user.img,
-        text: c.text,
-        children: [],
-      });
-    } else if (!c.isDeleted) {
-      comment[comment.length - 1].children.unshift({
-        id: c.id,
-        userID: c.userID,
-        nickname: c.user.nickname,
-        img: c.user.img,
-        text: c.text,
-      });
-    }
+    const children = c.children.map((child) => ({
+      id: child.id,
+      userID: child.userID,
+      nickname: child.user.nickname,
+      img: child.user.img,
+      text: child.text,
+      isDeleted: child.isDeleted,
+    }));
+
+    comment.push({
+      id: c.id,
+      userID: c.userID,
+      nickname: c.user.nickname,
+      img: c.user.img,
+      text: c.text,
+      children,
+      isDeleted: c.isDeleted,
+    });
   });
 
-  const resData: concertDTO.getConcertResDTO = {
+  let resData: concertDTO.getConcertResDTO = {
     id: concert.id,
     createdAt: concert.createdAt,
     updatedAt: concert.updatedAt,
@@ -204,20 +243,13 @@ export const getConcertOne = async (userID: number, concertID: number) => {
     isNotice: concert.concert.isNotice,
   };
 
-  if (userID) {
-    const isLike = await Like.findOne({
-      where: { userID, postID: concert.id },
-    });
-    const isScrap = await Scrap.findOne({
-      where: { postID: concert.id },
-    });
-
-    return {
+  // userID가 있는 경우
+  if (userID)
+    resData = {
       ...resData,
-      isLike: isLike ? true : false,
-      isScrap: isScrap ? true : false,
+      isLike: concert.userLikes.length ? true : false,
+      isScrap: concert.userScraps.length ? true : false,
     };
-  }
 
   return resData;
 };
@@ -249,6 +281,7 @@ export const getConcertSearch = async (
     offset = 0;
   }
 
+  // where
   let where: any = {
     isDeleted: false,
   };
@@ -271,90 +304,106 @@ export const getConcertSearch = async (
     };
   }
 
+  // include
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Concert, required: true, where: { isNotice: false } },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
+        {
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
+        },
+      ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
   const concertList = await Post.findAll({
     order: [["createdAt", "DESC"]],
     where,
-    include: [
-      { model: Concert, required: true, where: { isNotice: false } },
-      { model: User, required: true },
-      { model: Comment, include: [User] },
-      Like,
-      Scrap,
-    ],
+    include,
     limit,
     offset,
   });
 
-  const totalConcertNum = concertList.length;
-  const concertListArr = Object.values(concertList);
+  const concerts: concertDTO.getConcertResDTO[] = concertList.map((concert) => {
+    // 댓글 형식 변환
+    let comment: commentDTO.IComment[] = [];
+    concert.comments.forEach((c) => {
+      const children = c.children.map((child) => ({
+        id: child.id,
+        userID: child.userID,
+        nickname: child.user.nickname,
+        img: child.user.img,
+        text: child.text,
+        isDeleted: child.isDeleted,
+      }));
 
-  const concerts: concertDTO.getConcertResDTO[] = await Promise.all(
-    concertListArr.map(async (concert) => {
-      // 댓글 형식 변환
-      let comment: commentDTO.IComment[] = [];
-      concert.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+      comment.push({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children,
+        isDeleted: c.isDeleted,
       });
-      const returnData = {
-        id: concert.id,
-        createdAt: concert.createdAt,
-        updatedAt: concert.updatedAt,
-        userID: concert.userID,
-        nickname: concert.user.nickname,
-        img: concert.user.img,
-        authorNickname: concert.concert.authorNickname,
-        title: concert.concert.title,
-        videoLink: concert.concert.videoLink,
-        imgThumbnail: concert.concert.imgThumbnail,
-        text: concert.concert.text,
-        interest: concert.interest.split(","),
-        hashtag: concert.concert.hashtag
-          ? concert.concert.hashtag.slice(1).split("#")
-          : undefined,
-        likeNum: concert.likes.length,
-        scrapNum: concert.scraps.length,
-        commentNum: concert.comments.length,
-        comment,
-        isDeleted: concert.isDeleted,
-        isNotice: concert.concert.isNotice,
+    });
+
+    let returnData: concertDTO.getConcertResDTO = {
+      id: concert.id,
+      createdAt: concert.createdAt,
+      updatedAt: concert.updatedAt,
+      userID: concert.userID,
+      nickname: concert.user.nickname,
+      img: concert.user.img,
+      authorNickname: concert.concert.authorNickname,
+      title: concert.concert.title,
+      videoLink: concert.concert.videoLink,
+      imgThumbnail: concert.concert.imgThumbnail,
+      text: concert.concert.text,
+      interest: concert.interest.split(","),
+      hashtag: concert.concert.hashtag
+        ? concert.concert.hashtag.slice(1).split("#")
+        : undefined,
+      likeNum: concert.likes.length,
+      scrapNum: concert.scraps.length,
+      commentNum: concert.comments.length,
+      comment,
+      isDeleted: concert.isDeleted,
+      isNotice: concert.concert.isNotice,
+    };
+
+    // userID가 있는 경우
+    if (userID)
+      returnData = {
+        ...returnData,
+        isLike: concert.userLikes.length ? true : false,
+        isScrap: concert.userScraps.length ? true : false,
       };
 
-      if (userID) {
-        const isLike = await Like.findOne({
-          where: { userID, postID: concert.id },
-        });
-        const isScrap = await Scrap.findOne({
-          where: { postID: concert.id },
-        });
+    return returnData;
+  });
 
-        return {
-          ...returnData,
-          isLike: isLike ? true : false,
-          isScrap: isScrap ? true : false,
-        };
-      }
-
-      return returnData;
-    })
-  );
-
+  const totalConcertNum = concertList.length;
   const resData: concertDTO.concertAllResDTO = {
     concerts,
     totalConcertNum,
@@ -396,40 +445,39 @@ export const postConcertComment = async (
     return -2;
   }
 
-  let comment;
   // 답글인 경우
   if (parentID) {
-    const parentComment = await Comment.findOne({ where: { id: parentID } });
+    const parentComment = await Comment.findOne({
+      where: { id: parentID, isDeleted: false },
+    });
 
     // 3. 부모 댓글 id 값이 유효하지 않을 경우
     if (!parentComment) {
       return -3;
     }
 
-    comment = await Comment.create({
+    await Comment.create({
       userID,
       postID: concertID,
+      parentID,
       text,
       level: 1,
-      order: parentComment.groupNum,
     });
 
     // 첫 답글 작성 시 뱃지 추가
-    const badge = await Badge.findOne({ where: { id: userID } });
-    if (!badge.firstReplyBadge) {
-      badge.firstReplyBadge = true;
-      await badge.save();
-    }
+    await Badge.update(
+      { firstReplyBadge: true },
+      {
+        where: { id: userID, firstReplyBadge: false },
+      }
+    );
   } else {
     // 댓글인 경우
-    comment = await Comment.create({
+    await Comment.create({
       userID,
       postID: concertID,
       text,
-      order: 0,
     });
-
-    await comment.increment("groupNum", { by: 1, where: { id: parentID } });
 
     // 댓글 1개 작성 시 뱃지 추가
     const badge = await Badge.findOne({ where: { id: userID } });
@@ -588,11 +636,10 @@ export const postConcertScrap = async (concertID: number, userID: number) => {
   });
 
   // 첫 스크랩이면 뱃지 발급
-  const badge = await Badge.findOne({ where: { id: userID } });
-  if (!badge.concertScrapBadge) {
-    badge.concertScrapBadge = true;
-    await badge.save();
-  }
+  await Badge.update(
+    { concertScrapBadge: true },
+    { where: { id: userID, concertScrapBadge: false } }
+  );
 
   return 1;
 };
