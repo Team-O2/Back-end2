@@ -12,4 +12,5 @@ router.get("/mypage/write", authMiddleware, userController.getMyWritingsControll
 router.get("/mypage/comment", authMiddleware, userController.getMyCommentsController);
 router.get("/userInfo", authMiddleware, userController.userInfoController);
 router.patch("/password", authMiddleware, userController.patchPWController);
+router.delete("/mypage/comment", authMiddleware, userController.deleteMyCommentsController);
 export default router;

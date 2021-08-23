@@ -73,6 +73,9 @@ namespace userDTO {
     newPassword: string;
   }
 
+  export interface deleteCommentsReqDTO {
+    commentID: string[];
+  }
   
   export interface IMypageUser {
     nickname: string;

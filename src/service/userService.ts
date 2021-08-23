@@ -160,7 +160,24 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
       { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
       { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
       { model: Concert, where: { isNotice: false }, required: true },
-      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
+      {
+        model: Comment,
+        as: "comments",
+        where: { level: 0 },
+        required: false,
+        include: [
+          User,
+          {
+            model: Comment,
+            as: "children",
+            separate: true,
+            required: false,
+            order: [["id", "DESC"]],
+            include: [User],
+          },
+        ],
+      },
+      // { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
       { model: User, attributes: ['id', 'img', 'nickname']},
       { model: Like, attributes: ['userID'], required: false, as: "likes"},
       { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
@@ -179,30 +196,29 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
 
   const totalScrapNum = concertList.length;
 
-  const mypageConcertScrap: userDTO.concertResDTO[] = await Promise.all(
-    concertList.map(async (concert) => {
-      // 댓글 형식 변환
+  const mypageConcertScrap: userDTO.concertResDTO[] = concertList.map((concert) => {
+    // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
       concert.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+        const children = c.children.map((child) => ({
+          id: child.id,
+          userID: child.userID,
+          nickname: child.user.nickname,
+          img: child.user.img,
+          text: child.text,
+          isDeleted: child.isDeleted,
+      }));
+
+      comment.push({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children,
+        isDeleted: c.isDeleted,
       });
+    });
 
       const returnData = {
         id: concert.id,
@@ -229,10 +245,8 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
         isLike: concert.userLikes.length? true: false,
         isScrap: true
       };
-
-      return returnData;
-    })
-  );
+    return returnData;
+  });
 
   const resData: userDTO.concertScrapResDTO = {
     mypageConcertScrap,
@@ -270,7 +284,24 @@ export const getChallengeScrap = async (
       { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
       { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
       { model: Challenge, required: true },
-      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
+      {
+        model: Comment,
+        as: "comments",
+        where: { level: 0 },
+        required: false,
+        include: [
+          User,
+          {
+            model: Comment,
+            as: "children",
+            separate: true,
+            required: false,
+            order: [["id", "DESC"]],
+            include: [User],
+          },
+        ],
+      },
+      // { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
       { model: User, attributes: ['id', 'img', 'nickname'], required: false },
       { model: Like, attributes: ['userID'], required: false, as: "likes"},
       { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
@@ -289,30 +320,30 @@ export const getChallengeScrap = async (
 
   const totalScrapNum = challengeList.length;
 
-  const mypageChallengeScrap: userDTO.challengeResDTO[] = await Promise.all(
-    challengeList.map(async (challenge) => {
-      // 댓글 형식 변환
+
+  const mypageChallengeScrap: userDTO.challengeResDTO[] = challengeList.map((challenge) => {
+    // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
       challenge.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+        const children = c.children.map((child) => ({
+          id: child.id,
+          userID: child.userID,
+          nickname: child.user.nickname,
+          img: child.user.img,
+          text: child.text,
+          isDeleted: child.isDeleted,
+      }));
+
+      comment.push({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children,
+        isDeleted: c.isDeleted,
       });
+    });
 
       const returnData = {
         id: challenge.id,
@@ -334,9 +365,9 @@ export const getChallengeScrap = async (
         isScrap: true
       };
 
-      return returnData;
-    })
-  );
+    return returnData;
+
+  });
 
   const resData: userDTO.challengeScrapResDTO = {
     mypageChallengeScrap,
@@ -367,9 +398,26 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
     order: [["createdAt", "DESC"]],
     include: [
       { model: Scrap, attributes: ['userID'], required: false, as: "scraps"},
-      { model: Scrap, attributes: ['userID'], where: { userID }, required: false, as: "userScraps"},
+      { model: Scrap, attributes: ['userID'], where: { userID }, required: false, as: "userScraps" },
       { model: Challenge, required: true },
-      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
+      {
+        model: Comment,
+        as: "comments",
+        where: { level: 0 },
+        required: false,
+        include: [
+          User,
+          {
+            model: Comment,
+            as: "children",
+            separate: true,
+            required: false,
+            order: [["id", "DESC"]],
+            include: [User],
+          },
+        ],
+      },
+      // { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
       { model: User, attributes: ['id', 'img', 'nickname']},
       { model: Like, attributes: ['userID'], required: false, as: "likes"},
       { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
@@ -388,30 +436,29 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
     return -2;
   }
 
-  const resData: userDTO.challengeResDTO[] = await Promise.all(
-    challengeList.map(async (challenge) => {
-      // 댓글 형식 변환
-      let comment: commentDTO.IComment[] = [];
-      challenge.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+  const resData: userDTO.challengeResDTO[] = challengeList.map((challenge) => {
+    // 댓글 형식 변환
+    let comment: commentDTO.IComment[] = [];
+    challenge.comments.forEach((c) => {
+      const children = c.children.map((child) => ({
+        id: child.id,
+        userID: child.userID,
+        nickname: child.user.nickname,
+        img: child.user.img,
+        text: child.text,
+        isDeleted: child.isDeleted,
+      }));
+
+      comment.push({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children,
+        isDeleted: c.isDeleted,
       });
+    });
 
       const returnData = {
         id: challenge.id,
@@ -432,10 +479,8 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
         isLike: challenge.userLikes.length? true: false,
         isScrap: challenge.userScraps.length? true: false,
       };
-
       return returnData;
-    })
-  );
+    });
   
   return resData;
 
@@ -624,30 +669,117 @@ export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
   return;
 }
 
-// export const patchPW = async (body: newPwReqDTO) => {
-//   const { password, newPassword, userID } = body;
-//   // 1. 요청 바디 부족
-//   if (!newPassword) {
+
+/**
+ *  @마이페이지_내가_쓴_댓글_삭제
+ *  @route Delete user/mypage/comment
+ *  @error
+ *    1. 요청 바디가 부족할 경우
+ */
+export const deleteMyComments = async (userID?: number, comments?: userDTO.deleteCommentsReqDTO) => {
+  // 1. 요청 바디가 부족할 경우
+  if (!comments || !comments.commentID.length) {
+    return -1;
+  }
+
+  comments.commentID.map(async (commentID) => {
+    // 삭제하려는 댓글 isDelete = true 로 변경
+    await Comment.update(
+      { isDeleted: true },
+      { where: { id: commentID, userID } },
+    );
+  });
+
+  return;
+}
+
+// export const deleteMyComments = async (body) => {
+//   const { userID, commentID }: delMyCommentReqDTO = body;
+
+//   //1. 요청 바디가 부족할 경우
+//   if (!commentID || commentID.length === 0) {
 //     return -1;
 //   }
 
-//   const user = await User.findById(userID.id);
+//   commentID.map(async (cmtID) => {
+//     // 삭제하려는 댓글 isDelete = true로 변경
+//     await Comment.findByIdAndUpdate(cmtID, { isDeleted: true });
+//     // 게시글 댓글 수 1 감소
+//     let comment = await Comment.findById(cmtID);
+//     if (comment.postModel === "Challenge") {
+//       // challenge
+//       await Challenge.findByIdAndUpdate(comment.post, {
+//         $inc: { commentNum: -1 },
+//       });
+//     } else {
 
-//   // Encrpyt password
-//   const salt = await bcrypt.genSalt(10);
-//   const currentEncrpytPW = await bcrypt.hash(password, salt);
 
-//   // 2. 현재 비밀번호가 일치하지 않음
-//   const isMatch = await bcrypt.compare(password, user.password);
-//   if (!isMatch) {
-//     return -2;
+
+// /**
+//  *  @마이페이지_회원정보_수정
+//  *  @route Patch user/userInfo
+//  *  @access private
+//  */
+
+// export const patchInfo = async(userID?: number, body, url) => {
+//   let imgUrl = url.img;
+//   const { nickname, isMarketing } = body;
+//   let rawInterest = body.interest;
+//   let interest;
+
+// }
+// export const patchInfo = async (userID, body, url) => {
+//   var imgUrl = url.img;
+//   const { nickname, marpolicy } = body;
+//   let rawInterest = body.interest;
+//   var interest;
+//   if (rawInterest !== "") {
+//     interest = stringToArray(rawInterest);
+//   } else {
+//     interest = rawInterest;
+//   }
+//   const user = await User.findById(userID);
+
+//   // 1. 요청 바디 부족
+//   if (
+//     nickname === undefined ||
+//     interest === undefined ||
+//     marpolicy === undefined
+//   ) {
+//     return -1;
 //   }
 
-//   // Encrpyt password
-//   const encrpytPW = await bcrypt.hash(newPassword, salt);
+//   if (user.nickname !== nickname) {
+//     // 3. 닉네임 중복
+//     let checkNickname = await User.findOne({ nickname });
+//     if (checkNickname) {
+//       return -2;
+//     }
+//   }
 
-//   await user.update({ $set: { password: encrpytPW } });
+//   if (imgUrl !== "") {
+//     await user.update({ $set: { img: imgUrl } });
+//   }
 
+//   if (nickname !== "") {
+//     await user.update({ $set: { nickname: nickname } });
+//   }
+
+//   if (interest !== "") {
+//     await user.update({ $set: { interest: interest } });
+//   }
+
+//   if (marpolicy !== "") {
+//     await user.update({ $set: { marpolicy: marpolicy } });
+//   }
+
+//   // 마케팅 동의(marpolicy == true) 시 뱃지 발급
+//   if (marpolicy) {
+//     await Badge.findOneAndUpdate(
+//       { user: user.id },
+//       { $set: { marketingBadge: true } }
+//     );
+//   }
 //   return;
 // };
 
@@ -795,106 +927,8 @@ export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
 // };
 
 
-// /**
-//  *  @마이페이지_내가_쓴_댓글_삭제
-//  *  @route Delete user/mypage/comment
-//  *  @error
-//  *    1. 요청 바디가 부족할 경우
-//  */
-// export const deleteMyComments = async (body) => {
-//   const { userID, commentID }: delMyCommentReqDTO = body;
-
-//   //1. 요청 바디가 부족할 경우
-//   if (!commentID || commentID.length === 0) {
-//     return -1;
-//   }
-
-//   commentID.map(async (cmtID) => {
-//     // 삭제하려는 댓글 isDelete = true로 변경
-//     await Comment.findByIdAndUpdate(cmtID, { isDeleted: true });
-//     // 게시글 댓글 수 1 감소
-//     let comment = await Comment.findById(cmtID);
-//     if (comment.postModel === "Challenge") {
-//       // challenge
-//       await Challenge.findByIdAndUpdate(comment.post, {
-//         $inc: { commentNum: -1 },
-//       });
-//     } else {
-//       // concert
-//       await Concert.findByIdAndUpdate(comment.post, {
-//         $inc: { commentNum: -1 },
-//       });
-//     }
-//     // 유저 댓글 수 1 감소
-//     // 과연 필요할까??
-//     // await User.findByIdAndUpdate(userID.id, {
-//     //   $inc: { commentCNT: -1 },
-//     // });
-//   });
-
-//   return;
-// };
 
 
-// /**
-//  *  @마이페이지_회원정보_수정
-//  *  @route Patch user/userInfo
-//  *  @access private
-//  */
-// export const patchInfo = async (userID, body, url) => {
-//   var imgUrl = url.img;
-//   const { nickname, marpolicy } = body;
-//   let rawInterest = body.interest;
-//   var interest;
-//   if (rawInterest !== "") {
-//     interest = stringToArray(rawInterest);
-//   } else {
-//     interest = rawInterest;
-//   }
-//   const user = await User.findById(userID);
-
-//   // 1. 요청 바디 부족
-//   if (
-//     nickname === undefined ||
-//     interest === undefined ||
-//     marpolicy === undefined
-//   ) {
-//     return -1;
-//   }
-
-//   if (user.nickname !== nickname) {
-//     // 3. 닉네임 중복
-//     let checkNickname = await User.findOne({ nickname });
-//     if (checkNickname) {
-//       return -2;
-//     }
-//   }
-
-//   if (imgUrl !== "") {
-//     await user.update({ $set: { img: imgUrl } });
-//   }
-
-//   if (nickname !== "") {
-//     await user.update({ $set: { nickname: nickname } });
-//   }
-
-//   if (interest !== "") {
-//     await user.update({ $set: { interest: interest } });
-//   }
-
-//   if (marpolicy !== "") {
-//     await user.update({ $set: { marpolicy: marpolicy } });
-//   }
-
-//   // 마케팅 동의(marpolicy == true) 시 뱃지 발급
-//   if (marpolicy) {
-//     await Badge.findOneAndUpdate(
-//       { user: user.id },
-//       { $set: { marketingBadge: true } }
-//     );
-//   }
-//   return;
-// };
 
 const userService = {
   getMypageInfo,
@@ -903,7 +937,8 @@ const userService = {
   getChallengeScrap,
   getMyWritings,
   getMyComments,
-  patchPW
+  patchPW,
+  deleteMyComments
 };
 
 export default userService;

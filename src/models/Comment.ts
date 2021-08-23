@@ -10,6 +10,8 @@ import {
   Default,
   BelongsTo,
   ForeignKey,
+  HasMany,
+  AllowNull,
 } from "sequelize-typescript";
 import { User, Post } from ".";
 
@@ -39,20 +41,18 @@ export default class Comment extends Model {
   @Column
   text: string;
 
+  @AllowNull
+  @ForeignKey(() => Comment)
+  @Column
+  parentID: number;
+
   @ForeignKey(() => Post)
   @Column
   postID: number;
 
-  @Default(1)
-  @Column
-  groupNum: number;
-
   @Default(0)
   @Column
   level: number;
-
-  @Column
-  order: number;
 
   @CreatedAt
   createdAt!: Date;
@@ -65,4 +65,10 @@ export default class Comment extends Model {
 
   @BelongsTo(() => Post)
   post: Post;
+
+  @BelongsTo(() => Comment)
+  comment: Comment;
+
+  @HasMany(() => Comment)
+  children: Comment[];
 }

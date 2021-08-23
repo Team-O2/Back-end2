@@ -64,6 +64,7 @@ const scrapConcertController = async (req: Request, res: Response) => {
       Number(req.query.offset),
       Number(req.query.limit)
     );
+
    // 1. No limit
     if (data === -1) {
       response.basicResponse(
@@ -260,6 +261,7 @@ const getMyCommentsController = async (req: Request, res: Response) => {
  *    1. 요청 바디 부족
  *    2. 현재 비밀번호와 일치하지 않음
  */
+
 const patchPWController = async (req: Request, res:Response) => {
     try {
       const body: userDTO.newPwReqDTO = req.body;
@@ -299,8 +301,85 @@ const patchPWController = async (req: Request, res:Response) => {
       "서버 오류"
     );
   }
-  
 }
+
+/**
+ *  @마이페이지_내가_쓴_댓글_삭제
+ *  @route Delete user/mypage/comment
+ *  @access Private
+ *  @error
+ *    1. 요청 바디가 부족할 경우
+ */
+
+const deleteMyCommentsController = async (req: Request, res: Response) => {
+  try {
+    const comments: userDTO.deleteCommentsReqDTO = req.body;
+
+    const data = await userService.deleteMyComments(
+      req.body.userID.id,
+      comments
+    );
+
+    // 1. 요청 바디가 부족할 경우
+    if (data === -1) {
+      response.basicResponse(
+        res, 
+        returnCode.BAD_REQUEST, 
+        "요청 값이 올바르지 않습니다."
+      );
+    }
+    else {
+      response.basicResponse(
+        res, 
+        returnCode.OK, 
+        "내가 쓴 댓글 삭제 성공", 
+      );      
+    }
+
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(
+      res, 
+      returnCode.INTERNAL_SERVER_ERROR, 
+      "서버 오류"
+    );
+  }
+}
+
+
+// /**
+//  *  @마이페이지_회원정보_수정
+//  *  @route Patch user
+//  *  @access private
+//  */
+
+// router.patch(
+//   "/userInfo",
+//   upload.fields([{ name: "img", maxCount: 1 }]),
+//   auth,
+//   async (req: Request, res: Response) => {
+//     try {
+//       const url = {
+//         img: (req as any).files.img ? (req as any).files.img[0].location : "",
+//       };
+//       const data = await patchInfo(req.body.userID.id, req.body, url);
+
+//       // 요청 바디가 부족할 경우
+//       if (data === -1) {
+//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
+//       } else if (data === -2) {
+//         response(res, returnCode.CONFLICT, "중복된 닉네임 입니다");
+//       }
+
+//       dataResponse(res, returnCode.OK, "회원정보 수정 성공", data);
+//     } catch (err) {
+//       console.error(err.message);
+//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//     }
+//   }
+// );
+
+
 
 // router.patch("/password", auth, async (req: Request, res: Response) => {
 //   try {
@@ -416,38 +495,6 @@ const patchPWController = async (req: Request, res:Response) => {
 // });
 
 
-// /**
-//  *  @마이페이지_회원정보_수정
-//  *  @route Patch user
-//  *  @access private
-//  */
-// router.patch(
-//   "/userInfo",
-//   upload.fields([{ name: "img", maxCount: 1 }]),
-//   auth,
-//   async (req: Request, res: Response) => {
-//     try {
-//       const url = {
-//         img: (req as any).files.img ? (req as any).files.img[0].location : "",
-//       };
-//       const data = await patchInfo(req.body.userID.id, req.body, url);
-
-//       // 요청 바디가 부족할 경우
-//       if (data === -1) {
-//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
-//       } else if (data === -2) {
-//         response(res, returnCode.CONFLICT, "중복된 닉네임 입니다");
-//       }
-
-//       dataResponse(res, returnCode.OK, "회원정보 수정 성공", data);
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
-
-
 
 // /**
 //  *  @User_마이페이지_회고_스크랩_취소토글
@@ -482,27 +529,6 @@ const patchPWController = async (req: Request, res:Response) => {
 // );
 
 
-//  *  @마이페이지_내가_쓴_댓글_삭제
-//  *  @route Delete user/mypage/comment
-//  *  @access Private
-//  */
-
-// router.delete("/mypage/comment", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteMyComments(req.body);
-
-//     // 요청 바디가 부족할 경우
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
-//     }
-
-//     dataResponse(res, returnCode.OK, "내가 쓴 댓글 삭제 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
 // module.exports = router;
 
 
@@ -514,6 +540,7 @@ const userController = {
   getMyWritingsController,
   getMyCommentsController,
   patchPWController,
+  deleteMyCommentsController
 };
 
 export default userController;
