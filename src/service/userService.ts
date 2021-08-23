@@ -1,5 +1,15 @@
 // models
-import { Admin, User, Badge, Concert, Challenge, Comment, Post, Scrap, Like } from "../models";
+import {
+  Admin,
+  User,
+  Badge,
+  Concert,
+  Challenge,
+  Comment,
+  Post,
+  Scrap,
+  Like,
+} from "../models";
 // library
 import period from "../library/date";
 import jwt from "jsonwebtoken";
@@ -14,6 +24,7 @@ import { userDTO, commentDTO } from "../DTO";
 import { async, share } from "rxjs";
 import { getModels } from "sequelize-typescript";
 import { userInfo } from "os";
+import { CodeArtifact } from "aws-sdk";
 
 /**
  *  @User_마이페이지_Info
@@ -22,10 +33,9 @@ import { userInfo } from "os";
  */
 
 export const getMypageInfo = async (userID: number) => {
-
   const user = await User.findOne({
     where: { id: userID },
-    attributes: ['nickname', 'isAdmin']
+    attributes: ["nickname", "isAdmin"],
   });
 
   const learnMyselfQuery = `SELECT G.conditionNum, G.writingNum, A.challengeStartDT, A.challengeEndDT, A.generation
@@ -34,13 +44,16 @@ export const getMypageInfo = async (userID: number) => {
   WHERE G.userID = :userID
     AND day(A.challengeStartDT) <= day(curdate())
     AND day(A.challengeEndDT) >= day(curdate())
-  `
+  `;
 
-  const learnMyself: userDTO.IMyPageLearnMySelf[] = await sequelize.query(learnMyselfQuery, { 
-    type: QueryTypes.SELECT,
-    replacements: { userID: userID },
-    raw: true,
-  });
+  const learnMyself: userDTO.IMyPageLearnMySelf[] = await sequelize.query(
+    learnMyselfQuery,
+    {
+      type: QueryTypes.SELECT,
+      replacements: { userID: userID },
+      raw: true,
+    }
+  );
 
   let learnMyselfAchieve: userDTO.ILearnMySelfAchieve | null;
 
@@ -50,12 +63,15 @@ export const getMypageInfo = async (userID: number) => {
   }
   // 현재기수 참여
   else {
-    let term = await period.period(learnMyself[0].challengeStartDT, learnMyself[0].challengeEndDT);
+    let term = await period.period(
+      learnMyself[0].challengeStartDT,
+      learnMyself[0].challengeEndDT
+    );
     if (term < 1) {
       term = 1;
     }
     // 내림을 취해서 최대한 많은 %를 달성할 수 있도록 한다
-    let totalNum = learnMyself[0].conditionNum * Math.floor(term/7);
+    let totalNum = learnMyself[0].conditionNum * Math.floor(term / 7);
 
     if (totalNum < 1) {
       totalNum = 1;
@@ -74,41 +90,44 @@ export const getMypageInfo = async (userID: number) => {
       completeNum: learnMyself[0].writingNum,
       startDT: learnMyself[0].challengeStartDT,
       endDT: learnMyself[0].challengeEndDT,
-      generation: learnMyself[0].generation
-    }
+      generation: learnMyself[0].generation,
+    };
   }
-  
+
   const shareTogetherQuery = `SELECT P.id, title
   FROM Post AS P
   INNER JOIN Concert As C ON P.id = C.id
   WHERE C.userID = :userID 
-  ORDER BY createdAt DESC LIMIT 5`
+  ORDER BY createdAt DESC LIMIT 5`;
 
-  let shareTogether: userDTO.IShareTogether[] | null =  await sequelize.query(shareTogetherQuery, { 
-    type: QueryTypes.SELECT,
-    replacements: { userID: userID },
-    raw: true,
-  });
+  let shareTogether: userDTO.IShareTogether[] | null = await sequelize.query(
+    shareTogetherQuery,
+    {
+      type: QueryTypes.SELECT,
+      replacements: { userID: userID },
+      raw: true,
+    }
+  );
 
   if (!shareTogether.length) {
     shareTogether = null;
-  } 
-  
+  }
+
   const couponBook = await Badge.findOne({
     where: { id: userID },
     attributes: {
-      exclude: ['id']
-    }
+      exclude: ["id"],
+    },
   });
 
   const mypageInfoRes: userDTO.mypageInfoResDTO = {
     nickname: user.nickname,
     learnMyselfAchieve,
     shareTogether,
-    couponBook
+    couponBook,
   };
 
-  return  mypageInfoRes;
+  return mypageInfoRes;
 };
 
 /**
@@ -120,9 +139,9 @@ export const getMypageInfo = async (userID: number) => {
 export const getUserInfo = async (userID: number) => {
   const user = await User.findOne({
     where: {
-      id: userID
+      id: userID,
     },
-    attributes: ['isMarketing', 'img', 'id', 'email', 'nickname', 'interest']
+    attributes: ["isMarketing", "img", "id", "email", "nickname", "interest"],
   });
 
   const userInfoRes: userDTO.userInfoResDTO = {
@@ -131,12 +150,11 @@ export const getUserInfo = async (userID: number) => {
     img: user.img,
     id: user.id,
     email: user.email,
-    nickname: user.nickname
-  }
-  
-  return userInfoRes;
-}
+    nickname: user.nickname,
+  };
 
+  return userInfoRes;
+};
 
 /**
  *  @User_마이페이지_콘서트_스크랩
@@ -144,7 +162,11 @@ export const getUserInfo = async (userID: number) => {
  *  @access private
  */
 
-export const getConcertScrap = async (userID?: number, offset?: number, limit?: number) => {
+export const getConcertScrap = async (
+  userID?: number,
+  offset?: number,
+  limit?: number
+) => {
   if (!offset) {
     offset = 0;
   }
@@ -157,8 +179,14 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
   const concertList = await Post.findAll({
     order: [["createdAt", "DESC"]],
     include: [
-      { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
-      { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
+      { model: Scrap, attributes: ["userID"], required: true, as: "scraps" },
+      {
+        model: Scrap,
+        attributes: ["userID"],
+        where: { userID },
+        required: true,
+        as: "userScraps",
+      },
       { model: Concert, where: { isNotice: false }, required: true },
       {
         model: Comment,
@@ -178,15 +206,21 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
         ],
       },
       // { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
-      { model: User, attributes: ['id', 'img', 'nickname']},
-      { model: Like, attributes: ['userID'], required: false, as: "likes"},
-      { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
+      { model: User, attributes: ["id", "img", "nickname"] },
+      { model: Like, attributes: ["userID"], required: false, as: "likes" },
+      {
+        model: Like,
+        attributes: ["userID"],
+        where: { userID },
+        required: false,
+        as: "userLikes",
+      },
     ],
     where: {
       isDeleted: false,
     },
     offset,
-    limit
+    limit,
   });
 
   // 2. 스크랩한 글이 없을 때
@@ -196,8 +230,9 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
 
   const totalScrapNum = concertList.length;
 
-  const mypageConcertScrap: userDTO.concertResDTO[] = concertList.map((concert) => {
-    // 댓글 형식 변환
+  const mypageConcertScrap: userDTO.concertResDTO[] = concertList.map(
+    (concert) => {
+      // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
       concert.comments.forEach((c) => {
         const children = c.children.map((child) => ({
@@ -207,18 +242,18 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
           img: child.user.img,
           text: child.text,
           isDeleted: child.isDeleted,
-      }));
+        }));
 
-      comment.push({
-        id: c.id,
-        userID: c.userID,
-        nickname: c.user.nickname,
-        img: c.user.img,
-        text: c.text,
-        children,
-        isDeleted: c.isDeleted,
+        comment.push({
+          id: c.id,
+          userID: c.userID,
+          nickname: c.user.nickname,
+          img: c.user.img,
+          text: c.text,
+          children,
+          isDeleted: c.isDeleted,
+        });
       });
-    });
 
       const returnData = {
         id: concert.id,
@@ -242,31 +277,30 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
         comment,
         isDeleted: concert.isDeleted,
         isNotice: concert.concert.isNotice,
-        isLike: concert.userLikes.length? true: false,
-        isScrap: true
+        isLike: concert.userLikes.length ? true : false,
+        isScrap: true,
       };
-    return returnData;
-  });
+      return returnData;
+    }
+  );
 
   const resData: userDTO.concertScrapResDTO = {
     mypageConcertScrap,
-    totalScrapNum
+    totalScrapNum,
   };
 
   return resData;
-
-}
-
+};
 
 /**
  *  @User_마이페이지_회고_스크랩
  *  @route Post user/mypage/challenge
  *  @access private
-*/
+ */
 
 export const getChallengeScrap = async (
   userID?: number,
-  offset?: number, 
+  offset?: number,
   limit?: number
 ) => {
   if (!offset) {
@@ -281,8 +315,14 @@ export const getChallengeScrap = async (
   const challengeList = await Post.findAll({
     order: [["createdAt", "DESC"]],
     include: [
-      { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
-      { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
+      { model: Scrap, attributes: ["userID"], required: true, as: "scraps" },
+      {
+        model: Scrap,
+        attributes: ["userID"],
+        where: { userID },
+        required: true,
+        as: "userScraps",
+      },
       { model: Challenge, required: true },
       {
         model: Comment,
@@ -302,15 +342,21 @@ export const getChallengeScrap = async (
         ],
       },
       // { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
-      { model: User, attributes: ['id', 'img', 'nickname'], required: false },
-      { model: Like, attributes: ['userID'], required: false, as: "likes"},
-      { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
+      { model: User, attributes: ["id", "img", "nickname"], required: false },
+      { model: Like, attributes: ["userID"], required: false, as: "likes" },
+      {
+        model: Like,
+        attributes: ["userID"],
+        where: { userID },
+        required: false,
+        as: "userLikes",
+      },
     ],
     where: {
-      isDeleted: false
+      isDeleted: false,
     },
     offset,
-    limit
+    limit,
   });
 
   // 2. 스크랩한 글이 없을 때
@@ -320,9 +366,9 @@ export const getChallengeScrap = async (
 
   const totalScrapNum = challengeList.length;
 
-
-  const mypageChallengeScrap: userDTO.challengeResDTO[] = challengeList.map((challenge) => {
-    // 댓글 형식 변환
+  const mypageChallengeScrap: userDTO.challengeResDTO[] = challengeList.map(
+    (challenge) => {
+      // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
       challenge.comments.forEach((c) => {
         const children = c.children.map((child) => ({
@@ -332,18 +378,18 @@ export const getChallengeScrap = async (
           img: child.user.img,
           text: child.text,
           isDeleted: child.isDeleted,
-      }));
+        }));
 
-      comment.push({
-        id: c.id,
-        userID: c.userID,
-        nickname: c.user.nickname,
-        img: c.user.img,
-        text: c.text,
-        children,
-        isDeleted: c.isDeleted,
+        comment.push({
+          id: c.id,
+          userID: c.userID,
+          nickname: c.user.nickname,
+          img: c.user.img,
+          text: c.text,
+          children,
+          isDeleted: c.isDeleted,
+        });
       });
-    });
 
       const returnData = {
         id: challenge.id,
@@ -361,21 +407,21 @@ export const getChallengeScrap = async (
         scrapNum: challenge.scraps.length,
         commentNum: challenge.comments.length,
         comment,
-        isLike: challenge.userLikes.length? true: false,
-        isScrap: true
+        isLike: challenge.userLikes.length ? true : false,
+        isScrap: true,
       };
 
-    return returnData;
-
-  });
+      return returnData;
+    }
+  );
 
   const resData: userDTO.challengeScrapResDTO = {
     mypageChallengeScrap,
-    totalScrapNum
+    totalScrapNum,
   };
 
   return resData;
-}
+};
 
 /**
  *  @마이페이지_내가_쓴_글
@@ -383,8 +429,11 @@ export const getChallengeScrap = async (
  *  @access private
  */
 
-export const getMyWritings = async (userID?: number, offset?: number, limit?: number) => {
-
+export const getMyWritings = async (
+  userID?: number,
+  offset?: number,
+  limit?: number
+) => {
   if (!offset) {
     offset = 0;
   }
@@ -397,8 +446,14 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
   const challengeList = await Post.findAll({
     order: [["createdAt", "DESC"]],
     include: [
-      { model: Scrap, attributes: ['userID'], required: false, as: "scraps"},
-      { model: Scrap, attributes: ['userID'], where: { userID }, required: false, as: "userScraps" },
+      { model: Scrap, attributes: ["userID"], required: false, as: "scraps" },
+      {
+        model: Scrap,
+        attributes: ["userID"],
+        where: { userID },
+        required: false,
+        as: "userScraps",
+      },
       { model: Challenge, required: true },
       {
         model: Comment,
@@ -418,18 +473,24 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
         ],
       },
       // { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
-      { model: User, attributes: ['id', 'img', 'nickname']},
-      { model: Like, attributes: ['userID'], required: false, as: "likes"},
-      { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
+      { model: User, attributes: ["id", "img", "nickname"] },
+      { model: Like, attributes: ["userID"], required: false, as: "likes" },
+      {
+        model: Like,
+        attributes: ["userID"],
+        where: { userID },
+        required: false,
+        as: "userLikes",
+      },
     ],
     where: {
       userID,
-      isDeleted: false
+      isDeleted: false,
     },
     offset,
-    limit
+    limit,
   });
-  
+
   // 2. 작성한 글이 없을 떄
   if (!challengeList.length) {
     // console.log(challengeList.length);
@@ -460,32 +521,30 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
       });
     });
 
-      const returnData = {
-        id: challenge.id,
-        generation: challenge.generation,
-        createdAt: challenge.createdAt,
-        updatedAt: challenge.updatedAt,
-        userID: challenge.userID,
-        nickname: challenge.user.nickname,
-        img: challenge.user.img,
-        good: challenge.challenge.good,
-        bad: challenge.challenge.bad,
-        learn: challenge.challenge.learn,
-        interest: challenge.interest.split(","),
-        likeNum: challenge.likes.length,
-        scrapNum: challenge.scraps.length,
-        commentNum: challenge.comments.length,
-        comment,
-        isLike: challenge.userLikes.length? true: false,
-        isScrap: challenge.userScraps.length? true: false,
-      };
-      return returnData;
-    });
-  
+    const returnData = {
+      id: challenge.id,
+      generation: challenge.generation,
+      createdAt: challenge.createdAt,
+      updatedAt: challenge.updatedAt,
+      userID: challenge.userID,
+      nickname: challenge.user.nickname,
+      img: challenge.user.img,
+      good: challenge.challenge.good,
+      bad: challenge.challenge.bad,
+      learn: challenge.challenge.learn,
+      interest: challenge.interest.split(","),
+      likeNum: challenge.likes.length,
+      scrapNum: challenge.scraps.length,
+      commentNum: challenge.comments.length,
+      comment,
+      isLike: challenge.userLikes.length ? true : false,
+      isScrap: challenge.userScraps.length ? true : false,
+    };
+    return returnData;
+  });
+
   return resData;
-
-}
-
+};
 
 /**
  *  @마이페이지_내가_쓴_댓글
@@ -496,7 +555,12 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
  *    3. 작성한 댓글이 없을 때
  */
 
-export const getMyComments = async (userID?: number, postModel?: string, offset?: number, limit?: number) => {
+export const getMyComments = async (
+  userID?: number,
+  postModel?: string,
+  offset?: number,
+  limit?: number
+) => {
   if (!offset) {
     offset = 0;
   }
@@ -513,27 +577,28 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
       order: [["createdAt", "DESC"]],
       where: {
         userID,
-        isDeleted: false
+        isDeleted: false,
       },
       include: [
-        { 
+        {
           model: Post,
-          where: { isDeleted: false }, 
-          include: [{
+          where: { isDeleted: false },
+          include: [
+            {
               model: Challenge,
               required: true,
-              attributes: []
-            }],
-          attributes: ['id'],
-          required: true
-        }
+              attributes: [],
+            },
+          ],
+          attributes: ["id"],
+          required: true,
+        },
       ],
-      attributes: ['id', 'text', 'createdAt'],
+      attributes: ["id", "text", "createdAt"],
       offset,
-      limit
+      limit,
     });
-  }
-  else if (postModel === "Concert") {
+  } else if (postModel === "Concert") {
     commentList = await Comment.findAll({
       order: [["createdAt", "DESC"]],
       where: {
@@ -541,27 +606,28 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
         isDeleted: false,
       },
       include: [
-        { 
+        {
           model: Post,
           where: { isDeleted: false },
-          include: [{
+          include: [
+            {
               model: Concert,
               where: {
-                isNotice: false
+                isNotice: false,
               },
               required: true,
-              attributes: []
-            }],
-          attributes: ['id'],
-          required: true
-        }
+              attributes: [],
+            },
+          ],
+          attributes: ["id"],
+          required: true,
+        },
       ],
-      attributes: ['id', 'text', 'createdAt'],
+      attributes: ["id", "text", "createdAt"],
       offset,
-      limit
+      limit,
     });
-  }
-  else if (postModel === "Notice") {
+  } else if (postModel === "Notice") {
     commentList = await Comment.findAll({
       order: [["createdAt", "DESC"]],
       where: {
@@ -569,27 +635,28 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
         isDeleted: false,
       },
       include: [
-        { 
+        {
           model: Post,
           where: { isDeleted: false },
-          include: [{
+          include: [
+            {
               model: Concert,
               where: {
-                isNotice: true
+                isNotice: true,
               },
               required: true,
-              attributes: []
-            }],
-          attributes: ['id'],
-          required: true
-        }
+              attributes: [],
+            },
+          ],
+          attributes: ["id"],
+          required: true,
+        },
       ],
-      attributes: ['id', 'text', 'createdAt'],
+      attributes: ["id", "text", "createdAt"],
       offset,
-      limit
+      limit,
     });
-  }
-  else {
+  } else {
     commentList = null;
   }
 
@@ -619,12 +686,11 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
 
   const resData: userDTO.myCommentsResDTO = {
     comments,
-    commentNum
+    commentNum,
   };
 
   return resData;
-}
-
+};
 
 /**
  *  @마이페이지_비밀번호_수정
@@ -637,7 +703,7 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
 
 export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
   const { password, newPassword } = body;
-  
+
   // 1. 요청 바디 부족
   if (!newPassword || !password || !userID) {
     return -1;
@@ -645,7 +711,7 @@ export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
 
   const user = await User.findOne({
     where: { id: userID },
-    attributes: ['password']
+    attributes: ["password"],
   });
 
   // Encrpyt password
@@ -661,59 +727,128 @@ export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
   // Encrpyt password
   const encrpytPW = await bcrypt.hash(newPassword, salt);
 
-  await User.update(
-    { password: encrpytPW },
-    { where: { id: userID } },
-  );
+  await User.update({ password: encrpytPW }, { where: { id: userID } });
 
   return;
-}
-
+};
 
 /**
  *  @마이페이지_내가_쓴_댓글_삭제
- *  @route Delete user/mypage/comment
+ *  @route Patch user/mypage/comment
  *  @error
  *    1. 요청 바디가 부족할 경우
+ *    2. comment ID가 잘못된 경우
+ *    3. 해당 유저가 작성한 댓글이 아닐 경우
+ *    4. 삭제하려는 댓글이 이미 isDeleted = true 인 경우
  */
-export const deleteMyComments = async (userID?: number, comments?: userDTO.deleteCommentsReqDTO) => {
+
+export const deleteMyComments = async (
+  userID?: number,
+  comments?: userDTO.deleteCommentsReqDTO
+) => {
   // 1. 요청 바디가 부족할 경우
   if (!comments || !comments.commentID.length) {
     return -1;
   }
 
-  comments.commentID.map(async (commentID) => {
-    // 삭제하려는 댓글 isDelete = true 로 변경
+  comments.commentID.map(async (commentID: number) => {
+    const comment = await Comment.findOne({
+      where: { id: commentID },
+      attributes: ["userID", "isDeleted"],
+    });
+    // 2. comment ID가 잘못된 경우
+    if (!comment) {
+      return -2;
+    }
+    // 3. 해당 유저가 작성한 댓글이 아닐 경우
+    else if (comment.userID !== userID) {
+      return -3;
+    }
+    // 4. 삭제하려는 댓글이 이미 isDeleted = true 인 경우
+    else if (comment.isDeleted) {
+      console.log("=444");
+      return -4;
+    }
+  });
+
+  comments.commentID.map(async (commentID: number) => {
     await Comment.update(
       { isDeleted: true },
-      { where: { id: commentID, userID } },
+      { where: { id: commentID, userID } }
     );
   });
 
   return;
-}
+};
 
-// export const deleteMyComments = async (body) => {
-//   const { userID, commentID }: delMyCommentReqDTO = body;
+/**
+ *  @User_마이페이지_회고_스크랩_취소토글
+ *  @route Delete user/mypage/challenge/:challengeID
+ *  @access private
+ *  @error
+ *    1. no challengeID
+ *    2. challengeID 잘못됨
+ *    3. 스크랩 하지 않은 challenge
+ */
 
-//   //1. 요청 바디가 부족할 경우
-//   if (!commentID || commentID.length === 0) {
+export const deleteChallengeScrap = async (
+  userID: number,
+  challengeID: number
+) => {
+  // 1. no challengeID
+  if (!challengeID) {
+    return -1;
+  }
+
+  const challenge = await Post.findOne({
+    where: { id: challengeID, isDeleted: false },
+    include: [
+      { model: Scrap, as: "userScraps", required: false, where: { userID } },
+      { model: Challenge, required: true },
+    ],
+    attributes: ["id"],
+  });
+
+  // 2. challengeID 잘못됨
+  if (!challenge) {
+    return -2;
+  }
+  // 3. 스크랩 하지 않은 challenge
+  else if (!challenge.userScraps.length) {
+    return -3;
+  } else {
+    await Scrap.destroy({
+      where: { postID: challengeID, userID: userID },
+    });
+  }
+  return challenge;
+
+  // await User.update(
+  //   { password: encrpytPW },
+  //   { where: { id: userID } },
+  // );
+};
+
+// export const deleteMypageChallenge = async (userID, challengeID) => {
+//   // 1. 회고 id 잘못됨
+//   let challenge = await Challenge.findById(challengeID);
+//   if (!challenge) {
 //     return -1;
 //   }
 
-//   commentID.map(async (cmtID) => {
-//     // 삭제하려는 댓글 isDelete = true로 변경
-//     await Comment.findByIdAndUpdate(cmtID, { isDeleted: true });
-//     // 게시글 댓글 수 1 감소
-//     let comment = await Comment.findById(cmtID);
-//     if (comment.postModel === "Challenge") {
-//       // challenge
-//       await Challenge.findByIdAndUpdate(comment.post, {
-//         $inc: { commentNum: -1 },
-//       });
-//     } else {
+//   const user = await User.findById(userID);
+//   // 2. 스크랩하지 않은 글일 경우
+//   if (!user.scraps.challengeScraps.includes(challengeID)) {
+//     return -2;
+//   }
 
+//   // 유저 scraps 필드에 챌린지 id 삭제
+//   const idx = user.scraps.challengeScraps.indexOf(challengeID);
+//   user.scraps.challengeScraps.splice(idx, 1);
+//   await user.save();
 
+//   return;
+// };
 
 // /**
 //  *  @마이페이지_회원정보_수정
@@ -783,38 +918,6 @@ export const deleteMyComments = async (userID?: number, comments?: userDTO.delet
 //   return;
 // };
 
-
-// export const getMyComments = async (userID, postModel, offset, limit) => {
-//   if (!limit) {
-//     return -1;
-//   }
-//   if (!offset) {
-//     offset = 0;
-//   }
-//   let comments: IComment[];
-//   comments = await Comment.find({
-//     isDeleted: false,
-//     postModel: postModel,
-//     userID,
-//   })
-//     .skip(Number(offset))
-//     .limit(Number(limit))
-//     .sort({ _id: -1 });
-
-//   const totalCommentNum: number = await Comment.find({
-//     userID,
-//     postModel: postModel,
-//     isDeleted: false,
-//   }).countDocuments();
-
-//   const resData: myCommentsResDTO = {
-//     comments,
-//     commentNum: totalCommentNum,
-//   };
-//   return resData;
-// };
-
-
 // /**
 //  *  @User_챌린지_신청하기
 //  *  @route Post user/register
@@ -825,7 +928,6 @@ export const deleteMyComments = async (userID?: number, comments?: userDTO.delet
 // export const posetRegister = async (userID: number, body: userDTO.registerReqDTO) => {
 
 // }
-
 
 // export const postRegister = async (userID, body: registerReqDTO) => {
 //   const challengeCNT = body.challengeCNT;
@@ -898,38 +1000,6 @@ export const deleteMyComments = async (userID?: number, comments?: userDTO.delet
 //   return;
 // };
 
-
-// /**
-//  *  @User_마이페이지_회고_스크랩_취소토글
-//  *  @route Delete user/mypage/challenge/:challengeID
-//  *  @access private
-//  */
-
-// export const deleteMypageChallenge = async (userID, challengeID) => {
-//   // 1. 회고 id 잘못됨
-//   let challenge = await Challenge.findById(challengeID);
-//   if (!challenge) {
-//     return -1;
-//   }
-
-//   const user = await User.findById(userID);
-//   // 2. 스크랩하지 않은 글일 경우
-//   if (!user.scraps.challengeScraps.includes(challengeID)) {
-//     return -2;
-//   }
-
-//   // 유저 scraps 필드에 챌린지 id 삭제
-//   const idx = user.scraps.challengeScraps.indexOf(challengeID);
-//   user.scraps.challengeScraps.splice(idx, 1);
-//   await user.save();
-
-//   return;
-// };
-
-
-
-
-
 const userService = {
   getMypageInfo,
   getUserInfo,
@@ -938,7 +1008,8 @@ const userService = {
   getMyWritings,
   getMyComments,
   patchPW,
-  deleteMyComments
+  deleteMyComments,
+  deleteChallengeScrap,
 };
 
 export default userService;

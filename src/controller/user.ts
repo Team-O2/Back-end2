@@ -20,13 +20,17 @@ const mypageInfoController = async (req: Request, res: Response) => {
   }
   try {
     const data = await userService.getMypageInfo(req.body.userID.id);
-    response.dataResponse(res, returnCode.OK, "마이페이지 유저정보 검색 성공", data);
+    response.dataResponse(
+      res,
+      returnCode.OK,
+      "마이페이지 유저정보 검색 성공",
+      data
+    );
   } catch (err) {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
 };
-
 
 /**
  *  @마이페이지_회원정보_조회
@@ -34,7 +38,7 @@ const mypageInfoController = async (req: Request, res: Response) => {
  *  @access private
  */
 
- const userInfoController = async(req: Request, res:Response) => {
+const userInfoController = async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -48,8 +52,7 @@ const mypageInfoController = async (req: Request, res: Response) => {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-}
-
+};
 
 /**
  *  @User_마이페이지_콘서트_스크랩
@@ -59,18 +62,20 @@ const mypageInfoController = async (req: Request, res: Response) => {
 
 const scrapConcertController = async (req: Request, res: Response) => {
   try {
-    const data: userDTO.concertScrapResDTO | -1 | -2 = await userService.getConcertScrap(
-      req.body.userID.id,
-      Number(req.query.offset),
-      Number(req.query.limit)
-    );
+    const data: userDTO.concertScrapResDTO | -1 | -2 =
+      await userService.getConcertScrap(
+        req.body.userID.id,
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
 
-   // 1. No limit
+    // 1. No limit
     if (data === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
-        "요청 경로가 올바르지 않습니다");
+        "요청 경로가 올바르지 않습니다"
+      );
     }
 
     // 2. No content
@@ -85,22 +90,17 @@ const scrapConcertController = async (req: Request, res: Response) => {
     // 3. 마이페이지 콘서트 조회 성공
     else {
       response.dataResponse(
-        res, 
-        returnCode.OK, 
-        "Share Together 스크랩 조회 성공", 
+        res,
+        returnCode.OK,
+        "Share Together 스크랩 조회 성공",
         data
       );
     }
   } catch (err) {
     console.error(err.message);
-    response.basicResponse(
-      res, 
-      returnCode.INTERNAL_SERVER_ERROR, 
-      "서버 오류"
-    );
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-}
-
+};
 
 /**
  *  @User_마이페이지_회고_스크랩
@@ -110,17 +110,18 @@ const scrapConcertController = async (req: Request, res: Response) => {
 
 const scrapChallengeController = async (req: Request, res: Response) => {
   try {
-    const data: userDTO.challengeScrapResDTO | -1 | -2 = await userService.getChallengeScrap(
-      req.body.userID.id,
-      Number(req.query.offset),
-      Number(req.query.limit)
-    );
+    const data: userDTO.challengeScrapResDTO | -1 | -2 =
+      await userService.getChallengeScrap(
+        req.body.userID.id,
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
 
     // 1. No limit
     if (data === -1) {
       response.basicResponse(
-        res, 
-        returnCode.NOT_FOUND, 
+        res,
+        returnCode.NOT_FOUND,
         "요청 경로가 올바르지 않습니다"
       );
     }
@@ -137,22 +138,17 @@ const scrapChallengeController = async (req: Request, res: Response) => {
     // 3.마이페이지 콘서트 조회 성공
     else {
       response.dataResponse(
-        res, 
-        returnCode.OK, 
-        "learn Myself 스크랩 조회 성공", 
+        res,
+        returnCode.OK,
+        "learn Myself 스크랩 조회 성공",
         data
       );
     }
   } catch (err) {
     console.error(err.message);
-    response.basicResponse(
-      res, 
-      returnCode.INTERNAL_SERVER_ERROR, 
-      "서버 오류"
-    );
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-}
-
+};
 
 /**
  *  @마이페이지_내가_쓴_글
@@ -161,18 +157,23 @@ const scrapChallengeController = async (req: Request, res: Response) => {
  */
 
 const getMyWritingsController = async (req: Request, res: Response) => {
-    try {
-    const data: userDTO.challengeResDTO[] | -1 | -2 = await userService.getMyWritings(
-      req.body.userID.id,
-      Number(req.query.offset),
-      Number(req.query.limit)
-    );
+  try {
+    const data: userDTO.challengeResDTO[] | -1 | -2 =
+      await userService.getMyWritings(
+        req.body.userID.id,
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
 
     // 1. No limit
     if (data === -1) {
-      response.basicResponse(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다."
+      );
     }
-    
+
     // 2. No content
     else if (data == -2) {
       response.basicResponse(
@@ -182,14 +183,12 @@ const getMyWritingsController = async (req: Request, res: Response) => {
       );
     }
 
-
     response.dataResponse(res, returnCode.OK, "내가 쓴 글 가져오기 성공", data);
   } catch (err) {
     console.error(err.message);
     response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-}
-
+};
 
 /**
  *  @마이페이지_내가_쓴_댓글
@@ -202,8 +201,9 @@ const getMyWritingsController = async (req: Request, res: Response) => {
  */
 
 const getMyCommentsController = async (req: Request, res: Response) => {
-    try {
-      const data: userDTO.myCommentsResDTO | -1 | -2 | -3 | -4 = await userService.getMyComments(
+  try {
+    const data: userDTO.myCommentsResDTO | -1 | -2 | -3 | -4 =
+      await userService.getMyComments(
         req.body.userID.id,
         String(req.query.postModel),
         Number(req.query.offset),
@@ -214,7 +214,7 @@ const getMyCommentsController = async (req: Request, res: Response) => {
     if (data === -1) {
       response.basicResponse(
         res,
-        returnCode.BAD_REQUEST, 
+        returnCode.BAD_REQUEST,
         "요청 값이 올바르지 않습니다."
       );
     }
@@ -237,21 +237,17 @@ const getMyCommentsController = async (req: Request, res: Response) => {
     // 4. 내가 쓴 댓글 조회 성공
     else {
       response.dataResponse(
-        res, 
-        returnCode.OK, 
-        "내가 쓴 댓글 가져오기 성공", 
+        res,
+        returnCode.OK,
+        "내가 쓴 댓글 가져오기 성공",
         data
       );
     }
   } catch (err) {
     console.error(err.message);
-    response.basicResponse(
-      res, 
-      returnCode.INTERNAL_SERVER_ERROR, 
-      "서버 오류"
-    );
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-}
+};
 
 /**
  *  @마이페이지_비밀번호_수정
@@ -262,18 +258,16 @@ const getMyCommentsController = async (req: Request, res: Response) => {
  *    2. 현재 비밀번호와 일치하지 않음
  */
 
-const patchPWController = async (req: Request, res:Response) => {
-    try {
-      const body: userDTO.newPwReqDTO = req.body;
-      const data = await userService.patchPW(
-        req.body.userID.id, 
-        body);
+const patchPWController = async (req: Request, res: Response) => {
+  try {
+    const body: userDTO.newPwReqDTO = req.body;
+    const data = await userService.patchPW(req.body.userID.id, body);
 
     // 1. 요청 바디가 부족
     if (data === -1) {
       response.basicResponse(
-        res, 
-        returnCode.BAD_REQUEST, 
+        res,
+        returnCode.BAD_REQUEST,
         "요청 값이 올바르지 않습니다."
       );
     }
@@ -284,31 +278,24 @@ const patchPWController = async (req: Request, res:Response) => {
         returnCode.BAD_REQUEST,
         "현재 비밀번호가 일치하지 않습니다."
       );
+    } else {
+      response.basicResponse(res, returnCode.OK, "비밀번호 수정 성공");
     }
-    else {
-      response.basicResponse(
-        res, 
-        returnCode.OK, 
-        "비밀번호 수정 성공"
-      );
-    }
-
   } catch (err) {
     console.error(err.message);
-    response.basicResponse(
-      res, 
-      returnCode.INTERNAL_SERVER_ERROR, 
-      "서버 오류"
-    );
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-}
+};
 
 /**
  *  @마이페이지_내가_쓴_댓글_삭제
- *  @route Delete user/mypage/comment
+ *  @route Patch user/mypage/comment
  *  @access Private
  *  @error
  *    1. 요청 바디가 부족할 경우
+ *    2. comment ID가 잘못된 경우
+ *    3. 해당 유저가 작성한 댓글이 아닐 경우
+ *    4. 삭제하려는 댓글이 이미 isDeleted = true 인 경우
  */
 
 const deleteMyCommentsController = async (req: Request, res: Response) => {
@@ -320,32 +307,125 @@ const deleteMyCommentsController = async (req: Request, res: Response) => {
       comments
     );
 
+    console.log("data", data);
+
     // 1. 요청 바디가 부족할 경우
     if (data === -1) {
       response.basicResponse(
-        res, 
-        returnCode.BAD_REQUEST, 
+        res,
+        returnCode.BAD_REQUEST,
         "요청 값이 올바르지 않습니다."
       );
     }
-    else {
+    // 2. comment ID가 잘못된 경우
+    else if (data === -2) {
       response.basicResponse(
-        res, 
-        returnCode.OK, 
-        "내가 쓴 댓글 삭제 성공", 
-      );      
+        res,
+        returnCode.BAD_REQUEST,
+        "잘못된 commentID 입니다."
+      );
     }
-
+    // 3. 해당 유저가 작성한 댓글이 아닐 경우
+    else if (data === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "삭제 권한이 없습니다."
+      );
+    }
+    // 4. 삭제하려는 댓글이 이미 isDeleted = true 인 경우
+    else if (data === -4) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "이미 삭제된 댓글입니다."
+      );
+    } else {
+      response.basicResponse(res, returnCode.OK, "내가 쓴 댓글 삭제 성공");
+    }
   } catch (err) {
     console.error(err.message);
-    response.basicResponse(
-      res, 
-      returnCode.INTERNAL_SERVER_ERROR, 
-      "서버 오류"
-    );
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-}
+};
 
+/**
+ *  @User_마이페이지_회고_스크랩_취소토글
+ *  @route Delete user/mypage/challenge/:challengeID
+ *  @access private
+ *  @error
+ *    1. no challengeID
+ *    2. challengeID 잘못됨
+ *    3. 스크랩 하지 않은 challenge
+ */
+
+const deleteChallengeScrapController = async (req: Request, res: Response) => {
+  try {
+    const data = await userService.deleteChallengeScrap(
+      req.body.userID.id,
+      Number(req.params.challengeID)
+    );
+
+    // response.dataResponse(res, returnCode.OK, "스크랩 취소 성공", data);
+
+    // 1. no challengeID
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다."
+      );
+    }
+    // 2. challengeID 잘못됨
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "잘못된 challengeID 입니다."
+      );
+    }
+    // 3. 스크랩 하지 않은 challenge
+    else if (data === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "스크랩 하지 않은 글입니다."
+      );
+    }
+    // 마이페이지 회고 스크랩 취소
+    else {
+      response.basicResponse(res, returnCode.OK, "스크랩 취소 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
+// router.delete(
+//   "/mypage/challenge/:id",
+//   auth,
+//   async (req: Request, res: Response) => {
+//     try {
+//       const data = await deleteMypageChallenge(
+//         req.body.userID.id,
+//         req.params.id
+//       );
+//       // 회고 id가 잘못된 경우
+//       if (data === -1) {
+//         response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+//       }
+//       // 스크랩 하지 않은 글일 경우
+//       if (data === -2) {
+//         response(res, returnCode.BAD_REQUEST, "스크랩 하지 않은 글입니다");
+//       }
+//       // 마이페이지 회고 스크랩 취소
+//       response(res, returnCode.OK, "스크랩 취소 성공");
+//     } catch (err) {
+//       console.error(err.message);
+//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//     }
+//   }
+// );
 
 // /**
 //  *  @마이페이지_회원정보_수정
@@ -378,35 +458,6 @@ const deleteMyCommentsController = async (req: Request, res: Response) => {
 //     }
 //   }
 // );
-
-
-
-// router.patch("/password", auth, async (req: Request, res: Response) => {
-//   try {
-//     const body: newPwReqDTO = req.body;
-//     const data = await patchPW(body);
-
-//     // 요청 바디가 부족할 경우
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
-//     // 현재 password와 맞지 않을 경우
-//     if (data === -2) {
-//       response(
-//         res,
-//         returnCode.BAD_REQUEST,
-//         "현재 비밀번호가 일치하지 않습니다"
-//       );
-//     }
-
-//     response(res, returnCode.OK, "비밀번호 수정 성공");
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
-
 
 // import { Router, Request, Response } from "express";
 // // libraries
@@ -494,43 +545,7 @@ const deleteMyCommentsController = async (req: Request, res: Response) => {
 //   }
 // });
 
-
-
-// /**
-//  *  @User_마이페이지_회고_스크랩_취소토글
-//  *  @route Delete user/mypage/challenge/:challengeID
-//  *  @access private
-//  */
-
-// router.delete(
-//   "/mypage/challenge/:id",
-//   auth,
-//   async (req: Request, res: Response) => {
-//     try {
-//       const data = await deleteMypageChallenge(
-//         req.body.userID.id,
-//         req.params.id
-//       );
-//       // 회고 id가 잘못된 경우
-//       if (data === -1) {
-//         response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//       }
-//       // 스크랩 하지 않은 글일 경우
-//       if (data === -2) {
-//         response(res, returnCode.BAD_REQUEST, "스크랩 하지 않은 글입니다");
-//       }
-//       // 마이페이지 회고 스크랩 취소
-//       response(res, returnCode.OK, "스크랩 취소 성공");
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
-
-
 // module.exports = router;
-
 
 const userController = {
   mypageInfoController,
@@ -540,7 +555,8 @@ const userController = {
   getMyWritingsController,
   getMyCommentsController,
   patchPWController,
-  deleteMyCommentsController
+  deleteMyCommentsController,
+  deleteChallengeScrapController,
 };
 
 export default userController;

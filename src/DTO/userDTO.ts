@@ -74,9 +74,9 @@ namespace userDTO {
   }
 
   export interface deleteCommentsReqDTO {
-    commentID: string[];
+    commentID: number[];
   }
-  
+
   export interface IMypageUser {
     nickname: string;
     isAdmin: Boolean;
@@ -144,8 +144,6 @@ namespace userDTO {
     couponBook: ICouponBook;
   }
 
-
-
   export interface userInfoResDTO {
     interest: string[];
     isMarketing: Boolean;
@@ -154,15 +152,11 @@ namespace userDTO {
     email: string;
     nickname: string;
   }
-  
-  
-  export interface mypageConcertResDTO {
 
-  }
+  export interface mypageConcertResDTO {}
 }
 
 export default userDTO;
-
 
 // import mongoose, { Document } from "mongoose";
 // import { IComment } from "../interfaces/IComment";
