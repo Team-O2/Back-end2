@@ -5,6 +5,7 @@ import { Badge, Concert, Comment, Like, Post, Scrap, User } from "../models";
 
 // DTO
 import { concertDTO, commentDTO } from "../DTO";
+import { NumberAttributeValue } from "aws-sdk/clients/dynamodbstreams";
 
 /**
  *  @오투콘서트_전체_가져오기
@@ -12,7 +13,11 @@ import { concertDTO, commentDTO } from "../DTO";
  *  @error
  *    1. limit이 없는 경우
  */
-export const getConcertAll = async (userID, offset, limit) => {
+export const getConcertAll = async (
+  userID: number,
+  offset: number,
+  limit: number
+) => {
   // isDelete = true 인 애들만 가져오기
   // offset 뒤에서 부터 가져오기
   // 최신순으로 정렬
@@ -130,7 +135,7 @@ export const getConcertAll = async (userID, offset, limit) => {
  *  @error
  *    1. concertID가 없을 경우
  */
-export const getConcertOne = async (userID, concertID) => {
+export const getConcertOne = async (userID: number, concertID: number) => {
   // 1. concertID가 없을 경우
   if (!concertID) {
     return -1;
@@ -224,11 +229,11 @@ export const getConcertOne = async (userID, concertID) => {
  *    1. limit이 없는 경우
  */
 export const getConcertSearch = async (
-  offset,
-  limit,
-  userID?,
-  tag?,
-  keyword?
+  offset: number,
+  limit: number,
+  userID?: number,
+  tag?: string,
+  keyword?: string
 ) => {
   // isDelete = true 인 애들만 가져오기
   // offset 뒤에서 부터 가져오기
@@ -368,8 +373,8 @@ export const getConcertSearch = async (
  *      3. 부모 댓글 id 값이 유효하지 않을 경우
  */
 export const postConcertComment = async (
-  concertID,
-  userID,
+  concertID: number,
+  userID: number,
   reqData: commentDTO.postCommentReqDTO
 ) => {
   const { parentID, text } = reqData;
@@ -457,7 +462,7 @@ export const postConcertComment = async (
  *      1. 콘서트 id 잘못됨
  *      2. 이미 좋아요 한 글일 경우
  */
-export const postConcertLike = async (concertID, userID) => {
+export const postConcertLike = async (concertID: number, userID: number) => {
   // 1. 콘서트 id 잘못됨
   const concert = await Post.findOne({
     where: {
@@ -514,7 +519,7 @@ export const postConcertLike = async (concertID, userID) => {
  *      1. 콘서트 id 잘못됨
  *      2. 좋아요 개수가 0
  */
-export const deleteConcertLike = async (concertID, userID) => {
+export const deleteConcertLike = async (concertID: number, userID: number) => {
   // 1. 콘서트 id 잘못됨
   const concert = await Post.findOne({
     where: {
@@ -552,7 +557,7 @@ export const deleteConcertLike = async (concertID, userID) => {
  *      1. 콘서트 id 잘못됨
  *      2. 이미 스크랩 한 회고일 경우
  */
-export const postConcertScrap = async (concertID, userID) => {
+export const postConcertScrap = async (concertID: number, userID: number) => {
   // 1. 콘서트 id 잘못됨
   const concert = await Post.findOne({
     where: {
@@ -600,7 +605,7 @@ export const postConcertScrap = async (concertID, userID) => {
  *      1. 콘서트 id 잘못됨
  *      2. 스크랩 하지 않은 글일 경우
  */
-export const deleteConcertScrap = async (concertID, userID) => {
+export const deleteConcertScrap = async (concertID: number, userID: number) => {
   // 1. 콘서트 id 잘못됨
   const concert = await Post.findOne({
     where: {
