@@ -7,8 +7,10 @@ import {
   AutoIncrement,
   Unique,
   Default,
+  HasMany,
 } from "sequelize-typescript";
 import { Sequelize } from "sequelize";
+import { Generation } from ".";
 
 @Table({
   tableName: "Admin",
@@ -61,4 +63,7 @@ export default class Admin extends Model {
   @Default(Sequelize.fn("NOW"))
   @Column
   createdAt?: Date;
+
+  @HasMany(() => Generation)
+  generations: Generation[];
 }

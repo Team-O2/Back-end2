@@ -13,13 +13,11 @@ import { userDTO } from "../DTO";
  *  @access private
  */
 
-const mypageInfoController = async (req: Request, res: Response) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+const getMypageInfoController = async (req: Request, res: Response) => {
   try {
-    const data = await userService.getMypageInfo(req.body.userID.id);
+    const data: userDTO.mypageInfoResDTO = await userService.getMypageInfo(
+      req.body.userID.id
+    );
     response.dataResponse(
       res,
       returnCode.OK,
@@ -38,13 +36,11 @@ const mypageInfoController = async (req: Request, res: Response) => {
  *  @access private
  */
 
-const userInfoController = async (req: Request, res: Response) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+const getUserInfoController = async (req: Request, res: Response) => {
   try {
-    const data = await userService.getUserInfo(req.body.userID.id);
+    const data: userDTO.userInfoResDTO = await userService.getUserInfo(
+      req.body.userID.id
+    );
 
     // 유저정보 조회 성공
     response.dataResponse(res, returnCode.OK, "유저정보 조회 성공", data);
@@ -56,11 +52,14 @@ const userInfoController = async (req: Request, res: Response) => {
 
 /**
  *  @User_마이페이지_콘서트_스크랩
- *  @route Get user/mypage/concert?offset=@&limit=
- *  @access Private
+ *  @route GET user/mypage/concert?offset=@&limit=
+ *  @access private
+ *  @error
+ *    1. no Limit
+ *    2. no content
  */
 
-const scrapConcertController = async (req: Request, res: Response) => {
+const getConcertScrapController = async (req: Request, res: Response) => {
   try {
     const data: userDTO.concertScrapResDTO | -1 | -2 =
       await userService.getConcertScrap(
@@ -77,7 +76,6 @@ const scrapConcertController = async (req: Request, res: Response) => {
         "요청 경로가 올바르지 않습니다"
       );
     }
-
     // 2. No content
     else if (data == -2) {
       response.basicResponse(
@@ -86,8 +84,7 @@ const scrapConcertController = async (req: Request, res: Response) => {
         "스크랩한 Share Together가 없습니다."
       );
     }
-
-    // 3. 마이페이지 콘서트 조회 성공
+    // 마이페이지 콘서트 조회 성공
     else {
       response.dataResponse(
         res,
@@ -108,7 +105,7 @@ const scrapConcertController = async (req: Request, res: Response) => {
  *  @access Private
  */
 
-const scrapChallengeController = async (req: Request, res: Response) => {
+const getChallengeScrapController = async (req: Request, res: Response) => {
   try {
     const data: userDTO.challengeScrapResDTO | -1 | -2 =
       await userService.getChallengeScrap(
@@ -125,7 +122,6 @@ const scrapChallengeController = async (req: Request, res: Response) => {
         "요청 경로가 올바르지 않습니다"
       );
     }
-
     // 2. No content
     else if (data == -2) {
       response.basicResponse(
@@ -134,8 +130,7 @@ const scrapChallengeController = async (req: Request, res: Response) => {
         "스크랩한 learn Myself가 없습니다."
       );
     }
-
-    // 3.마이페이지 콘서트 조회 성공
+    // 마이페이지 콘서트 조회 성공
     else {
       response.dataResponse(
         res,
@@ -509,10 +504,10 @@ const patchUserInfoController = async (req: Request, res: Response) => {
 };
 
 const userController = {
-  mypageInfoController,
-  userInfoController,
-  scrapConcertController,
-  scrapChallengeController,
+  getMypageInfoController,
+  getUserInfoController,
+  getConcertScrapController,
+  getChallengeScrapController,
   getMyWritingsController,
   getMyCommentsController,
   patchPWController,

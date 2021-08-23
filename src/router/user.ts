@@ -7,16 +7,22 @@ const upload = require("../modules/upload");
 
 const router = express.Router();
 
-router.get("/mypage/info", authMiddleware, userController.mypageInfoController);
+router.get(
+  "/mypage/info",
+  authMiddleware,
+  userController.getMypageInfoController
+);
+router.get("/userInfo", authMiddleware, userController.getUserInfoController);
+
 router.get(
   "/mypage/concert",
   authMiddleware,
-  userController.scrapConcertController
+  userController.getConcertScrapController
 );
 router.get(
   "/mypage/challenge",
   authMiddleware,
-  userController.scrapChallengeController
+  userController.getChallengeScrapController
 );
 router.get(
   "/mypage/write",
@@ -28,7 +34,7 @@ router.get(
   authMiddleware,
   userController.getMyCommentsController
 );
-router.get("/userInfo", authMiddleware, userController.userInfoController);
+
 router.patch("/password", authMiddleware, userController.patchPWController);
 router.patch(
   "/mypage/comment",

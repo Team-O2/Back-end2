@@ -2,6 +2,8 @@ import { DateDataType } from "sequelize/types";
 import { commentDTO } from ".";
 
 namespace userDTO {
+  // 합치면 challengeDTO 및 concertDTO 에서 받아와서 써도 될 듯!
+  // 일단 여기 써놓고 씁니다아
   export interface challengeResDTO {
     id: number;
     generation: number;
@@ -88,20 +90,7 @@ namespace userDTO {
     img?: File;
   }
 
-  export interface IMypageUser {
-    nickname: string;
-    isAdmin: Boolean;
-  }
-
-  export interface IMyPageLearnMySelf {
-    conditionNum: number;
-    writingNum: number;
-    challengeStartDT: Date;
-    challengeEndDT: Date;
-    generation: number;
-  }
-
-  export interface ILearnMySelfAchieve {
+  export interface mypageInfoChallengeResDTO {
     percent: number;
     totalNum: number;
     completeNum: number;
@@ -110,29 +99,12 @@ namespace userDTO {
     generation: number;
   }
 
-  export interface IShareTogether {
+  export interface mypageInfoConcertResDTO {
     id: number;
     title: string;
   }
 
-  export interface ICouponBook {
-    welcomeBadge: Boolean;
-    firstJoinBadge: Boolean;
-    firstWriteBadge: Boolean;
-    oneCommentBadge: Boolean;
-    fiveCommentBadge: Boolean;
-    oneLikeBadge: Boolean;
-    fiveLikeBadge: Boolean;
-    loginBadge: Boolean;
-    marketingBadge: Boolean;
-    learnMySelfScrapBadge: Boolean;
-    firstReplyBadge: Boolean;
-    concertScrapBadge: Boolean;
-    challengeBadge: number;
-  }
-
-  export interface IBadge {
-    id: number;
+  export interface mypageInfoBadgeResDTO {
     welcomeBadge: Boolean;
     firstJoinBadge: Boolean;
     firstWriteBadge: Boolean;
@@ -150,9 +122,9 @@ namespace userDTO {
 
   export interface mypageInfoResDTO {
     nickname: string;
-    learnMyselfAchieve: ILearnMySelfAchieve | null;
-    shareTogether: IShareTogether[] | null;
-    couponBook: ICouponBook;
+    learnMyselfAchieve: mypageInfoChallengeResDTO | null;
+    shareTogether: mypageInfoConcertResDTO[] | null;
+    couponBook: mypageInfoBadgeResDTO;
   }
 
   export interface userInfoResDTO {
