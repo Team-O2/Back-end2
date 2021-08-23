@@ -51,7 +51,7 @@ const getConcertAllController = async (req: Request, res: Response) => {
 
 const getConcertSearchController = async (req: Request, res: Response) => {
   try {
-    const data: concertDTO.concertAllResDTO | -1 =
+    const resData: concertDTO.concertAllResDTO | -1 =
       await concertService.getConcertSearch(
         Number(req.query.offset),
         Number(req.query.limit),
@@ -61,7 +61,7 @@ const getConcertSearchController = async (req: Request, res: Response) => {
       );
 
     // limit 없을 때
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
@@ -69,8 +69,7 @@ const getConcertSearchController = async (req: Request, res: Response) => {
       );
     } else {
       // 검색 불러오기 성공
-      const concertSearch = data;
-      response.dataResponse(res, returnCode.OK, "검색 성공", concertSearch);
+      response.dataResponse(res, returnCode.OK, "검색 성공", resData);
     }
   } catch (err) {
     console.error(err.message);
@@ -87,13 +86,13 @@ const getConcertSearchController = async (req: Request, res: Response) => {
  */
 const getConcertDetailController = async (req: Request, res: Response) => {
   try {
-    const concert: concertDTO.concertDetailDTO | -1 =
+    const resData: concertDTO.concertDetailDTO | -1 =
       await concertService.getConcertOne(
         req.body.userID?.id,
         Number(req.params.concertID)
       );
 
-    if (concert === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
@@ -104,7 +103,7 @@ const getConcertDetailController = async (req: Request, res: Response) => {
         res,
         returnCode.OK,
         "해당 콘서트 게시글 불러오기 성공",
-        concert
+        resData
       );
     }
   } catch (err) {
@@ -122,14 +121,14 @@ const getConcertDetailController = async (req: Request, res: Response) => {
 const postConcertCommentController = async (req: Request, res: Response) => {
   try {
     const reqData: commentDTO.postCommentReqDTO = req.body;
-    const data = await concertService.postConcertComment(
+    const resData = await concertService.postConcertComment(
       Number(req.params.concertID),
       req.body.userID.id,
       reqData
     );
 
     // 회고 id가 잘못된 경우
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
@@ -137,7 +136,7 @@ const postConcertCommentController = async (req: Request, res: Response) => {
       );
     }
     //  요청 바디가 부족한 경우
-    else if (data === -2) {
+    else if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -145,7 +144,7 @@ const postConcertCommentController = async (req: Request, res: Response) => {
       );
     }
     // 부모 댓글 id가 잘못된 경우
-    else if (data === -3) {
+    else if (resData === -3) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -169,13 +168,13 @@ const postConcertCommentController = async (req: Request, res: Response) => {
 
 const postConcertLikeController = async (req: Request, res: Response) => {
   try {
-    const data = await concertService.postConcertLike(
+    const resData = await concertService.postConcertLike(
       Number(req.params.concertID),
       req.body.userID.id
     );
 
     // 회고 id가 잘못된 경우
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
@@ -183,7 +182,7 @@ const postConcertLikeController = async (req: Request, res: Response) => {
       );
     }
     // 이미 좋아요 한 글일 경우
-    else if (data === -2) {
+    else if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -207,20 +206,20 @@ const postConcertLikeController = async (req: Request, res: Response) => {
 
 const deleteConcertLikeController = async (req: Request, res: Response) => {
   try {
-    const data = await concertService.deleteConcertLike(
+    const resData = await concertService.deleteConcertLike(
       Number(req.params.concertID),
       Number(req.body.userID.id)
     );
 
     // 콘서트 id가 잘못된 경우
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
         "요청 경로가 올바르지 않습니다"
       );
     } // 좋아요 한 개수가 0인 경우
-    else if (data === -2) {
+    else if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -243,13 +242,13 @@ const deleteConcertLikeController = async (req: Request, res: Response) => {
  */
 const postConcertScrapController = async (req: Request, res: Response) => {
   try {
-    const data = await concertService.postConcertScrap(
+    const resData = await concertService.postConcertScrap(
       Number(req.params.concertID),
       Number(req.body.userID.id)
     );
 
     // 회고 id가 잘못된 경우
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
@@ -257,7 +256,7 @@ const postConcertScrapController = async (req: Request, res: Response) => {
       );
     }
     // 이미 유저가 스크랩한 글일 경우
-    else if (data === -2) {
+    else if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -266,7 +265,7 @@ const postConcertScrapController = async (req: Request, res: Response) => {
     }
 
     //자신의 회고인 경우
-    else if (data === -3) {
+    else if (resData === -3) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -289,13 +288,13 @@ const postConcertScrapController = async (req: Request, res: Response) => {
  */
 const deleteConcertScrapController = async (req: Request, res: Response) => {
   try {
-    const data = await concertService.deleteConcertScrap(
+    const resData = await concertService.deleteConcertScrap(
       Number(req.params.concertID),
       Number(req.body.userID.id)
     );
 
     // 콘서트 id가 잘못된 경우
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,
@@ -303,7 +302,7 @@ const deleteConcertScrapController = async (req: Request, res: Response) => {
       );
     }
     // 스크랩 하지 않은 글일 경우
-    else if (data === -2) {
+    else if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
