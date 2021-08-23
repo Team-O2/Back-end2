@@ -174,36 +174,36 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
   });
 
   // 스크랩한 글이 없을 때
-  if (!concertList) {
+  if (!concertList.length) {
     return -1;
   }
 
   const totalScrapNum = concertList.length;
 
-    const concerts: userDTO.getScrapConcertResDTO[] = await Promise.all(
-      concertList.map(async (concert) => {
+  const mypageConcertScrap: userDTO.getScrapConcertResDTO[] = await Promise.all(
+    concertList.map(async (concert) => {
       // 댓글 형식 변환
-        let comment: commentDTO.IComment[] = [];
-        concert.comments.forEach((c) => {
-          if (c.level === 0) {
-            comment.unshift({
-              id: c.id,
-              userID: c.userID,
-              nickname: c.user.nickname,
-              img: c.user.img,
-              text: c.text,
-              children: [],
-            });
-          } else if (!c.isDeleted) {
-            comment[comment.length - 1].children.unshift({
-              id: c.id,
-              userID: c.userID,
-              nickname: c.user.nickname,
-              img: c.user.img,
-              text: c.text,
-            });
-          }
-        });
+      let comment: commentDTO.IComment[] = [];
+      concert.comments.forEach((c) => {
+        if (c.level === 0) {
+          comment.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+            children: [],
+          });
+        } else if (!c.isDeleted) {
+          comment[comment.length - 1].children.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+          });
+        }
+      });
 
       const returnData = {
         id: concert.id,
@@ -227,25 +227,17 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
         comment,
         isDeleted: concert.isDeleted,
         isNotice: concert.concert.isNotice,
+        isLike: concert.userLikes.length? true: false,
+        isScrap: true
       };
-
-
-      if (userID) {
-        const isLike= concert.userLikes.length? true: false;
-        return {
-          ...returnData,
-          isLike,
-          isScrap: true
-        };
-      }
 
       return returnData;
     })
   );
 
   const resData: userDTO.scrapConcertAllResDTO = {
-    concerts,
-    totalScrapNum,
+    mypageConcertScrap,
+    totalScrapNum
   };
 
   return resData;
@@ -253,190 +245,107 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
 }
 
 
+/**
+ *  @User_마이페이지_회고_스크랩
+ *  @route Post user/mypage/challenge
+ *  @access private
+*/
 
+export const getMypageChallenge = async (
+  userID?: number,
+  offset?: number, 
+  limit?: number
+) => {
+  if (!offset) {
+    offset = 0;
+  }
 
+  // 요청 부족
+  if (!limit) {
+    return -2;
+  }
 
-// export const getMypageConcert = async (userID, offset, limit) => {
-//   if (!offset) {
-//     offset = "0";
-//   }
+  const challengeList = await Post.findAll({
+    order: [["createdAt", "DESC"]],
+    include: [
+      { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
+      { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
+      { model: Challenge, required: true },
+      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}] },
+      { model: User, attributes: ['id', 'img', 'nickname']},
+      { model: Like, attributes: ['userID'], required: false, as: "likes"},
+      { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
+    ],
+    where: {
+      isDeleted: false
+    },
+    offset,
+    limit
+  });
+  
+    // 스크랩한 글이 없을 때
+  if (!challengeList.length) {
+      return -1;
+  }
 
-//   const user = await User.findById(userID);
+  const totalScrapNum = challengeList.length;
 
-//   if (!user.scraps.concertScraps[0]) {
-//     return -1;
-//   }
+  const mypageChallengeScrap: userDTO.getScrapChallengeResDTO[] = await Promise.all(
+    challengeList.map(async (challenge) => {
+      // 댓글 형식 변환
+      let comment: commentDTO.IComment[] = [];
+      challenge.comments.forEach((c) => {
+        if (c.level === 0) {
+          comment.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+            children: [],
+          });
+        } else if (!c.isDeleted) {
+          comment[comment.length - 1].children.unshift({
+            id: c.id,
+            userID: c.userID,
+            nickname: c.user.nickname,
+            img: c.user.img,
+            text: c.text,
+          });
+        }
+      });
 
-//   if (!limit) {
-//     return -2;
-//   }
+      const returnData = {
+        id: challenge.id,
+        generation: challenge.generation,
+        createdAt: challenge.createdAt,
+        updatedAt: challenge.updatedAt,
+        userID: challenge.userID,
+        nickname: challenge.user.nickname,
+        img: challenge.user.img,
+        good: challenge.challenge.good,
+        bad: challenge.challenge.bad,
+        learn: challenge.challenge.learn,
+        interest: challenge.interest.split(","),
+        likeNum: challenge.likes.length,
+        scrapNum: challenge.scraps.length,
+        commentNum: challenge.comments.length,
+        comment,
+        isLike: challenge.userLikes.length? true: false,
+        isScrap: true
+      };
 
-//   const concertList: (IConcert &
-//     Document<IUser, mongoose.Schema.Types.ObjectId> &
-//     Document<IComment, mongoose.Schema.Types.ObjectId>)[][] = await Promise.all(
-//     user.scraps.concertScraps.map(async function (scrap) {
-//       let concertScrap: (IConcert &
-//         Document<IUser, mongoose.Schema.Types.ObjectId> &
-//         Document<IComment, mongoose.Schema.Types.ObjectId>)[] =
-//         await Concert.find({ _id: scrap }, { isDeleted: false })
-//           .populate("user", ["nickname", "img"])
-//           .populate({
-//             path: "comments",
-//             select: { userID: 1, text: 1, isDeleted: 1 },
-//             options: { sort: { _id: -1 } },
-//             populate: [
-//               {
-//                 path: "childrenComment",
-//                 select: { userID: 1, text: 1, isDeleted: 1 },
-//                 options: { sort: { _id: -1 } },
-//                 populate: {
-//                   path: "userID",
-//                   select: ["nickname", "img"],
-//                 },
-//               },
-//               {
-//                 path: "userID",
-//                 select: ["nickname", "img"],
-//               },
-//             ],
-//           });
-//       return concertScrap;
-//     })
-//   );
-//   const mypageConcert: (IConcert &
-//     Document<IUser, mongoose.Schema.Types.ObjectId> &
-//     Document<IComment, mongoose.Schema.Types.ObjectId>)[][] = concertList.sort(
-//     function (a, b) {
-//       return dateToNumber(b[0].createdAt) - dateToNumber(a[0].createdAt);
-//     }
-//   );
+      return returnData;
+    })
+  );
 
-//   let concertScraps = [];
-//   for (var i = Number(offset); i < Number(offset) + Number(limit); i++) {
-//     const tmp = mypageConcert[i];
-//     if (!tmp) {
-//       break;
-//     }
-//     concertScraps.push(tmp[0]);
-//   }
+  const resData: userDTO.scrapChallengeAllResDTO = {
+    mypageChallengeScrap,
+    totalScrapNum
+  };
 
-//   // 좋아요, 스크랩 여부 추가
-//   const mypageConcertScrap: IConcertDTO[] = concertScraps.map((c) => {
-//     if (
-//       user.scraps.challengeScraps.includes(c._id) &&
-//       user.likes.challengeLikes.includes(c._id)
-//     ) {
-//       return { ...c._doc, isLike: true, isScrap: true };
-//     } else if (user.scraps.challengeScraps.includes(c._id)) {
-//       return { ...c._doc, isLike: false, isScrap: true };
-//     } else if (user.likes.challengeLikes.includes(c._id)) {
-//       return { ...c._doc, isLike: true, isScrap: false };
-//     } else {
-//       return {
-//         ...c._doc,
-//         isLike: false,
-//         isScrap: false,
-//       };
-//     }
-//   });
-
-//   const resData: concertScrapResDTO = {
-//     mypageConcertScrap,
-//     totalScrapNum: mypageConcert.length,
-//   };
-//   return resData;
-// };
-
-
-// /**
-//  *  @User_챌린지_신청하기
-//  *  @route Post user/register
-//  *  @body challengeCNT
-//  *  @access private
-//  */
-
-// export const posetRegister = async (userID: number, body: userDTO.registerReqDTO) => {
-
-// }
-
-
-// export const postRegister = async (userID, body: registerReqDTO) => {
-//   const challengeCNT = body.challengeCNT;
-
-//   // 1. 요청 바디 부족
-//   if (!challengeCNT) {
-//     return -1;
-//   }
-
-//   // 2. 유저 id가 관리자 아이디임
-//   let user = await User.findById(userID);
-//   if (user.userType === 1) {
-//     return -2;
-//   }
-
-//   // 신청 기간을 확인
-//   let dateNow = new Date();
-//   const admin = await Admin.findOne({
-//     $and: [
-//       { registerStartDT: { $lte: dateNow } },
-//       { registerEndDT: { $gte: dateNow } },
-//     ],
-//   });
-
-//   // 3. 신청 기간이 아님
-//   if (!admin) {
-//     return -3;
-//   }
-
-//   // 4. 이미 신청이 완료된 사용자
-//   if (user.isRegist) {
-//     return -4;
-//   }
-
-//   // 5. 신청 인원을 초과함
-//   if (admin.applyNum > admin.limitNum) {
-//     return -5;
-//   }
-
-//   // 신청 성공
-//   // applyNum 증가
-//   await Admin.findOneAndUpdate(
-//     {
-//       $and: [
-//         { registerStartDT: { $lte: dateNow } },
-//         { registerEndDT: { $gte: dateNow } },
-//       ],
-//     },
-//     {
-//       $inc: { applyNum: 1 },
-//     }
-//   );
-
-//   // isRegist true
-//   await user.update({ $set: { isRegist: true } });
-//   await user.update({ $set: { challengeCNT: challengeCNT } });
-
-//   // 첫 챌린지 참여 시 뱃지 부여
-//   const badge = await Badge.findOne(
-//     { user: userID },
-//     { firstJoinBadge: true, _id: false }
-//   );
-
-//   if (!badge.firstJoinBadge) {
-//     await Badge.findOneAndUpdate(
-//       { user: userID },
-//       { $set: { firstJoinBadge: true } }
-//     );
-//   }
-//   return;
-// };
-
-
-// /**
-//  *  @User_마이페이지_회고_스크랩
-//  *  @route Post user/mypage/challenge
-//  *  @access private
-//  */
+  return resData;
+}
 
 // export const getMypageChallenge = async (userID, offset, limit) => {
 //   if (!offset) {
@@ -527,6 +436,91 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
 //     totalScrapNum: mypageChallenge.length,
 //   };
 //   return resData;
+// };
+
+
+
+// /**
+//  *  @User_챌린지_신청하기
+//  *  @route Post user/register
+//  *  @body challengeCNT
+//  *  @access private
+//  */
+
+// export const posetRegister = async (userID: number, body: userDTO.registerReqDTO) => {
+
+// }
+
+
+// export const postRegister = async (userID, body: registerReqDTO) => {
+//   const challengeCNT = body.challengeCNT;
+
+//   // 1. 요청 바디 부족
+//   if (!challengeCNT) {
+//     return -1;
+//   }
+
+//   // 2. 유저 id가 관리자 아이디임
+//   let user = await User.findById(userID);
+//   if (user.userType === 1) {
+//     return -2;
+//   }
+
+//   // 신청 기간을 확인
+//   let dateNow = new Date();
+//   const admin = await Admin.findOne({
+//     $and: [
+//       { registerStartDT: { $lte: dateNow } },
+//       { registerEndDT: { $gte: dateNow } },
+//     ],
+//   });
+
+//   // 3. 신청 기간이 아님
+//   if (!admin) {
+//     return -3;
+//   }
+
+//   // 4. 이미 신청이 완료된 사용자
+//   if (user.isRegist) {
+//     return -4;
+//   }
+
+//   // 5. 신청 인원을 초과함
+//   if (admin.applyNum > admin.limitNum) {
+//     return -5;
+//   }
+
+//   // 신청 성공
+//   // applyNum 증가
+//   await Admin.findOneAndUpdate(
+//     {
+//       $and: [
+//         { registerStartDT: { $lte: dateNow } },
+//         { registerEndDT: { $gte: dateNow } },
+//       ],
+//     },
+//     {
+//       $inc: { applyNum: 1 },
+//     }
+//   );
+
+//   // isRegist true
+//   await user.update({ $set: { isRegist: true } });
+//   await user.update({ $set: { challengeCNT: challengeCNT } });
+
+//   // 첫 챌린지 참여 시 뱃지 부여
+//   const badge = await Badge.findOne(
+//     { user: userID },
+//     { firstJoinBadge: true, _id: false }
+//   );
+
+//   if (!badge.firstJoinBadge) {
+//     await Badge.findOneAndUpdate(
+//       { user: userID },
+//       { $set: { firstJoinBadge: true } }
+//     );
+//   }
+//   return;
 // };
 
 
@@ -797,7 +791,8 @@ export const getMypageConcert = async (userID?: number, offset?: number, limit?:
 const userService = {
   getMypageInfo,
   getUserInfo,
-  getMypageConcert
+  getMypageConcert,
+  getMypageChallenge
 };
 
 export default userService;

@@ -1,6 +1,31 @@
 import { commentDTO } from ".";
 
 namespace userDTO {
+  export interface getScrapChallengeResDTO {
+    id: number;
+    generation: number;
+    createdAt: Date;
+    updatedAt: Date;
+    userID: number;
+    nickname: string;
+    img: string;
+    good: string;
+    bad: string;
+    learn: string;
+    interest: string[];
+    likeNum: number;
+    scrapNum: number;
+    commentNum: number;
+    comment: commentDTO.IComment[];
+    isLike?: Boolean;
+    isScrap?: Boolean;
+  }
+
+  export interface scrapChallengeAllResDTO {
+    mypageChallengeScrap: getScrapChallengeResDTO[];
+    totalScrapNum: number;
+  }
+
   export interface getScrapConcertResDTO {
     id: number;
     createdAt: Date;
@@ -26,10 +51,11 @@ namespace userDTO {
   }
 
   export interface scrapConcertAllResDTO {
-    concerts: getScrapConcertResDTO[];
+    mypageConcertScrap: getScrapConcertResDTO[];
     totalScrapNum: number;
   }
 
+  
   export interface IMypageUser {
     nickname: string;
     isAdmin: Boolean;
