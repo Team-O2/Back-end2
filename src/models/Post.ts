@@ -78,6 +78,9 @@ export default class Post extends Model {
   @HasMany(() => Comment)
   comments: Comment[];
 
+  @HasMany(() => Comment)
+  userComments: Comment[];
+
   @HasMany(() => Like)
   likes: Like[];
 

@@ -1,3 +1,4 @@
+import { DateDataType } from "sequelize/types";
 import { commentDTO } from ".";
 
 namespace userDTO {
@@ -26,7 +27,7 @@ namespace userDTO {
     totalScrapNum: number;
   }
 
-  export interface ConcertResDTO {
+  export interface concertResDTO {
     id: number;
     createdAt: Date;
     updatedAt: Date;
@@ -51,10 +52,21 @@ namespace userDTO {
   }
 
   export interface concertScrapResDTO {
-    mypageConcertScrap: ConcertResDTO[];
+    mypageConcertScrap: concertResDTO[];
     totalScrapNum: number;
   }
 
+  export interface commentResDTO {
+    id: number;
+    text: string;
+    post: string;
+    createdAt: Date;
+  }
+
+  export interface myCommentsResDTO {
+    comments: commentResDTO[];
+    commentNum: number;
+  }
   
   export interface IMypageUser {
     nickname: string;

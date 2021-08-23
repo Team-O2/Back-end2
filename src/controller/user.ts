@@ -64,25 +64,31 @@ const scrapConcertController = async (req: Request, res: Response) => {
       Number(req.query.offset),
       Number(req.query.limit)
     );
+   // 1. No limit
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다");
+    }
 
-    // 1. No content
-    if (data == -1) {
+    // 2. No content
+    else if (data == -2) {
       response.basicResponse(
         res,
         returnCode.NO_CONTENT,
         "스크랩한 Share Together가 없습니다."
       );
     }
-   // 2. No limit
-    else if (data === -2) {
-      response.basicResponse(
-        res,
-        returnCode.NOT_FOUND,
-        "요청 경로가 올바르지 않습니다");
-    }
+
     // 3. 마이페이지 콘서트 조회 성공
     else {
-      response.dataResponse(res, returnCode.OK, "Share Together 스크랩 조회 성공", data);
+      response.dataResponse(
+        res, 
+        returnCode.OK, 
+        "Share Together 스크랩 조회 성공", 
+        data
+      );
     }
   } catch (err) {
     console.error(err.message);
@@ -109,21 +115,21 @@ const scrapChallengeController = async (req: Request, res: Response) => {
       Number(req.query.limit)
     );
 
-    // 1. No content
-    if (data == -1) {
-      response.basicResponse(
-        res,
-        returnCode.NO_CONTENT,
-        "스크랩한 learn Myself가 없습니다."
-      );
-    }
-
-    // 2. limit 없을 때
-    if (data === -2) {
+    // 1. No limit
+    if (data === -1) {
       response.basicResponse(
         res, 
         returnCode.NOT_FOUND, 
         "요청 경로가 올바르지 않습니다"
+      );
+    }
+
+    // 2. No content
+    else if (data == -2) {
+      response.basicResponse(
+        res,
+        returnCode.NO_CONTENT,
+        "스크랩한 learn Myself가 없습니다."
       );
     }
 
@@ -161,8 +167,13 @@ const getMyWritingsController = async (req: Request, res: Response) => {
       Number(req.query.limit)
     );
 
-    // 1. No content
-    if (data == -1) {
+    // 1. No limit
+    if (data === -1) {
+      response.basicResponse(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
+    }
+    
+    // 2. No content
+    else if (data == -2) {
       response.basicResponse(
         res,
         returnCode.NO_CONTENT,
@@ -170,10 +181,6 @@ const getMyWritingsController = async (req: Request, res: Response) => {
       );
     }
 
-    // 2. No limit
-    if (data === -2) {
-      response.basicResponse(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
-    }
 
     response.dataResponse(res, returnCode.OK, "내가 쓴 글 가져오기 성공", data);
   } catch (err) {
@@ -182,25 +189,68 @@ const getMyWritingsController = async (req: Request, res: Response) => {
   }
 }
 
-// router.get("/mypage/write", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data: IChallengeDTO[] | -1 = await getMyWritings(
-//       req.body.userID.id,
-//       req.query.offset,
-//       req.query.limit
-//     );
 
-//     // limit 없을 때
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
-//     }
+/**
+ *  @마이페이지_내가_쓴_댓글
+ *  @route Get user/mypage/comment?postModel=@&offset=@&limit=
+ *  @access Private
+ *  @error
+ *    1. No limit / No postModel
+ *    2. Wrong postModel
+ *    3. 작성한 댓글이 없을 때
+ */
 
-//     dataResponse(res, returnCode.OK, "내가 쓴 글 가져오기 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+const getMyCommentsController = async (req: Request, res: Response) => {
+    try {
+      const data: userDTO.myCommentsResDTO | -1 | -2 | -3 | -4 = await userService.getMyComments(
+        req.body.userID.id,
+        String(req.query.postModel),
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
+
+    // 1. No limit
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST, 
+        "요청 값이 올바르지 않습니다."
+      );
+    }
+    // 2. Wrong postModel
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "잘못된 postModel 값입니다."
+      );
+    }
+    // 3. 작성한 댓글이 없을 때
+    else if (data === -3) {
+      response.basicResponse(
+        res,
+        returnCode.NO_CONTENT,
+        "작성한 댓글이 없습니다."
+      );
+    }
+    // 4. 내가 쓴 댓글 조회 성공
+    else {
+      response.dataResponse(
+        res, 
+        returnCode.OK, 
+        "내가 쓴 댓글 가져오기 성공", 
+        data
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(
+      res, 
+      returnCode.INTERNAL_SERVER_ERROR, 
+      "서버 오류"
+    );
+  }
+}
 
 
 // import { Router, Request, Response } from "express";
@@ -388,34 +438,6 @@ const getMyWritingsController = async (req: Request, res: Response) => {
 // );
 
 
-// /**
-//  *  @마이페이지_내가_쓴_댓글
-//  *  @route Get user/mypage/comment
-//  *  @access Private
-//  */
-
-// router.get("/mypage/comment", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data: myCommentsResDTO | -1 = await getMyComments(
-//       req.body.userID.id,
-//       req.query.postModel,
-//       req.query.offset,
-//       req.query.limit
-//     );
-
-//     // limit 없을 때
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다.");
-//     }
-
-//     dataResponse(res, returnCode.OK, "내가 쓴 댓글 가져오기 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
-// /**
 //  *  @마이페이지_내가_쓴_댓글_삭제
 //  *  @route Delete user/mypage/comment
 //  *  @access Private
@@ -445,7 +467,8 @@ const userController = {
   userInfoController,
   scrapConcertController,
   scrapChallengeController,
-  getMyWritingsController
+  getMyWritingsController,
+  getMyCommentsController
 };
 
 export default userController;

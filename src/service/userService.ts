@@ -145,14 +145,13 @@ export const getUserInfo = async (userID: number) => {
  */
 
 export const getConcertScrap = async (userID?: number, offset?: number, limit?: number) => {
-
   if (!offset) {
     offset = 0;
   }
 
-  // 요청 부족
+  // 1. No limit
   if (!limit) {
-    return -2;
+    return -1;
   }
 
   const concertList = await Post.findAll({
@@ -160,27 +159,27 @@ export const getConcertScrap = async (userID?: number, offset?: number, limit?: 
     include: [
       { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
       { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
-      { model: Concert, required: true },
-      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}] },
+      { model: Concert, where: { isNotice: false }, required: true },
+      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
       { model: User, attributes: ['id', 'img', 'nickname']},
       { model: Like, attributes: ['userID'], required: false, as: "likes"},
       { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
     ],
     where: {
-      isDeleted: false
+      isDeleted: false,
     },
     offset,
     limit
   });
 
-  // 스크랩한 글이 없을 때
+  // 2. 스크랩한 글이 없을 때
   if (!concertList.length) {
-    return -1;
+    return -2;
   }
 
   const totalScrapNum = concertList.length;
 
-  const mypageConcertScrap: userDTO.ConcertResDTO[] = await Promise.all(
+  const mypageConcertScrap: userDTO.concertResDTO[] = await Promise.all(
     concertList.map(async (concert) => {
       // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
@@ -260,9 +259,9 @@ export const getChallengeScrap = async (
     offset = 0;
   }
 
-  // 요청 부족
+  // 1. No limit
   if (!limit) {
-    return -2;
+    return -1;
   }
 
   const challengeList = await Post.findAll({
@@ -271,8 +270,8 @@ export const getChallengeScrap = async (
       { model: Scrap, attributes: ['userID'], required: true, as: "scraps"},
       { model: Scrap, attributes: ['userID'], where: { userID }, required: true, as: "userScraps"},
       { model: Challenge, required: true },
-      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}] },
-      { model: User, attributes: ['id', 'img', 'nickname']},
+      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
+      { model: User, attributes: ['id', 'img', 'nickname'], required: false },
       { model: Like, attributes: ['userID'], required: false, as: "likes"},
       { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
     ],
@@ -283,10 +282,9 @@ export const getChallengeScrap = async (
     limit
   });
 
-    // 스크랩한 글이 없을 때
+  // 2. 스크랩한 글이 없을 때
   if (!challengeList.length) {
-    // console.log(challengeList.length);
-    return -1;
+    return -2;
   }
 
   const totalScrapNum = challengeList.length;
@@ -362,7 +360,7 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
 
   // 1. No limit
   if (!limit) {
-    return -2;
+    return -1;
   }
 
   const challengeList = await Post.findAll({
@@ -371,7 +369,7 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
       { model: Scrap, attributes: ['userID'], required: false, as: "scraps"},
       { model: Scrap, attributes: ['userID'], where: { userID }, required: false, as: "userScraps"},
       { model: Challenge, required: true },
-      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}] },
+      { model: Comment, include: [{ model: User, attributes: ['id', 'img', 'nickname']}], as: "comments" },
       { model: User, attributes: ['id', 'img', 'nickname']},
       { model: Like, attributes: ['userID'], required: false, as: "likes"},
       { model: Like, attributes: ['userID'], where: { userID }, required: false, as: "userLikes"}
@@ -384,10 +382,10 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
     limit
   });
   
-  // 2. No content
+  // 2. 작성한 글이 없을 떄
   if (!challengeList.length) {
     // console.log(challengeList.length);
-    return -1;
+    return -2;
   }
 
   const resData: userDTO.challengeResDTO[] = await Promise.all(
@@ -443,69 +441,175 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
 
 }
 
-// export const getMyWritings = async (userID, offset, limit) => {
+
+/**
+ *  @마이페이지_내가_쓴_댓글
+ *  @route Get user/mypage/comment?postModel=@&offset=@&limit=
+ *  @error
+ *    1. No limit / No postModel
+ *    2. Wrong postModel
+ *    3. 작성한 글이 없을 때
+ */
+
+export const getMyComments = async (userID?: number, postModel?: string, offset?: number, limit?: number) => {
+  if (!offset) {
+    offset = 0;
+  }
+
+  // 1. No limit / No postModel
+  if (!limit || !postModel) {
+    return -1;
+  }
+
+  let commentList;
+
+  if (postModel === "Challenge") {
+    commentList = await Comment.findAll({
+      order: [["createdAt", "DESC"]],
+      where: {
+        userID,
+        isDeleted: false
+      },
+      include: [
+        { 
+          model: Post,
+          where: { isDeleted: false }, 
+          include: [{
+              model: Challenge,
+              required: true,
+              attributes: []
+            }],
+          attributes: ['id'],
+          required: true
+        }
+      ],
+      attributes: ['id', 'text', 'createdAt'],
+      offset,
+      limit
+    });
+  }
+  else if (postModel === "Concert") {
+    commentList = await Comment.findAll({
+      order: [["createdAt", "DESC"]],
+      where: {
+        userID,
+        isDeleted: false,
+      },
+      include: [
+        { 
+          model: Post,
+          where: { isDeleted: false },
+          include: [{
+              model: Concert,
+              where: {
+                isNotice: false
+              },
+              required: true,
+              attributes: []
+            }],
+          attributes: ['id'],
+          required: true
+        }
+      ],
+      attributes: ['id', 'text', 'createdAt'],
+      offset,
+      limit
+    });
+  }
+  else if (postModel === "Notice") {
+    commentList = await Comment.findAll({
+      order: [["createdAt", "DESC"]],
+      where: {
+        userID,
+        isDeleted: false,
+      },
+      include: [
+        { 
+          model: Post,
+          where: { isDeleted: false },
+          include: [{
+              model: Concert,
+              where: {
+                isNotice: true
+              },
+              required: true,
+              attributes: []
+            }],
+          attributes: ['id'],
+          required: true
+        }
+      ],
+      attributes: ['id', 'text', 'createdAt'],
+      offset,
+      limit
+    });
+  }
+  else {
+    commentList = null;
+  }
+
+  // 2. Wrong postModel
+  if (!commentList) {
+    return -2;
+  }
+  // 3. 작성한 글이 없을 떄
+  else if (!commentList.length) {
+    // console.log(challengeList.length);
+    return -3;
+  }
+
+  const commentNum = commentList.length;
+
+  const comments: userDTO.commentResDTO[] = await Promise.all(
+    commentList.map(async (comment) => {
+      const returnData = {
+        id: comment.id,
+        text: comment.text,
+        post: comment.post.id,
+        createdAt: comment.createdAt,
+      };
+      return returnData;
+    })
+  );
+
+  const resData: userDTO.myCommentsResDTO = {
+    comments,
+    commentNum
+  };
+
+  return resData;
+}
+
+// export const getMyComments = async (userID, postModel, offset, limit) => {
 //   if (!limit) {
 //     return -1;
 //   }
-
 //   if (!offset) {
 //     offset = 0;
 //   }
-
-//   let challenges;
-
-//   challenges = await Challenge.find({
+//   let comments: IComment[];
+//   comments = await Comment.find({
 //     isDeleted: false,
-//     user: userID,
+//     postModel: postModel,
+//     userID,
 //   })
 //     .skip(Number(offset))
 //     .limit(Number(limit))
-//     .sort({ _id: -1 })
-//     .populate("user", ["nickname", "img"])
-//     .populate({
-//       path: "comments",
-//       select: { userID: 1, text: 1, isDeleted: 1 },
-//       options: { sort: { _id: -1 } },
-//       populate: [
-//         {
-//           path: "childrenComment",
-//           select: { userID: 1, text: 1, isDeleted: 1 },
-//           options: { sort: { _id: -1 } },
-//           populate: {
-//             path: "userID",
-//             select: ["nickname", "img"],
-//           },
-//         },
-//         {
-//           path: "userID",
-//           select: ["nickname", "img"],
-//         },
-//       ],
-//     });
+//     .sort({ _id: -1 });
 
-//   // 좋아요, 스크랩 여부 추가
-//   const user = await User.findById(userID);
-//   const resData: IChallengeDTO[] = challenges.map((c) => {
-//     if (
-//       user.scraps.challengeScraps.includes(c._id) &&
-//       user.likes.challengeLikes.includes(c._id)
-//     ) {
-//       return { ...c._doc, isLike: true, isScrap: true };
-//     } else if (user.scraps.challengeScraps.includes(c._id)) {
-//       return { ...c._doc, isLike: false, isScrap: true };
-//     } else if (user.likes.challengeLikes.includes(c._id)) {
-//       return { ...c._doc, isLike: true, isScrap: false };
-//     } else {
-//       return {
-//         ...c._doc,
-//         isLike: false,
-//         isScrap: false,
-//       };
-//     }
-//   });
+//   const totalCommentNum: number = await Comment.find({
+//     userID,
+//     postModel: postModel,
+//     isDeleted: false,
+//   }).countDocuments();
 
+//   const resData: myCommentsResDTO = {
+//     comments,
+//     commentNum: totalCommentNum,
+//   };
 //   return resData;
 // };
+
 
 // /**
 //  *  @User_챌린지_신청하기
@@ -618,40 +722,6 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
 //   return;
 // };
 
-
-// /**
-//  *  @마이페이지_내가_쓴_댓글
-//  *  @route Get user/mypage/comment
-//  */
-// export const getMyComments = async (userID, postModel, offset, limit) => {
-//   if (!limit) {
-//     return -1;
-//   }
-//   if (!offset) {
-//     offset = 0;
-//   }
-//   let comments: IComment[];
-//   comments = await Comment.find({
-//     isDeleted: false,
-//     postModel: postModel,
-//     userID,
-//   })
-//     .skip(Number(offset))
-//     .limit(Number(limit))
-//     .sort({ _id: -1 });
-
-//   const totalCommentNum: number = await Comment.find({
-//     userID,
-//     postModel: postModel,
-//     isDeleted: false,
-//   }).countDocuments();
-
-//   const resData: myCommentsResDTO = {
-//     comments,
-//     commentNum: totalCommentNum,
-//   };
-//   return resData;
-// };
 
 // /**
 //  *  @마이페이지_내가_쓴_댓글_삭제
@@ -792,6 +862,7 @@ const userService = {
   getConcertScrap,
   getChallengeScrap,
   getMyWritings,
+  getMyComments
 };
 
 export default userService;
