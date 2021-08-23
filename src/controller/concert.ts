@@ -152,7 +152,7 @@ const postConcertCommentController = async (req: Request, res: Response) => {
       );
     } else {
       // 댓글 등록 성공
-      response.basicResponse(res, returnCode.OK, "댓글 등록 성공");
+      response.basicResponse(res, returnCode.CREATED, "댓글 등록 성공");
     }
   } catch (err) {
     console.error(err.message);
@@ -190,7 +190,7 @@ const postConcertLikeController = async (req: Request, res: Response) => {
       );
     } else {
       // 좋아요 등록 성공
-      response.basicResponse(res, returnCode.OK, "좋아요 등록 성공");
+      response.basicResponse(res, returnCode.CREATED, "좋아요 등록 성공");
     }
   } catch (err) {
     console.error(err.message);
@@ -273,7 +273,7 @@ const postConcertScrapController = async (req: Request, res: Response) => {
       );
     } else {
       // 회고 스크랩 성공
-      response.basicResponse(res, returnCode.OK, "콘서트 스크랩 성공");
+      response.basicResponse(res, returnCode.CREATED, "콘서트 스크랩 성공");
     }
   } catch (err) {
     console.error(err.message);
