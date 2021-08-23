@@ -19,30 +19,30 @@ router.get(
 );
 
 router.post(
-  "/comment/:concertID",
+  "/:concertID/comment",
   authMiddleware,
   concertController.postConcertCommentController
 );
 
 router.post(
-  "/like/:concertID",
+  "/:concertID/like",
   authMiddleware,
   concertController.postConcertLikeController
 );
 
 router.post(
-  "/scrap/:concertID",
+  "/:concertID/scrap",
   authMiddleware,
   concertController.postConcertScrapController
 );
 
 router.delete(
-  "/like/:concertID",
+  "/:concertID/like",
   authMiddleware,
   concertController.deleteConcertLikeController
 );
 router.delete(
-  "/scrap/:concertID",
+  "/:concertID/scrap",
   authMiddleware,
   concertController.deleteConcertScrapController
 );
