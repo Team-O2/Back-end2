@@ -10,5 +10,6 @@ router.get("/mypage/concert", authMiddleware, userController.scrapConcertControl
 router.get("/mypage/challenge", authMiddleware, userController.scrapChallengeController);
 router.get("/mypage/write", authMiddleware, userController.getMyWritingsController);
 router.get("/mypage/comment", authMiddleware, userController.getMyCommentsController);
-router.get("/userInfo", authMiddleware, userController.userInfoController)
+router.get("/userInfo", authMiddleware, userController.userInfoController);
+router.patch("/password", authMiddleware, userController.patchPWController);
 export default router;

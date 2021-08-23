@@ -448,7 +448,7 @@ export const getMyWritings = async (userID?: number, offset?: number, limit?: nu
  *  @error
  *    1. No limit / No postModel
  *    2. Wrong postModel
- *    3. 작성한 글이 없을 때
+ *    3. 작성한 댓글이 없을 때
  */
 
 export const getMyComments = async (userID?: number, postModel?: string, offset?: number, limit?: number) => {
@@ -552,7 +552,7 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
   if (!commentList) {
     return -2;
   }
-  // 3. 작성한 글이 없을 떄
+  // 3. 작성한 댓글이 없을 떄
   else if (!commentList.length) {
     // console.log(challengeList.length);
     return -3;
@@ -579,6 +579,78 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
 
   return resData;
 }
+
+
+/**
+ *  @마이페이지_비밀번호_수정
+ *  @route Patch user/password
+ *  @access private
+ *  @error
+ *    1. 요청 바디 부족
+ *    2. 현재 비밀번호와 일치하지 않음
+ */
+
+export const patchPW = async (userID?: number, body?: userDTO.newPwReqDTO) => {
+  const { password, newPassword } = body;
+  
+  // 1. 요청 바디 부족
+  if (!newPassword || !password || !userID) {
+    return -1;
+  }
+
+  const user = await User.findOne({
+    where: { id: userID },
+    attributes: ['password']
+  });
+
+  // Encrpyt password
+  const salt = await bcrypt.genSalt(10);
+  const currentEncrpytPW = await bcrypt.hash(password, salt);
+
+  // 2. 현재 비밀번호와 일치하지 않음
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return -2;
+  }
+
+  // Encrpyt password
+  const encrpytPW = await bcrypt.hash(newPassword, salt);
+
+  await User.update(
+    { password: encrpytPW },
+    { where: { id: userID } },
+  );
+
+  return;
+}
+
+// export const patchPW = async (body: newPwReqDTO) => {
+//   const { password, newPassword, userID } = body;
+//   // 1. 요청 바디 부족
+//   if (!newPassword) {
+//     return -1;
+//   }
+
+//   const user = await User.findById(userID.id);
+
+//   // Encrpyt password
+//   const salt = await bcrypt.genSalt(10);
+//   const currentEncrpytPW = await bcrypt.hash(password, salt);
+
+//   // 2. 현재 비밀번호가 일치하지 않음
+//   const isMatch = await bcrypt.compare(password, user.password);
+//   if (!isMatch) {
+//     return -2;
+//   }
+
+//   // Encrpyt password
+//   const encrpytPW = await bcrypt.hash(newPassword, salt);
+
+//   await user.update({ $set: { password: encrpytPW } });
+
+//   return;
+// };
+
 
 // export const getMyComments = async (userID, postModel, offset, limit) => {
 //   if (!limit) {
@@ -824,45 +896,14 @@ export const getMyComments = async (userID?: number, postModel?: string, offset?
 //   return;
 // };
 
-// /**
-//  *  @마이페이지_비밀번호_수정
-//  *  @route Patch user/pw
-//  *  @access private
-//  */
-// export const patchPW = async (body: newPwReqDTO) => {
-//   const { password, newPassword, userID } = body;
-//   // 1. 요청 바디 부족
-//   if (!newPassword) {
-//     return -1;
-//   }
-
-//   const user = await User.findById(userID.id);
-
-//   // Encrpyt password
-//   const salt = await bcrypt.genSalt(10);
-//   const currentEncrpytPW = await bcrypt.hash(password, salt);
-
-//   // 2. 현재 비밀번호가 일치하지 않음
-//   const isMatch = await bcrypt.compare(password, user.password);
-//   if (!isMatch) {
-//     return -2;
-//   }
-
-//   // Encrpyt password
-//   const encrpytPW = await bcrypt.hash(newPassword, salt);
-
-//   await user.update({ $set: { password: encrpytPW } });
-
-//   return;
-// };
-
 const userService = {
   getMypageInfo,
   getUserInfo,
   getConcertScrap,
   getChallengeScrap,
   getMyWritings,
-  getMyComments
+  getMyComments,
+  patchPW
 };
 
 export default userService;

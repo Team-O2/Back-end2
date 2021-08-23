@@ -252,6 +252,82 @@ const getMyCommentsController = async (req: Request, res: Response) => {
   }
 }
 
+/**
+ *  @마이페이지_비밀번호_수정
+ *  @route Patch user/password
+ *  @access private
+ *  @error
+ *    1. 요청 바디 부족
+ *    2. 현재 비밀번호와 일치하지 않음
+ */
+const patchPWController = async (req: Request, res:Response) => {
+    try {
+      const body: userDTO.newPwReqDTO = req.body;
+      const data = await userService.patchPW(
+        req.body.userID.id, 
+        body);
+
+    // 1. 요청 바디가 부족
+    if (data === -1) {
+      response.basicResponse(
+        res, 
+        returnCode.BAD_REQUEST, 
+        "요청 값이 올바르지 않습니다."
+      );
+    }
+    // 2. 현재 비밀번호와 일치하지 않음
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "현재 비밀번호가 일치하지 않습니다."
+      );
+    }
+    else {
+      response.basicResponse(
+        res, 
+        returnCode.OK, 
+        "비밀번호 수정 성공"
+      );
+    }
+
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(
+      res, 
+      returnCode.INTERNAL_SERVER_ERROR, 
+      "서버 오류"
+    );
+  }
+  
+}
+
+// router.patch("/password", auth, async (req: Request, res: Response) => {
+//   try {
+//     const body: newPwReqDTO = req.body;
+//     const data = await patchPW(body);
+
+//     // 요청 바디가 부족할 경우
+//     if (data === -1) {
+//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
+//     }
+//     // 현재 password와 맞지 않을 경우
+//     if (data === -2) {
+//       response(
+//         res,
+//         returnCode.BAD_REQUEST,
+//         "현재 비밀번호가 일치하지 않습니다"
+//       );
+//     }
+
+//     response(res, returnCode.OK, "비밀번호 수정 성공");
+//   } catch (err) {
+//     console.error(err.message);
+//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+//   }
+// });
+
+
 
 // import { Router, Request, Response } from "express";
 // // libraries
@@ -371,38 +447,6 @@ const getMyCommentsController = async (req: Request, res: Response) => {
 //   }
 // );
 
-// /**
-//  *  @마이페이지_비밀번호_수정
-//  *  @route Patch user/pw
-//  *  @access private
-//  */
-
-// router.patch("/password", auth, async (req: Request, res: Response) => {
-//   try {
-//     const body: newPwReqDTO = req.body;
-//     const data = await patchPW(body);
-
-//     // 요청 바디가 부족할 경우
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
-//     // 현재 password와 맞지 않을 경우
-//     if (data === -2) {
-//       response(
-//         res,
-//         returnCode.BAD_REQUEST,
-//         "현재 비밀번호가 일치하지 않습니다"
-//       );
-//     }
-
-//     response(res, returnCode.OK, "비밀번호 수정 성공");
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
-
-
 
 
 // /**
@@ -468,7 +512,8 @@ const userController = {
   scrapConcertController,
   scrapChallengeController,
   getMyWritingsController,
-  getMyCommentsController
+  getMyCommentsController,
+  patchPWController,
 };
 
 export default userController;

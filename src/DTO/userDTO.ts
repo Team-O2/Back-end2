@@ -67,6 +67,12 @@ namespace userDTO {
     comments: commentResDTO[];
     commentNum: number;
   }
+
+  export interface newPwReqDTO {
+    password: string;
+    newPassword: string;
+  }
+
   
   export interface IMypageUser {
     nickname: string;
