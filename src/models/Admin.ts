@@ -7,8 +7,10 @@ import {
   AutoIncrement,
   Unique,
   Default,
+  HasMany,
 } from "sequelize-typescript";
 import { Sequelize } from "sequelize";
+import { Generation } from ".";
 
 @Table({
   tableName: "Admin",
@@ -55,10 +57,13 @@ export default class Admin extends Model {
     "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg"
   )
   @Column
-  img!: string;
+  img?: string;
 
   @CreatedAt
   @Default(Sequelize.fn("NOW"))
   @Column
   createdAt?: Date;
+
+  @HasMany(() => Generation)
+  generations: Generation[];
 }

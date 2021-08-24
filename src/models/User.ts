@@ -36,9 +36,7 @@ export default class User extends Model {
   @Column
   password: string;
 
-  @Default(
-    "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg"
-  )
+  @Default("https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg")
   @Column
   img: string;
 
@@ -78,7 +76,7 @@ export default class User extends Model {
   likes: Like[];
 
   @HasMany(() => Scrap)
-  scraps: Scrap[];
+  scraps: Scrap[]; 
 
   @HasMany(() => Post)
   posts: Post[];

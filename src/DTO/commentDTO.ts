@@ -1,5 +1,3 @@
-import { userHeaderDTO } from "./userDTO";
-
 namespace commentDTO {
   export interface IComment {
     id: number;

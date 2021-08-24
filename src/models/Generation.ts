@@ -10,7 +10,8 @@ import {
   BelongsTo,
   Default,
 } from "sequelize-typescript";
-import { User } from ".";
+
+import { User, Admin } from ".";
 
 @Table({
   tableName: "Generation",
@@ -27,7 +28,7 @@ export default class Generation extends Model {
   @Column
   id: number;
 
-  @AllowNull(true)
+  @ForeignKey(() => Admin)
   @Column
   generation: number;
 
@@ -49,4 +50,7 @@ export default class Generation extends Model {
 
   @BelongsTo(() => User)
   user: User;
+
+  @BelongsTo(() => Admin)
+  admin: Admin;
 }

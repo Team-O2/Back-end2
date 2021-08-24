@@ -7,7 +7,7 @@ namespace adminDTO {
     challengeEndDT: Date;
     generation: Number;
     limitNum: Number;
-    img: String;
+    img: string;
     createdDT: Date;
     applyNum: Number;
   }
@@ -39,7 +39,7 @@ namespace adminDTO {
   }
 
   export interface adminRegistResDTO {
-    img: String;
+    img: string;
     title: String;
     registerStartDT: Date;
     registerEndDT: Date;
