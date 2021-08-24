@@ -8,6 +8,7 @@ namespace commentDTO {
     img: string;
     text: string;
     children?: IComment[];
+    isDeleted: Boolean;
   }
 
   export interface postCommentReqDTO {

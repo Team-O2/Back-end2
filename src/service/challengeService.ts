@@ -1,3 +1,4 @@
+import sequelize, { Op } from "sequelize";
 // models
 import {
   Badge,
@@ -5,7 +6,6 @@ import {
   Comment,
   Like,
   Post,
-  PostInterest,
   Scrap,
   User,
   Generation,
@@ -22,7 +22,7 @@ import { challengeDTO, commentDTO } from "../DTO";
  *      2. 유저 id 잘못됨
  */
 
-export const postChallenge = async (
+const postChallenge = async (
   userID: number,
   reqData: challengeDTO.postChallengeReqDTO
 ) => {
@@ -47,27 +47,20 @@ export const postChallenge = async (
   });
   await Challenge.create({
     id: newPost.id,
-    good: good.toLowerCase(),
-    bad: bad.toLowerCase(),
-    learn: learn.toLowerCase(),
+    good: good,
+    bad: bad,
+    learn: learn,
+    interest: interest.join(),
   });
-  interest.map(
-    async (it) =>
-      await PostInterest.create({
-        postID: newPost.id,
-        interest: it.toLowerCase(),
-      })
-  );
 
   // 유저의 writingCNT 증가
   await Generation.increment("writingNum", { by: 1, where: { userID } });
 
   // 첫 챌린지 회고 작성 시 배지 추가
-  const badge = await Badge.findOne({ where: { id: userID } });
-  if (!badge.firstWriteBadge) {
-    badge.firstWriteBadge = true;
-    await badge.save();
-  }
+  await Badge.update(
+    { firstWriteBadge: true },
+    { where: { id: userID, firstWriteBadge: false } }
+  );
 
   // table join
   const challenge = await Post.findOne({
@@ -75,7 +68,6 @@ export const postChallenge = async (
       id: newPost.id,
     },
     include: [
-      PostInterest,
       Challenge,
       {
         model: User,
@@ -92,7 +84,7 @@ export const postChallenge = async (
     good: challenge.challenge.good,
     bad: challenge.challenge.bad,
     learn: challenge.challenge.learn,
-    interest: challenge.interests.map((i) => i.interest),
+    interest: challenge.interest.split(","),
     generation: challenge.generation,
     likeNum: challenge.likes.length,
     scrapNum: challenge.scraps.length,
@@ -117,7 +109,7 @@ export const postChallenge = async (
  *      3. 부모 댓글 id 값이 유효하지 않을 경우
  */
 
-export const postComment = async (
+const postComment = async (
   challengeID: number,
   userID: number,
   reqData: commentDTO.postCommentReqDTO
@@ -139,10 +131,11 @@ export const postComment = async (
     return -2;
   }
 
-  let newComment;
   // 대댓글인 경우
   if (parentID) {
-    const parentComment = await Comment.findOne({ where: { id: parentID } });
+    const parentComment = await Comment.findOne({
+      where: { id: parentID, isDeleted: false },
+    });
 
     // 3. 부모 댓글 id 값이 유효하지 않을 경우
     if (!parentComment) {
@@ -150,40 +143,29 @@ export const postComment = async (
     }
 
     // 대댓글 생성
-    newComment = await Comment.create({
+    await Comment.create({
       userID,
       postID: challengeID,
+      parentID,
       text,
       level: 1,
-      order: parentComment.groupNum,
     });
-    await Comment.increment("groupNum", { by: 1, where: { id: parentID } });
 
     // 첫 답글 작성 시 뱃지 추가
-    const badge = await Badge.findOne({ where: { id: userID } });
-    if (!badge.firstReplyBadge) {
-      badge.firstReplyBadge = true;
-      await badge.save();
-    }
+    await Badge.update(
+      { firstReplyBadge: true },
+      {
+        where: { id: userID, firstReplyBadge: false },
+      }
+    );
   } else {
     // 댓글인 경우
-    newComment = await Comment.create({
+    await Comment.create({
       userID,
       postID: challengeID,
       text,
-      order: 0,
     });
   }
-
-  const comment = await Comment.findOne({
-    where: { id: newComment.id },
-    include: [
-      {
-        model: User,
-        attributes: ["img", "nickname"],
-      },
-    ],
-  });
 
   // 댓글 1개 작성 시 뱃지 추가
   const badge = await Badge.findOne({
@@ -200,17 +182,7 @@ export const postComment = async (
     await badge.save();
   }
 
-  const resData: commentDTO.postCommentResDTO = {
-    id: comment.id,
-    userID: comment.userID,
-    nickname: comment.user.nickname,
-    img: comment.user.img,
-    text: comment.text,
-    createdAt: comment.createdAt,
-    updatedAt: comment.updatedAt,
-  };
-
-  return resData;
+  return undefined;
 };
 
 /**
@@ -221,7 +193,7 @@ export const postComment = async (
  *      2. 이미 좋아요 한 글일 경우
  */
 
-export const postLike = async (challengeID: number, userID: number) => {
+const postLike = async (challengeID: number, userID: number) => {
   const challenge = await Challenge.findOne({
     where: { id: challengeID },
     include: [Post],
@@ -273,7 +245,7 @@ export const postLike = async (challengeID: number, userID: number) => {
  *      3. 자신이 작성한 글인 경우
  */
 
-export const postScrap = async (challengeID: number, userID: number) => {
+const postScrap = async (challengeID: number, userID: number) => {
   const challenge = await Challenge.findOne({
     where: { id: challengeID },
     include: [Post],
@@ -302,11 +274,10 @@ export const postScrap = async (challengeID: number, userID: number) => {
   });
 
   // 게시글 첫 스크랩 시 배지 추가
-  const badge = await Badge.findOne({ where: { id: userID } });
-  if (!badge.learnMySelfScrapBadge) {
-    badge.learnMySelfScrapBadge = true;
-    await badge.save();
-  }
+  await Badge.update(
+    { learnMySelfScrapBadge: true },
+    { where: { id: userID, learnMySelfScrapBadge: false } }
+  );
 
   return;
 };
@@ -319,13 +290,13 @@ export const postScrap = async (challengeID: number, userID: number) => {
  *    2. generation이 없는 경우
  */
 
-export const getChallengeAll = async (
+const getChallengeAll = async (
   userID?: number,
   generation?: number,
   offset?: number,
   limit?: number
 ) => {
-  // isDelete = true 인 애들만 가져오기
+  // isDelete = false 인 애들만 가져오기
   // offset 뒤에서 부터 가져오기
   // 최신순으로 정렬
   // 댓글, 답글 최신순으로 정렬
@@ -342,53 +313,80 @@ export const getChallengeAll = async (
   }
 
   if (!offset) {
-    offset = 1;
+    offset = 0;
   }
 
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Challenge, required: true },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
+        {
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
+        },
+      ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
   const challengeList = await Post.findAll({
-    order: [["createdAt", "DESC"]],
+    order: [
+      ["createdAt", "DESC"],
+      ["comments", "id", "DESC"],
+    ],
     where: {
       isDeleted: false,
       generation,
     },
-    include: [
-      Challenge,
-      User,
-      { model: Comment, include: [User] },
-      Like,
-      Scrap,
-      PostInterest,
-    ],
+    include,
     limit,
     offset,
   });
 
-  const resData: challengeDTO.getChallengeAllResDTO[] = await Promise.all(
-    challengeList.map(async (challenge) => {
+  const resData: challengeDTO.getChallengeResDTO[] = challengeList.map(
+    (challenge) => {
       // 댓글 형식 변환
       let comment: commentDTO.IComment[] = [];
       challenge.comments.forEach((c) => {
-        if (c.level === 0) {
-          comment.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-            children: [],
-          });
-        } else if (!c.isDeleted) {
-          comment[comment.length - 1].children.unshift({
-            id: c.id,
-            userID: c.userID,
-            nickname: c.user.nickname,
-            img: c.user.img,
-            text: c.text,
-          });
-        }
+        const children = c.children.map((child) => ({
+          id: child.id,
+          userID: child.userID,
+          nickname: child.user.nickname,
+          img: child.user.img,
+          text: child.text,
+          isDeleted: child.isDeleted,
+        }));
+
+        comment.push({
+          id: c.id,
+          userID: c.userID,
+          nickname: c.user.nickname,
+          img: c.user.img,
+          text: c.text,
+          children,
+          isDeleted: c.isDeleted,
+        });
       });
 
-      const returnData = {
+      let returnData: challengeDTO.getChallengeResDTO = {
         id: challenge.id,
         generation: challenge.generation,
         createdAt: challenge.createdAt,
@@ -399,358 +397,420 @@ export const getChallengeAll = async (
         good: challenge.challenge.good,
         bad: challenge.challenge.bad,
         learn: challenge.challenge.learn,
-        interest: challenge.interests.map((interest) => interest.interest),
+        interest: challenge.interest.split(","),
         likeNum: challenge.likes.length,
         scrapNum: challenge.scraps.length,
         commentNum: challenge.comments.length,
         comment,
       };
 
-      if (userID) {
-        const isLike = await Like.findOne({
-          where: { userID, postID: challenge.id },
-        });
-        const isScrap = await Scrap.findOne({
-          where: { postID: challenge.id },
-        });
-
-        return {
+      // userID가 있는 경우
+      if (userID)
+        returnData = {
           ...returnData,
-          isLike: isLike ? true : false,
-          isScrap: isScrap ? true : false,
+          isLike: challenge.userLikes.length ? true : false,
+          isScrap: challenge.userScraps.length ? true : false,
         };
-      }
 
       return returnData;
-    })
+    }
   );
 
   return resData;
 };
 
-// /**
-//  *  @챌린지_Detail
-//  *  @route Get /challenge/:challengeID
-//  */
-// export const getChallengeOne = async (userID, challengeID) => {
-//   // 댓글, 답글 populate
-//   // isDelete = true 인 애들만 가져오기
-//   let challenge;
-//   challenge = await Challenge.findById(challengeID)
-//     .populate("user", ["nickname", "img"])
-//     .populate({
-//       path: "comments",
-//       select: ["userID", "text", "isDeleted"],
-//       options: { sort: { _id: -1 } },
-//       populate: [
-//         {
-//           path: "childrenComment",
-//           select: ["userID", "text", "isDeleted"],
-//           options: { sort: { _id: -1 } },
-//           populate: {
-//             path: "userID",
-//             select: ["nickname", "img"],
-//           },
-//         },
-//         {
-//           path: "userID",
-//           select: ["nickname", "img"],
-//         },
-//       ],
-//     });
+/**
+ *  @챌린지_회고_검색_또는_필터
+ *  @route Get /search?offset=&limit=&generation=&tag=&keyword=&isMine=
+ *  @error
+ *    1. limit이 없는 경우
+ *    2. generation이 없는 경우
+ *    3. isMine=true 인데 user id가 없는 경우
+ */
 
-//   // challenge ID가 잘못되었을 때
-//   if (!challenge) {
-//     return -1;
-//   }
+const getChallengeSearch = async (
+  offset: number,
+  limit: number,
+  generation: number,
+  userID?: number,
+  tag?: string,
+  isMine?: boolean,
+  keyword?: string
+) => {
+  // isDelete = false 인 애들만 가져오기
+  // offset 뒤에서 부터 가져오기
+  // 최신순으로 정렬
+  // 댓글, 답글 최신순으로 정렬
+  // public인 경우 isLike, isScrap 없음
+  // tag 검사
+  // keyword 검사
+  // 내 글 여부 검사
 
-//   let resData: IChallengeDTO[];
-//   if (userID) {
-//     // 좋아요, 스크랩 여부 추가
-//     const user = await User.findById(userID.id);
-//     if (
-//       user.scraps.challengeScraps.includes(challengeID) &&
-//       user.likes.challengeLikes.includes(challengeID)
-//     ) {
-//       resData = { ...challenge._doc, isLike: true, isScrap: true };
-//     } else if (user.scraps.challengeScraps.includes(challengeID)) {
-//       resData = { ...challenge._doc, isLike: false, isScrap: true };
-//     } else if (user.likes.challengeLikes.includes(challengeID)) {
-//       resData = { ...challenge._doc, isLike: true, isScrap: false };
-//     } else {
-//       resData = {
-//         ...challenge._doc,
-//         isLike: false,
-//         isScrap: false,
-//       };
-//     }
-//   } else {
-//     resData = challenge;
-//   }
+  // 1. limit이 없는 경우
+  if (!limit) {
+    return -1;
+  }
 
-//   return resData;
-// };
+  // 2. generation이 없는 경우
+  if (!generation) {
+    return -2;
+  }
 
-// /**
-//  *  @챌린지_회고_검색_또는_필터
-//  *  @route Get /challenge/search
-//  */
-// export const getChallengeSearch = async (
-//   tag,
-//   ismine,
-//   keyword,
-//   offset,
-//   limit,
-//   gen,
-//   userID
-// ) => {
-//   // isDelete = true 인 애들만 가져오기
-//   // offset 뒤에서 부터 가져오기
-//   // 최신순으로 정렬
-//   // 댓글, 답글 populate
+  // 3. isMine=true 인데 user id가 없는 경우
+  if (isMine && !userID) {
+    return -3;
+  }
 
-//   if (!limit) {
-//     return -1;
-//   }
-//   if (!offset) {
-//     offset = 0;
-//   }
+  if (!offset) {
+    offset = 0;
+  }
 
-//   let challenges;
-//   challenges = await Challenge.find({
-//     isDeleted: false,
-//     generation: gen,
-//   })
-//     .sort({ _id: -1 })
-//     .populate("user", ["nickname", "img"])
-//     .populate({
-//       path: "comments",
-//       select: ["userID", "text", "isDeleted"],
-//       options: { sort: { _id: -1 } },
-//       populate: [
-//         {
-//           path: "childrenComment",
-//           select: ["userID", "text", "isDeleted"],
-//           options: { sort: { _id: -1 } },
-//           populate: {
-//             path: "userID",
-//             select: ["nickname", "img"],
-//           },
-//         },
-//         {
-//           path: "userID",
-//           select: ["nickname", "img"],
-//         },
-//       ],
-//     });
+  // where option
+  let where: sequelize.WhereOptions<any> = {
+    isDeleted: false,
+    generation,
+  };
 
-//   let filteredData = challenges;
+  // tag 여부에 따라 query 적용
+  if (tag && tag !== "전체")
+    where = {
+      ...where,
+      interest: { [Op.like]: `%${tag}%` },
+    };
 
-//   // 관심분야 필터링
-//   if (tag !== "" && tag && tag !== "전체") {
-//     filteredData = filteredData.filter((fd) => {
-//       if (fd.interest.includes(tag.toLowerCase())) return fd;
-//     });
-//   }
+  // keyword 여부에 따라 query 적용
+  if (keyword)
+    where = {
+      ...where,
+      [Op.or]: [
+        { "$challenge.good$": { [Op.like]: `%${keyword}%` } },
+        { "$challenge.bad$": { [Op.like]: `%${keyword}%` } },
+        { "$challenge.learn$": { [Op.like]: `%${keyword}%` } },
+      ],
+    };
 
-//   if (userID) {
-//     // 내가 쓴 글 필터링
-//     if (ismine === "1" && ismine) {
-//       filteredData = filteredData.filter((fd) => {
-//         if (String(fd.user._id) === String(userID.id)) return fd;
-//       });
-//     }
-//   }
+  // isMine, user id 여부에 따라 query 적용
+  if (isMine && userID)
+    where = {
+      ...where,
+      "$user.id$": { [Op.eq]: userID },
+    };
 
-//   // 검색 단어 필터링
-//   if (keyword !== "" && keyword) {
-//     filteredData = filteredData.filter((fd) => {
-//       if (
-//         fd.good.includes(keyword.toLowerCase().trim()) ||
-//         fd.bad.includes(keyword.toLowerCase().trim()) ||
-//         fd.learn.includes(keyword.toLowerCase().trim())
-//       )
-//         return fd;
-//     });
-//   }
-//   var searchData = [];
-//   for (var i = Number(offset); i < Number(offset) + Number(limit); i++) {
-//     if (!filteredData[i]) {
-//       break;
-//     }
-//     searchData.push(filteredData[i]);
-//   }
+  // include option
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Challenge, required: true },
+    { model: User, required: true },
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
+        {
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
+        },
+      ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
 
-//   var resData: IChallengeDTO[];
-//   if (userID) {
-//     // 좋아요, 스크랩 여부 추가
-//     const user = await User.findById(userID.id);
-//     const newChallenge = searchData.map((c) => {
-//       // console.log(c);
-//       if (
-//         user.scraps.challengeScraps.includes(c._id) &&
-//         user.likes.challengeLikes.includes(c._id)
-//       ) {
-//         return { ...c._doc, isLike: true, isScrap: true };
-//       } else if (user.scraps.challengeScraps.includes(c._id)) {
-//         return { ...c._doc, isLike: false, isScrap: true };
-//       } else if (user.likes.challengeLikes.includes(c._id)) {
-//         return { ...c._doc, isLike: true, isScrap: false };
-//       } else {
-//         return {
-//           ...c._doc,
-//           isLike: false,
-//           isScrap: false,
-//         };
-//       }
-//     });
+  // userID 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
 
-//     resData = newChallenge;
-//   } else {
-//     resData = searchData;
-//   }
+  const challengeList = await Post.findAll({
+    order: [
+      ["createdAt", "DESC"],
+      ["comments", "id", "DESC"],
+    ],
+    where,
+    include,
+    limit,
+    offset,
+  });
 
-//   return resData;
-// };
+  const resData: challengeDTO.getChallengeResDTO[] = challengeList.map(
+    (challenge) => {
+      // 댓글 형식 변환
+      let comment: commentDTO.IComment[] = [];
+      challenge.comments.forEach((c) => {
+        const children = c.children.map((child) => ({
+          id: child.id,
+          userID: child.userID,
+          nickname: child.user.nickname,
+          img: child.user.img,
+          text: child.text,
+          isDeleted: child.isDeleted,
+        }));
 
-// /**
-//  *  @챌린지_회고_수정
-//  *  @route PATCH api/challenge/:challengeId
-//  *  @body good, bad, learn
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 요청 바디 부족
-//  */
-// export const patchChallenge = async (
-//   challengeID,
-//   reqData: challengeWriteReqDTO
-// ) => {
-//   const { good, bad, learn, interest } = reqData;
+        comment.push({
+          id: c.id,
+          userID: c.userID,
+          nickname: c.user.nickname,
+          img: c.user.img,
+          text: c.text,
+          children,
+          isDeleted: c.isDeleted,
+        });
+      });
 
-//   // 1. 회고록 id 잘못됨
-//   const challenge = await Challenge.findById(challengeID);
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
-//   // 2. 요청 바디 부족
-//   if (!good || !bad || !learn || !interest) {
-//     return -2;
-//   }
+      let returnData: challengeDTO.getChallengeResDTO = {
+        id: challenge.id,
+        generation: challenge.generation,
+        createdAt: challenge.createdAt,
+        updatedAt: challenge.updatedAt,
+        userID: challenge.userID,
+        nickname: challenge.user.nickname,
+        img: challenge.user.img,
+        good: challenge.challenge.good,
+        bad: challenge.challenge.bad,
+        learn: challenge.challenge.learn,
+        interest: challenge.interest.split(","),
+        likeNum: challenge.likes.length,
+        scrapNum: challenge.scraps.length,
+        commentNum: challenge.comments.length,
+        comment,
+      };
 
-//   const updateDate = new Date();
+      // userID 있는 경우
+      if (userID)
+        returnData = {
+          ...returnData,
+          isLike: challenge.userLikes.length ? true : false,
+          isScrap: challenge.userScraps.length ? true : false,
+        };
 
-//   await Challenge.update(
-//     { _id: challengeID },
-//     {
-//       good: good.toLowerCase(),
-//       bad: bad.toLowerCase(),
-//       learn: learn.toLowerCase(),
-//       interest: interest,
-//       updatedAt: updateDate,
-//     }
-//   );
-// };
+      return returnData;
+    }
+  );
 
-// /**
-//  *  @챌린지_회고_삭제
-//  *  @route DELETE api/challenge/:challengeId
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  */
-// export const deleteChallenge = async (userID, challengeID) => {
-//   // 1. 회고록 id 잘못됨
-//   const challenge = await Challenge.findById(challengeID);
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+  return resData;
+};
 
-//   await Challenge.findByIdAndUpdate(
-//     { _id: challengeID },
-//     { $set: { isDeleted: true } }
-//   );
+/**
+ *  @챌린지_Detail
+ *  @route Get /challenge/:challengeID
+ *  @error
+ *    1. challenge id가 없을 때
+ */
 
-//   // 유저의 writingCNT 감소
-//   await User.findOneAndUpdate(
-//     { _id: userID },
-//     {
-//       $inc: { writingCNT: 1 },
-//     }
-//   );
+const getChallengeOne = async (challengeID: number, userID: number) => {
+  // isDelete = fasle 인 애들만 가져오기
+  const challenge = await Post.findOne({
+    where: { isDeleted: false, "$challenge.id$": challengeID },
+    order: [["comments", "id", "DESC"]],
+    include: [
+      { model: Challenge, required: true },
+      User,
+      {
+        model: Comment,
+        as: "comments",
+        required: false,
+        where: { level: 0 },
+        include: [
+          User,
+          {
+            model: Comment,
+            as: "children",
+            separate: true,
+            order: [["id", "DESC"]],
+            include: [User],
+          },
+        ],
+      },
+      { model: Like, as: "likes", required: false },
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "scraps", required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ],
+  });
 
-//   return { _id: challenge._id };
-// };
+  // challenge ID가 없을 때
+  if (!challenge) {
+    return -1;
+  }
 
-// /**
-//  *  @챌린지_회고_좋아요_삭제
-//  *  @route DELETE /challenge/like/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 좋아요 개수가 0
-//  */
-// export const deleteChallengeLike = async (challengeID, userID) => {
-//   const challenge = await Challenge.findById(challengeID);
+  let comment: commentDTO.IComment[] = [];
+  challenge.comments.forEach((c) => {
+    const children = c.children.map((child) => ({
+      id: child.id,
+      userID: child.userID,
+      nickname: child.user.nickname,
+      img: child.user.img,
+      text: child.text,
+      isDeleted: child.isDeleted,
+    }));
 
-//   // 1. 회고록 id 잘못됨
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+    comment.push({
+      id: c.id,
+      userID: c.userID,
+      nickname: c.user.nickname,
+      img: c.user.img,
+      text: c.text,
+      children,
+      isDeleted: c.isDeleted,
+    });
+  });
 
-//   // 2. 좋아요 개수가 0
-//   if (challenge.likes === 0) {
-//     return -2;
-//   }
+  const returnData = {
+    id: challenge.id,
+    generation: challenge.generation,
+    createdAt: challenge.createdAt,
+    updatedAt: challenge.updatedAt,
+    userID: challenge.userID,
+    nickname: challenge.user.nickname,
+    img: challenge.user.img,
+    good: challenge.challenge.good,
+    bad: challenge.challenge.bad,
+    learn: challenge.challenge.learn,
+    interest: challenge.interest.split(","),
+    likeNum: challenge.likes.length,
+    scrapNum: challenge.scraps.length,
+    isLike: challenge.userLikes.length ? true : false,
+    isScrap: challenge.userScraps.length ? true : false,
+    commentNum: challenge.comments.length,
+    comment,
+  };
 
-//   // 챌린지 글의 like 1 감소
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { likes: -1 },
-//     }
-//   );
-//   // 유저 likes 필드에 챌린지 id 삭제
-//   const user = await User.findById(userID);
-//   const idx = user.likes.challengeLikes.indexOf(challengeID);
-//   user.likes.challengeLikes.splice(idx, 1);
-//   await user.save();
+  return returnData;
+};
 
-//   return { _id: challengeID };
-// };
+/**
+ *  @챌린지_회고_수정
+ *  @route PATCH challenge/:challengeId
+ *  @body good, bad, learn, interest
+ *  @error
+ *    1. 요청 바디 부족
+ *    2. 회고록 id 잘못됨
+ */
 
-// /**
-//  *  @유저_챌린지_회고_스크랩_취소하기
-//  *  @route Delete /user/challenge/:challengeID
-//  *  @error
-//  *      1. 회고록 id 잘못됨
-//  *      2. 스크랩 하지 않은 글일 경우
-//  */
-// export const deleteChallengeScrap = async (challengeID, userID) => {
-//   // 1. 회고 id 잘못됨
-//   let challenge = await Challenge.findById(challengeID);
-//   if (!challenge || challenge.isDeleted) {
-//     return -1;
-//   }
+const patchChallenge = async (
+  challengeID: number,
+  reqData: challengeDTO.patchChallengeReqDTO
+) => {
+  const { good, bad, learn, interest } = reqData;
 
-//   const user = await User.findById(userID);
-//   // 2. 스크랩하지 않은 글일 경우
-//   if (!user.scraps.challengeScraps.includes(challengeID)) {
-//     return -2;
-//   }
+  // 1. 요청 바디 부족
+  if (!good || !bad || !learn || !interest) {
+    return -1;
+  }
 
-//   // 유저 scraps 필드에 챌린지 id 삭제
-//   const idx = user.scraps.challengeScraps.indexOf(challengeID);
-//   user.scraps.challengeScraps.splice(idx, 1);
-//   await user.save();
+  const challenge = await Post.findOne({
+    where: { isDeleted: false, "$challenge.id$": challengeID },
+    include: [{ model: Challenge, required: true }, User, Like, Scrap],
+  });
 
-//   // 게시글 스크랩 수 1 감소
-//   await Challenge.findOneAndUpdate(
-//     { _id: challengeID },
-//     {
-//       $inc: { scrapNum: -1 },
-//     }
-//   );
+  // 2. 회고록 id 잘못됨
+  if (!challenge) {
+    return -2;
+  }
 
-//   return { _id: challengeID };
-// };
+  // 데이터 업데이트
+  challenge.interest = interest.join();
+  await challenge.save();
+  await Challenge.update(
+    { good, bad, learn },
+    {
+      where: { id: challengeID },
+    }
+  );
+
+  const returnData: challengeDTO.patchChallengeResDTO = {
+    id: challenge.id,
+    good,
+    bad,
+    learn,
+    interest: challenge.interest.split(","),
+    generation: challenge.generation,
+    likeNum: challenge.likes.length,
+    scrapNum: challenge.scraps.length,
+    isDeleted: challenge.isDeleted,
+    userID: challenge.userID,
+    nickname: challenge.user.nickname,
+    img: challenge.user.img,
+    createdAt: challenge.createdAt,
+    updatedAt: challenge.updatedAt,
+  };
+
+  return returnData;
+};
+
+/**
+ *  @챌린지_회고_삭제
+ *  @route DELETE /challenge/:challengeId
+ *  @error
+ *      1. 회고록 id 잘못됨
+ */
+
+const deleteChallenge = async (challengeID: number) => {
+  const challenge = await Post.findOne({ where: { id: challengeID } });
+
+  // 1. 회고록 id 잘못됨
+  if (!challenge || challenge.isDeleted) {
+    return -1;
+  }
+
+  challenge.isDeleted = true;
+  await challenge.save();
+
+  // 유저의 writingNum 감소
+  await Generation.update(
+    { writingNum: sequelize.literal("writingNum - 1") },
+    { where: { userID: challenge.userID, generation: challenge.generation } }
+  );
+
+  return undefined;
+};
+
+/**
+ *  @챌린지_회고_좋아요_삭제
+ *  @route DELETE /challenge/:challengeID/like
+ *  @error
+ *      1. 회고록 id 잘못됨
+ */
+
+const deleteLike = async (challengeID: number, userID: number) => {
+  const like = await Like.destroy({
+    where: { postID: challengeID, userID },
+  });
+
+  // 1. 회고록 id 잘못됨
+  if (!like) {
+    return -1;
+  }
+
+  return undefined;
+};
+
+/**
+ *  @챌린지_회고_스크랩_삭제
+ *  @route Delete /challenge/:challengeID
+ *  @error
+ *      1. 회고록 id 잘못됨
+ */
+
+const deleteScrap = async (challengeID: number, userID: number) => {
+  const scrap = await Scrap.destroy({
+    where: { postID: challengeID, userID },
+  });
+
+  // 1. 회고록 id 잘못됨
+  if (!scrap) {
+    return -1;
+  }
+
+  return undefined;
+};
 
 const challengeService = {
   postChallenge,
@@ -758,6 +818,12 @@ const challengeService = {
   postLike,
   postScrap,
   getChallengeAll,
+  getChallengeSearch,
+  getChallengeOne,
+  patchChallenge,
+  deleteChallenge,
+  deleteLike,
+  deleteScrap,
 };
 
 export default challengeService;

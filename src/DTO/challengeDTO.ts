@@ -9,6 +9,13 @@ namespace challengeDTO {
     generation: number;
   }
 
+  export interface patchChallengeReqDTO {
+    good: string;
+    bad: string;
+    learn: string;
+    interest: string[];
+  }
+
   export interface postChallengeResDTO {
     id: number;
     good: string;
@@ -26,7 +33,24 @@ namespace challengeDTO {
     updatedAt: Date;
   }
 
-  export interface getChallengeAllResDTO {
+  export interface patchChallengeResDTO {
+    id: number;
+    good: string;
+    bad: string;
+    learn: string;
+    interest: string[];
+    generation: number;
+    likeNum: number;
+    scrapNum: number;
+    isDeleted: Boolean;
+    userID: number;
+    nickname: string;
+    img: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }
+
+  export interface getChallengeResDTO {
     id: number;
     generation: number;
     createdAt: Date;
