@@ -8,9 +8,7 @@ import Concert from "./Concert";
 import Generation from "./Generation";
 import Like from "./Like";
 import Post from "./Post";
-// import PostInterest from "./PostInterest";
 import Scrap from "./Scrap";
-// import UserInterest from "./UserInterest";
 import Comment from "./Comment";
 const db = {};
 

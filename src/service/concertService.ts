@@ -1,102 +1,145 @@
+import sequelize, { Op } from "sequelize";
+
 // models
-import Concert from "../models/Concert";
-import User from "../models/User";
-import Comment from "../models/Comment";
-import Badge from "../models/Badge";
+import { Badge, Concert, Comment, Like, Post, Scrap, User } from "../models";
 
 // DTO
-import {
-  IConcertDTO,
-  concertResDTO,
-  IConcertDetailDTO,
-} from "../DTO/concertDTO";
-import { commentReqDTO } from "../DTO/commentDTO";
+import { concertDTO, commentDTO } from "../DTO";
 
 /**
  *  @오투콘서트_전체_가져오기
- *  @route Get /concert
+ *  @route Get /concert?offset=@&limit=
+ *  @access public
+ *  @error
+ *    1. limit이 없는 경우
  */
-export const getConcertAll = async (userID, offset, limit) => {
+export const getConcertAll = async (
+  userID: number,
+  offset: number,
+  limit: number
+) => {
   // isDelete = true 인 애들만 가져오기
   // offset 뒤에서 부터 가져오기
   // 최신순으로 정렬
-  // 댓글, 답글 populate
   // 댓글, 답글 최신순으로 정렬
+  // public인 경우 isLike, isScrap 없음
+
+  // 1. 요청 부족
   if (!limit) {
     return -1;
   }
+
   if (!offset) {
     offset = 0;
   }
 
-  let concerts;
-  concerts = await Concert.find({
-    isDeleted: false,
-    isNotice: false,
-  })
-    .skip(Number(offset))
-    .limit(Number(limit))
-    .sort({ likes: -1 })
-    .populate("user", ["nickname", "img"])
-    .populate({
-      path: "comments",
-      select: { userID: 1, text: 1, isDeleted: 1 },
-      options: { sort: { _id: -1 } },
-      populate: [
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Concert, required: true, where: { isNotice: false } },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
         {
-          path: "childrenComment",
-          select: { userID: 1, text: 1, isDeleted: 1 },
-          options: { sort: { _id: -1 } },
-          populate: {
-            path: "userID",
-            select: ["nickname", "img"],
-          },
-        },
-        {
-          path: "userID",
-          select: ["nickname", "img"],
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
         },
       ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
+  const concertList = await Post.findAll({
+    order: [
+      ["createdAt", "DESC"],
+      ["comments", "id", "DESC"],
+    ],
+    where: {
+      isDeleted: false,
+    },
+    include,
+    limit,
+    offset,
+  });
+
+  const concerts: concertDTO.getConcertResDTO[] = concertList.map((concert) => {
+    // 댓글 형식 변환
+    let comment: commentDTO.IComment[] = [];
+    concert.comments.forEach((c) => {
+      const children = c.children.map((child) => ({
+        id: child.id,
+        userID: child.userID,
+        nickname: child.user.nickname,
+        img: child.user.img,
+        text: child.text,
+        isDeleted: child.isDeleted,
+      }));
+
+      comment.push({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children,
+        isDeleted: c.isDeleted,
+      });
     });
 
-  let totalConcertNum = await Concert.find({
-    isDeleted: false,
-    isNotice: false,
-  }).countDocuments();
-
-  let resData: concertResDTO;
-  if (userID) {
-    // 좋아요, 스크랩 여부 추가
-    const user = await User.findById(userID.id);
-    const newConcerts: IConcertDTO[] = concerts.map((c) => {
-      if (
-        user.scraps.concertScraps.includes(c._id) &&
-        user.likes.concertLikes.includes(c._id)
-      ) {
-        return { ...c._doc, isLike: true, isScrap: true };
-      } else if (user.scraps.concertScraps.includes(c._id)) {
-        return { ...c._doc, isLike: false, isScrap: true };
-      } else if (user.likes.concertLikes.includes(c._id)) {
-        return { ...c._doc, isLike: true, isScrap: false };
-      } else {
-        return {
-          ...c._doc,
-          isLike: false,
-          isScrap: false,
-        };
-      }
-    });
-
-    resData = {
-      concerts: newConcerts,
-      totalConcertNum,
+    let returnData: concertDTO.getConcertResDTO = {
+      id: concert.id,
+      createdAt: concert.createdAt,
+      updatedAt: concert.updatedAt,
+      userID: concert.userID,
+      nickname: concert.user.nickname,
+      img: concert.user.img,
+      authorNickname: concert.concert.authorNickname,
+      title: concert.concert.title,
+      videoLink: concert.concert.videoLink,
+      imgThumbnail: concert.concert.imgThumbnail,
+      text: concert.concert.text,
+      interest: concert.interest.split(","),
+      hashtag: concert.concert.hashtag
+        ? concert.concert.hashtag.slice(1).split("#")
+        : undefined,
+      likeNum: concert.likes.length,
+      scrapNum: concert.scraps.length,
+      commentNum: concert.comments.length,
+      comment,
+      isDeleted: concert.isDeleted,
+      isNotice: concert.concert.isNotice,
     };
-  } else {
-    resData = {
-      concerts,
-      totalConcertNum,
-    };
-  }
+
+    // userID가 있는 경우
+    if (userID)
+      returnData = {
+        ...returnData,
+        isLike: concert.userLikes.length ? true : false,
+        isScrap: concert.userScraps.length ? true : false,
+      };
+
+    return returnData;
+  });
+  const totalConcertNum = concertList.length;
+  const resData: concertDTO.concertAllResDTO = {
+    concerts,
+    totalConcertNum,
+  };
 
   return resData;
 };
@@ -104,70 +147,132 @@ export const getConcertAll = async (userID, offset, limit) => {
 /**
  *  @오투콘서트_Detail
  *  @route Get /concert/:concertID
+ *  @access public
+ *  @error
+ *    1. concertID가 없을 경우
  */
-export const getConcertOne = async (userID, concertID) => {
-  // 댓글, 답글 populate
-  // isDelete = true 인 애들만 가져오기
-  let concert;
-  concert = await Concert.findById(concertID)
-    .populate("user", ["nickname", "img"])
-    .populate({
-      path: "comments",
-      select: { userID: 1, text: 1, isDeleted: 1 },
-      options: { sort: { _id: -1 } },
-      populate: [
+export const getConcertOne = async (userID: number, concertID: number) => {
+  // 1. concertID가 없을 경우
+  if (!concertID) {
+    return -1;
+  }
+
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Concert, required: true, where: { isNotice: false } },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
         {
-          path: "childrenComment",
-          select: { userID: 1, text: 1, isDeleted: 1 },
-          options: { sort: { _id: -1 } },
-          populate: {
-            path: "userID",
-            select: ["nickname", "img"],
-          },
-        },
-        {
-          path: "userID",
-          select: ["nickname", "img"],
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
         },
       ],
-    });
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
 
-  let resData: IConcertDTO;
-  if (userID) {
-    // 좋아요, 스크랩 여부 추가
-    const user = await User.findById(userID.id);
-    if (
-      user.scraps.concertScraps.includes(concertID) &&
-      user.likes.concertLikes.includes(concertID)
-    ) {
-      resData = { ...concert._doc, isLike: true, isScrap: true };
-    } else if (user.scraps.concertScraps.includes(concertID)) {
-      resData = { ...concert._doc, isLike: false, isScrap: true };
-    } else if (user.likes.concertLikes.includes(concertID)) {
-      resData = { ...concert._doc, isLike: true, isScrap: false };
-    } else {
-      resData = {
-        ...concert._doc,
-        isLike: false,
-        isScrap: false,
-      };
-    }
-  } else {
-    resData = concert;
-  }
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
+  // 댓글, 답글 join
+  // isDeleted = false
+  // isNotice = false
+  const concert = await Post.findOne({
+    where: { isDeleted: false, "$concert.id$": concertID },
+    order: [["comments", "id", "DESC"]],
+    include,
+  });
+  // 댓글 형식 변환
+  let comment: commentDTO.IComment[] = [];
+  concert.comments.forEach((c) => {
+    const children = c.children.map((child) => ({
+      id: child.id,
+      userID: child.userID,
+      nickname: child.user.nickname,
+      img: child.user.img,
+      text: child.text,
+      isDeleted: child.isDeleted,
+    }));
+
+    comment.push({
+      id: c.id,
+      userID: c.userID,
+      nickname: c.user.nickname,
+      img: c.user.img,
+      text: c.text,
+      children,
+      isDeleted: c.isDeleted,
+    });
+  });
+
+  let resData: concertDTO.getConcertResDTO = {
+    id: concert.id,
+    createdAt: concert.createdAt,
+    updatedAt: concert.updatedAt,
+    userID: concert.userID,
+    nickname: concert.user.nickname,
+    img: concert.user.img,
+    authorNickname: concert.concert.authorNickname,
+    title: concert.concert.title,
+    videoLink: concert.concert.videoLink,
+    imgThumbnail: concert.concert.imgThumbnail,
+    text: concert.concert.text,
+    interest: concert.interest.split(","),
+    hashtag: concert.concert.hashtag
+      ? concert.concert.hashtag.slice(1).split("#")
+      : undefined,
+    likeNum: concert.likes.length,
+    scrapNum: concert.scraps.length,
+    commentNum: concert.comments.length,
+    comment,
+    isDeleted: concert.isDeleted,
+    isNotice: concert.concert.isNotice,
+  };
+
+  // userID가 있는 경우
+  if (userID)
+    resData = {
+      ...resData,
+      isLike: concert.userLikes.length ? true : false,
+      isScrap: concert.userScraps.length ? true : false,
+    };
 
   return resData;
 };
 
 /**
  *  @오투콘서트_검색_또는_필터
- *  @route Get /concert/search?tag=관심분야&ismine=내글만보기여부&keyword=검색할단어
+ *  @route Get /concert/search?offset=&limit=&tag=&keyword=
+ *  @error
+ *    1. limit이 없는 경우
  */
-export const getConcertSearch = async (userID, tag, keyword, offset, limit) => {
+export const getConcertSearch = async (
+  offset: number,
+  limit: number,
+  userID?: number,
+  tag?: string,
+  keyword?: string
+) => {
   // isDelete = true 인 애들만 가져오기
   // offset 뒤에서 부터 가져오기
   // 최신순으로 정렬
   // 댓글, 답글 populate
+  // tag 검사
+  // keyword 검사
 
   if (!limit) {
     return -1;
@@ -176,98 +281,133 @@ export const getConcertSearch = async (userID, tag, keyword, offset, limit) => {
     offset = 0;
   }
 
-  let concerts;
-
-  concerts = await Concert.find({
+  // where
+  let where: any = {
     isDeleted: false,
-    isNotice: false,
-  })
-    .sort({ likes: -1 })
-    .populate("user", ["nickname", "img"])
-    .populate({
-      path: "comments",
-      select: { userID: 1, text: 1, isDeleted: 1 },
-      options: { sort: { _id: -1 } },
-      populate: [
+  };
+
+  if (tag && tag !== "전체") {
+    where = {
+      ...where,
+      interest: { [Op.like]: `%${tag}%` },
+    };
+  }
+
+  if (keyword) {
+    where = {
+      ...where,
+      [Op.or]: [
+        { "$concert.text$": { [Op.like]: `%${keyword}%` } },
+        { "$concert.title$": { [Op.like]: `%${keyword}%` } },
+        { "$concert.hashtag$": { [Op.like]: `%${keyword}%` } },
+      ],
+    };
+  }
+
+  // include
+  let include: sequelize.Includeable | sequelize.Includeable[] = [
+    { model: Concert, required: true, where: { isNotice: false } },
+    User,
+    {
+      model: Comment,
+      as: "comments",
+      required: false,
+      where: { level: 0 },
+      include: [
+        User,
         {
-          path: "childrenComment",
-          select: { userID: 1, text: 1, isDeleted: 1 },
-          options: { sort: { _id: -1 } },
-          populate: {
-            path: "userID",
-            select: ["nickname", "img"],
-          },
-        },
-        {
-          path: "userID",
-          select: ["nickname", "img"],
+          model: Comment,
+          as: "children",
+          separate: true,
+          order: [["id", "DESC"]],
+          include: [User],
         },
       ],
+    },
+    { model: Like, as: "likes", required: false },
+    { model: Scrap, as: "scraps", required: false },
+  ];
+
+  // userID가 있는 경우
+  if (userID)
+    include = [
+      ...include,
+      { model: Like, as: "userLikes", where: { userID }, required: false },
+      { model: Scrap, as: "userScraps", where: { userID }, required: false },
+    ];
+
+  const concertList = await Post.findAll({
+    order: [["createdAt", "DESC"]],
+    where,
+    include,
+    limit,
+    offset,
+  });
+
+  const concerts: concertDTO.getConcertResDTO[] = concertList.map((concert) => {
+    // 댓글 형식 변환
+    let comment: commentDTO.IComment[] = [];
+    concert.comments.forEach((c) => {
+      const children = c.children.map((child) => ({
+        id: child.id,
+        userID: child.userID,
+        nickname: child.user.nickname,
+        img: child.user.img,
+        text: child.text,
+        isDeleted: child.isDeleted,
+      }));
+
+      comment.push({
+        id: c.id,
+        userID: c.userID,
+        nickname: c.user.nickname,
+        img: c.user.img,
+        text: c.text,
+        children,
+        isDeleted: c.isDeleted,
+      });
     });
 
-  let filteredData = await concerts;
-
-  // 관심분야 필터링
-  if (tag !== "" && tag && tag !== "전체") {
-    filteredData = filteredData.filter((fd) => {
-      if (fd.interest.includes(tag.toLowerCase())) return fd;
-    });
-  }
-
-  // 검색 단어 필터링
-  if (keyword !== "" && keyword) {
-    filteredData = filteredData.filter((fd) => {
-      if (
-        fd.text.includes(keyword.toLowerCase().trim()) ||
-        fd.title.includes(keyword.toLowerCase().trim()) ||
-        fd.hashtag.includes(keyword.toLowerCase().trim())
-      )
-        return fd;
-    });
-  }
-
-  var searchData = [];
-  for (var i = Number(offset); i < Number(offset) + Number(limit); i++) {
-    if (!filteredData[i]) {
-      break;
-    }
-    searchData.push(filteredData[i]);
-  }
-
-  const totalConcertNum = filteredData.length;
-  let resData: concertResDTO;
-  if (userID) {
-    // 좋아요, 스크랩 여부 추가
-    const user = await User.findById(userID.id);
-    const newConcert = searchData.map((c) => {
-      if (
-        user.scraps.concertScraps.includes(c._id) &&
-        user.likes.concertLikes.includes(c._id)
-      ) {
-        return { ...c._doc, isLike: true, isScrap: true };
-      } else if (user.scraps.concertScraps.includes(c._id)) {
-        return { ...c._doc, isLike: false, isScrap: true };
-      } else if (user.likes.concertLikes.includes(c._id)) {
-        return { ...c._doc, isLike: true, isScrap: false };
-      } else {
-        return {
-          ...c._doc,
-          isLike: false,
-          isScrap: false,
-        };
-      }
-    });
-
-    resData = {
-      concerts: newConcert,
-      totalConcertNum,
+    let returnData: concertDTO.getConcertResDTO = {
+      id: concert.id,
+      createdAt: concert.createdAt,
+      updatedAt: concert.updatedAt,
+      userID: concert.userID,
+      nickname: concert.user.nickname,
+      img: concert.user.img,
+      authorNickname: concert.concert.authorNickname,
+      title: concert.concert.title,
+      videoLink: concert.concert.videoLink,
+      imgThumbnail: concert.concert.imgThumbnail,
+      text: concert.concert.text,
+      interest: concert.interest.split(","),
+      hashtag: concert.concert.hashtag
+        ? concert.concert.hashtag.slice(1).split("#")
+        : undefined,
+      likeNum: concert.likes.length,
+      scrapNum: concert.scraps.length,
+      commentNum: concert.comments.length,
+      comment,
+      isDeleted: concert.isDeleted,
+      isNotice: concert.concert.isNotice,
     };
-  } else {
-    resData = {
-      concerts: searchData,
-      totalConcertNum,
-    };
-  }
+
+    // userID가 있는 경우
+    if (userID)
+      returnData = {
+        ...returnData,
+        isLike: concert.userLikes.length ? true : false,
+        isScrap: concert.userScraps.length ? true : false,
+      };
+
+    return returnData;
+  });
+
+  const totalConcertNum = concertList.length;
+  const resData: concertDTO.concertAllResDTO = {
+    concerts,
+    totalConcertNum,
+  };
 
   return resData;
 };
@@ -275,285 +415,277 @@ export const getConcertSearch = async (userID, tag, keyword, offset, limit) => {
 /**
  *  @콘서트_댓글_등록
  *  @route Post /concert/comment/:concertID
- *  @access Private
+ *  @access private
  *  @error
  *      1. 회고록 id 잘못됨
  *      2. 요청 바디 부족
  *      3. 부모 댓글 id 값이 유효하지 않을 경우
  */
 export const postConcertComment = async (
-  concertID,
-  userID,
-  reqData: commentReqDTO
+  concertID: number,
+  userID: number,
+  reqData: commentDTO.postCommentReqDTO
 ) => {
   const { parentID, text } = reqData;
-
   // 1. 회고록 id 잘못됨
-  const concert = await Concert.findById(concertID);
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
 
   if (!concert || concert.isDeleted) {
     return -1;
   }
+
   // 2. 요청 바디 부족
   if (!text) {
     return -2;
   }
 
-  let comment;
   // 답글인 경우
   if (parentID) {
-    const parentComment = await Comment.findById(parentID);
+    const parentComment = await Comment.findOne({
+      where: { id: parentID, isDeleted: false },
+    });
 
     // 3. 부모 댓글 id 값이 유효하지 않을 경우
     if (!parentComment) {
       return -3;
     }
 
-    comment = new Comment({
-      postModel: "Concert",
-      post: concertID,
-      userID: userID,
-      parentComment: parentID,
+    await Comment.create({
+      userID,
+      postID: concertID,
+      parentID,
       text,
+      level: 1,
     });
-    await comment.save();
-
-    await parentComment.childrenComment.push(comment._id);
-    await parentComment.save();
 
     // 첫 답글 작성 시 뱃지 추가
-    const badge = await Badge.findOne({ user: userID });
-    if (!badge.firstReplyBadge) {
-      badge.firstReplyBadge = true;
-      await badge.save();
-    }
+    await Badge.update(
+      { firstReplyBadge: true },
+      {
+        where: { id: userID, firstReplyBadge: false },
+      }
+    );
   } else {
     // 댓글인 경우
-    comment = new Comment({
-      postModel: "Concert",
-      post: concertID,
-      userID: userID,
+    await Comment.create({
+      userID,
+      postID: concertID,
       text,
     });
 
-    await comment.save();
-    await concert.comments.push(comment._id);
-    await concert.save();
-
     // 댓글 1개 작성 시 뱃지 추가
-    const badge = await Badge.findOne({ user: userID });
+    const badge = await Badge.findOne({ where: { id: userID } });
     if (!badge.oneCommentBadge) {
       badge.oneCommentBadge = true;
       await badge.save();
     }
+
     // 댓글 5개 작성 시 뱃지 추가
-    const user = await User.findById(userID);
-    if (!badge.fiveCommentBadge && user.commentCNT === 4) {
+    const user = await User.findOne({
+      where: { id: userID },
+      include: [Comment],
+    });
+
+    // 댓글 5개 작성 시 뱃지 추가
+    if (!badge.fiveCommentBadge && user.comments.length > 4) {
       badge.fiveCommentBadge = true;
       await badge.save();
     }
 
-    // 유저 댓글 수 1 증가
-    await user.update({
-      commentCNT: user.commentCNT + 1,
-    });
+    return 1;
   }
-
-  // 게시글 댓글 수 1 증가
-  await Concert.findOneAndUpdate(
-    { _id: concertID },
-    {
-      $inc: { commentNum: 1 },
-    }
-  );
-
-  const user = await User.findById(userID);
-
-  return {
-    _id: comment._id,
-    nickname: user.nickname,
-    text: text,
-    createdAt: comment.createdAt,
-  };
-
-  return;
 };
 
 /**
  *  @오투콘서트_좋아요_등록
  *  @route Post /concert/like/:concertID
+ *  @access private
  *  @error
  *      1. 콘서트 id 잘못됨
  *      2. 이미 좋아요 한 글일 경우
  */
-export const postConcertLike = async (concertID, userID) => {
+export const postConcertLike = async (concertID: number, userID: number) => {
   // 1. 콘서트 id 잘못됨
-  const concert = await Concert.findById(concertID);
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
 
   if (!concert || concert.isDeleted) {
     return -1;
   }
 
-  const user = await User.findById(userID);
+  const like = await Like.findOne({ where: { postID: concertID, userID } });
   // 2. 이미 좋아요 한 글일 경우
-  if (user.likes.concertLikes.includes(concertID)) {
+  if (like) {
     return -2;
   }
 
-  // 챌린지 글의 like 1 증가
-  await Concert.findOneAndUpdate(
-    { _id: concertID },
-    {
-      $inc: { likes: 1 },
-    }
-  );
-  // 유저 likes 필드에 챌린지 id 추가
-  user.likes.concertLikes.push(concertID);
-  await user.save();
+  // 좋아요
+  await Like.create({
+    postID: concertID,
+    userID,
+  });
 
   // 좋아요 1개 누를 시 뱃지 추가
-  const badge = await Badge.findOne({ user: userID });
+  const badge = await Badge.findOne({ where: { id: userID } });
   if (!badge.oneLikeBadge) {
     badge.oneLikeBadge = true;
     await badge.save();
   }
 
   // 좋아요 5개 누를 시 뱃지 추가
-  if (
-    !badge.fiveLikeBadge &&
-    user.likes.challengeLikes.length + user.likes.concertLikes.length === 5
-  ) {
+  // 댓글 5개 작성 시 뱃지 추가
+  const user = await User.findOne({
+    where: { id: userID },
+    include: [Like],
+  });
+
+  // 댓글 5개 작성 시 뱃지 추가
+  if (!badge.fiveLikeBadge && user.likes.length > 4) {
     badge.fiveLikeBadge = true;
     await badge.save();
   }
 
-  return { _id: concertID };
+  return 1;
 };
 
 /**
  *  @오투콘서트_좋아요_삭제
  *  @route Delete /concert/like/:concertID
+ *  @access private
  *  @error
  *      1. 콘서트 id 잘못됨
  *      2. 좋아요 개수가 0
  */
-export const deleteConcertLike = async (concertID, userID) => {
-  const concert = await Concert.findById(concertID);
-
+export const deleteConcertLike = async (concertID: number, userID: number) => {
   // 1. 콘서트 id 잘못됨
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [
+      { model: Concert, required: true, where: { isNotice: false } },
+      Like,
+    ],
+  });
+
   if (!concert || concert.isDeleted) {
     return -1;
   }
 
   // 2. 좋아요 개수가 0
-  if (concert.likes === 0) {
+  if (concert.likes.length === 0) {
     return -2;
   }
 
   // 콘서트 글의 like 1 감소
-  await Concert.findOneAndUpdate(
-    { _id: concertID },
-    {
-      $inc: { likes: -1 },
-    }
-  );
-  // 유저 likes 필드에 챌린지 id 삭제
-  const user = await User.findById(userID);
+  await Like.destroy({
+    where: { postID: concertID, userID },
+  });
 
-  const idx = user.likes.concertLikes.indexOf(concertID);
-  user.likes.concertLikes.splice(idx, 1);
-
-  await user.save();
-
-  return { _id: concertID };
+  return 1;
 };
 
 /**
  *  @오투콘서트_스크랩하기
  *  @route Post /user/concert/:concertID
+ *  @access private
  *  @error
  *      1. 콘서트 id 잘못됨
  *      2. 이미 스크랩 한 회고일 경우
  */
-export const postConcertScrap = async (concertID, userID) => {
-  // 1. 회고 id 잘못됨
-  let concert = await Concert.findById(concertID);
+export const postConcertScrap = async (concertID: number, userID: number) => {
+  // 1. 콘서트 id 잘못됨
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
+
   if (!concert || concert.isDeleted) {
     return -1;
   }
 
-  const user = await User.findById(userID);
-
   // 2. 이미 스크랩 한 회고인 경우
-  if (user.scraps.concertScraps.includes(concertID)) {
+  const scrap = await Scrap.findOne({ where: { postID: concertID, userID } });
+  if (scrap) {
     return -2;
   }
+
   // 3. 자신의 회고인 경우
-  if (concert.user.toString() === user._id.toString()) {
-    console.log("dd");
+  if (concert.concert.userID === userID) {
     return -3;
   }
 
-  // 게시글 스크랩 수 1 증가
-  await Concert.findOneAndUpdate(
-    { _id: concertID },
-    {
-      $inc: { scrapNum: 1 },
-    }
-  );
-
-  user.scraps.concertScraps.push(concertID);
-  await user.save();
+  await Scrap.create({
+    postID: concertID,
+    userID,
+  });
 
   // 첫 스크랩이면 뱃지 발급
-  const badge = await Badge.findOne(
-    { user: userID },
-    { concertScrapBadge: true, _id: false }
+  await Badge.update(
+    { concertScrapBadge: true },
+    { where: { id: userID, concertScrapBadge: false } }
   );
 
-  const scrapNum = user.scraps.concertScraps.length;
-  if (!badge.concertScrapBadge && scrapNum === 1) {
-    await Badge.findOneAndUpdate(
-      { user: userID },
-      { $set: { concertScrapBadge: true } }
-    );
-  }
-
-  return { _id: concertID };
+  return 1;
 };
 
 /**
  *  @유저_콘서트_스크랩_취소하기
  *  @route Delete /user/concert/:concertID
+ *  @access private
  *  @error
  *      1. 콘서트 id 잘못됨
  *      2. 스크랩 하지 않은 글일 경우
  */
-export const deleteConcertScrap = async (concertID, userID) => {
+export const deleteConcertScrap = async (concertID: number, userID: number) => {
   // 1. 콘서트 id 잘못됨
-  let concert = await Concert.findById(concertID);
+  const concert = await Post.findOne({
+    where: {
+      "$concert.id$": concertID,
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
+
   if (!concert || concert.isDeleted) {
     return -1;
   }
 
-  const user = await User.findById(userID);
   // 2. 스크랩하지 않은 글일 경우
-  if (!user.scraps.concertScraps.includes(concertID)) {
+  let scrap = await Scrap.findOne({ where: { postID: concertID, userID } });
+  if (!scrap) {
     return -2;
   }
 
-  // 게시글 스크랩 수 1 감소
-  await Concert.findOneAndUpdate(
-    { _id: concertID },
-    {
-      $inc: { scrapNum: -1 },
-    }
-  );
+  await Scrap.destroy({ where: { postID: concertID, userID } });
 
-  // 유저 likes 필드에 챌린지 id 삭제
-  const idx = user.scraps.concertScraps.indexOf(concertID);
-  user.scraps.concertScraps.splice(idx, 1);
-  await user.save();
-
-  return { _id: concertID };
+  return 1;
 };
+
+const concertService = {
+  getConcertAll,
+  getConcertOne,
+  getConcertSearch,
+  postConcertComment,
+  postConcertLike,
+  deleteConcertLike,
+  postConcertScrap,
+  deleteConcertScrap,
+};
+
+export default concertService;
