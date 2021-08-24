@@ -1,6 +1,6 @@
 import { Router } from "express";
 // controller
-import { challengeController, concertController } from "../controller";
+import { concertController } from "../controller";
 // middleware
 import { authMiddleware, publicAuthMiddleware } from "../middleware";
 
