@@ -1,5 +1,5 @@
 // models
-import { User, UserInterest, Badge, Admin } from "../models";
+import { User, Badge, Admin } from "../models";
 // DTO
 import { authDTO } from "../DTO";
 // library
