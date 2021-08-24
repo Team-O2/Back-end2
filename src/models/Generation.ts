@@ -10,7 +10,9 @@ import {
   BelongsTo,
   Default,
 } from "sequelize-typescript";
+
 import { User, Admin } from ".";
+
 @Table({
   tableName: "Generation",
   freezeTableName: true,

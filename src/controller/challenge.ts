@@ -60,7 +60,7 @@ const postChallengeController = async (req: Request, res: Response) => {
 const postCommentController = async (req: Request, res: Response) => {
   try {
     const reqData: commentDTO.postCommentReqDTO = req.body;
-    const resData: commentDTO.postCommentResDTO | -1 | -2 | -3 =
+    const resData: undefined | -1 | -2 | -3 =
       await challengeService.postComment(
         Number(req.params.challengeID),
         req.body.userID.id,
@@ -93,7 +93,7 @@ const postCommentController = async (req: Request, res: Response) => {
     }
     // 댓글 등록 성공
     else {
-      response.dataResponse(res, returnCode.CREATED, "댓글 등록 성공", resData);
+      response.basicResponse(res, returnCode.CREATED, "댓글 등록 성공");
     }
   } catch (err) {
     console.error(err.message);
@@ -190,18 +190,19 @@ const postScrapController = async (req: Request, res: Response) => {
 
 /**
  *  @챌린지_회고_전체_가져오기
- *  @route Get /
+ *  @route Get ?offset=&limit=&generation=
  *  @access public
  */
 
 const getChallengeAllController = async (req: Request, res: Response) => {
   try {
-    const resData = await challengeService.getChallengeAll(
-      req.body.userID.id,
-      Number(req.query.generation),
-      Number(req.query.offset),
-      Number(req.query.limit)
-    );
+    const resData: challengeDTO.getChallengeResDTO[] | -1 | -2 =
+      await challengeService.getChallengeAll(
+        req.body.userID?.id,
+        Number(req.query.generation),
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
 
     // limit 없을 때
     if (resData === -1) {
@@ -234,164 +235,232 @@ const getChallengeAllController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @챌린지_회고_검색_또는_필터
-//  *  @route Get /challenge/search
-//  *  @access public
-//  */
+/**
+ *  @챌린지_회고_검색_또는_필터
+ *  @route Get /search?offset=&limit=&generation=&tag=&keyword=&isMine=
+ *  @access public
+ */
 
-// router.get("/search", publicAuth, async (req: Request, res: Response) => {
-//   try {
-//     const data: IChallengeDTO[] | -1 = await getChallengeSearch(
-//       req.query.tag,
-//       req.query.ismine,
-//       req.query.keyword,
-//       req.query.offset,
-//       req.query.limit,
-//       req.query.generation,
-//       req.body.userID
-//     );
+const getChallengeSearchController = async (req: Request, res: Response) => {
+  try {
+    const resData: challengeDTO.getChallengeResDTO[] | -1 | -2 | -3 =
+      await challengeService.getChallengeSearch(
+        Number(req.query.offset),
+        Number(req.query.limit),
+        Number(req.query.generation),
+        req.body.userID?.id,
+        req.query.tag ? String(req.query.tag) : undefined,
+        Boolean(req.query.isMine),
+        req.query.keyword ? String(req.query.keyword) : undefined
+      );
 
-//     // limit 없을 때
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
+    // limit 없을 때
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "잘못된 limit 값입니다"
+      );
+    }
+    // generation 없을 때
+    else if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "잘못된 generation 값입니다"
+      );
+    }
+    // userID가 없을 때
+    else if (resData === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "user id가 존재하지 않습니다"
+      );
+    }
+    // 회고 전체 불러오기 성공
+    else {
+      response.dataResponse(
+        res,
+        returnCode.OK,
+        "회고 검색/필터링 성공",
+        resData
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-//     // 회고 전체 불러오기 성공
-//     const challengeSearch = data;
-//     dataResponse(res, returnCode.OK, "검색 성공", challengeSearch);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+/**
+ *  @챌린지_회고_가져오기
+ *  @route Get /:challengeID
+ *  @access private
+ */
 
-// /**
-//  *  @챌린지_회고_가져오기
-//  *  @route Get /challenge/:challengeID
-//  *  @access public
-//  */
+const getChallengeOneController = async (req: Request, res: Response) => {
+  try {
+    const resData: challengeDTO.getChallengeResDTO | -1 =
+      await challengeService.getChallengeOne(
+        Number(req.params.challengeID),
+        Number(req.body.userID.id)
+      );
 
-// router.get("/:id", publicAuth, async (req: Request, res: Response) => {
-//   try {
-//     const data: IChallengeDTO[] | -1 = await getChallengeOne(
-//       req.body.userID,
-//       req.params.id
-//     );
+    // challengeID가 없을 때
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "존재하지 않는 회고입니다"
+      );
+    }
+    // 회고 불러오기 성공
+    else {
+      response.dataResponse(res, returnCode.OK, "회고 불러오기 성공", resData);
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-//     // challengeID가 이상할 때
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
+/**
+ *  @챌린지_회고_수정
+ *  @route Patch /:challengeId
+ *  @access private
+ */
 
-//     dataResponse(res, returnCode.OK, "회고 불러오기 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+const patchChallengeController = async (req: Request, res: Response) => {
+  try {
+    const reqData: challengeDTO.patchChallengeReqDTO = req.body;
+    const resData: challengeDTO.patchChallengeResDTO | -1 | -2 =
+      await challengeService.patchChallenge(
+        Number(req.params.challengeID),
+        reqData
+      );
 
-// /**
-//  *  @챌린지_회고_수정
-//  *  @route Patch /challenge/:challengeId
-//  *  @access private
-//  */
+    // 요청 바디가 부족한 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // 회고 id가 잘못된 경우
+    else if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 존재하지 않습니다"
+      );
+    }
+    //회고 수정 성공
+    else {
+      response.dataResponse(res, returnCode.OK, "회고 수정 성공", resData);
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// router.patch("/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const reqData: challengeWriteReqDTO = req.body;
-//     const data = await patchChallenge(req.params.id, reqData);
+/**
+ *  @챌린지_회고_삭제
+ *  @route Delete /challenge/:challengeId
+ *  @access private
+ */
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 요청 바디가 부족한 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
-//     //회고 수정 성공
-//     const challenge = data;
-//     dataResponse(res, returnCode.OK, "회고 수정 성공", challenge);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+const deleteChallengeController = async (req: Request, res: Response) => {
+  try {
+    const resData: number | undefined = await challengeService.deleteChallenge(
+      Number(req.params.challengeID)
+    );
 
-// /**
-//  *  @챌린지_회고_삭제
-//  *  @route Delete /challenge/:challengeId
-//  *  @access private
-//  */
+    // 회고 id가 잘못된 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 존재하지 않습니다"
+      );
+    }
+    // 회고 삭제 성공
+    else {
+      response.basicResponse(res, returnCode.NO_CONTENT, "회고 삭제 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// router.delete("/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteChallenge(req.body.userID.id, req.params.id);
+/**
+ *  @챌린지_회고_좋아요_삭제
+ *  @route Delete /challenge/like/:challengeID
+ *  @access private
+ */
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     }
-//     // 회고 삭제 성공
-//     const challengeID = data;
-//     dataResponse(res, returnCode.OK, "회고 삭제 성공", challengeID);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+const deleteLikeController = async (req: Request, res: Response) => {
+  try {
+    const resData: number | undefined = await challengeService.deleteLike(
+      Number(req.params.challengeID),
+      Number(req.body.userID.id)
+    );
 
-// /**
-//  *  @챌린지_회고_좋아요_삭제하기
-//  *  @route Delete /challenge/like/:challengeID
-//  *  @access private
-//  */
+    // 회고 id가 잘못된 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 존재하지 않습니다"
+      );
+    }
+    // 좋아요 삭제 성공
+    else {
+      response.basicResponse(res, returnCode.NO_CONTENT, "좋아요 취소 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// router.delete("/like/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteChallengeLike(req.params.id, req.body.userID.id);
+/**
+ *  @챌린지_회고_스크랩_삭제
+ *  @route Delete /challenge/:challengeID/scrap
+ *  @access private
+ */
 
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
-//     } // 좋아요 한 개수가 0인 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "좋아요 개수가 0");
-//     }
-//     // 좋아요 삭제 성공
-//     const challengeID = data;
-//     dataResponse(res, returnCode.OK, "좋아요 삭제 성공", challengeID);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+const deleteScrapController = async (req: Request, res: Response) => {
+  try {
+    const data: number | undefined = await challengeService.deleteScrap(
+      Number(req.params.challengeID),
+      Number(req.body.userID.id)
+    );
 
-// /**
-//  *  @유저_챌린지_회고_스크랩_취소하기
-//  *  @route Delete /challenge/scrap/:challengeID
-//  *  @access private
-//  */
-// router.delete("/scrap/:id", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data = await deleteChallengeScrap(req.params.id, req.body.userID.id);
-
-//     // 회고 id가 잘못된 경우
-//     if (data === -1) {
-//       response(res, returnCode.NOT_FOUND, "요청 아이디가 올바르지 않습니다");
-//     }
-//     // 스크랩 하지 않은 글일 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "스크랩 하지 않은 글입니다");
-//     }
-//     // 스크랩 취소 성공
-//     dataResponse(res, returnCode.OK, "회고 스크랩 취소 성공", data);
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 회고 id가 잘못된 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "회고 id가 존재하지 않습니다"
+      );
+    }
+    // 스크랩 취소 성공
+    else {
+      response.basicResponse(
+        res,
+        returnCode.NO_CONTENT,
+        "회고 스크랩 취소 성공"
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 const challengeController = {
   postChallengeController,
@@ -399,6 +468,12 @@ const challengeController = {
   postLikeController,
   postScrapController,
   getChallengeAllController,
+  getChallengeSearchController,
+  getChallengeOneController,
+  patchChallengeController,
+  deleteChallengeController,
+  deleteLikeController,
+  deleteScrapController,
 };
 
 export default challengeController;

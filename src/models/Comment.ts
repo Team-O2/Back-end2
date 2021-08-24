@@ -1,3 +1,4 @@
+// Comment model
 import {
   Model,
   Column,
