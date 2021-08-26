@@ -1,5 +1,5 @@
 // models
-import { User, UserInterest, Badge, Admin } from "../models";
+import { User, Badge, Admin } from "../models";
 // DTO
 import { authDTO } from "../DTO";
 // library
@@ -51,17 +51,10 @@ const postSignup = async (data: authDTO.signupReqDTO) => {
     password: hashPassword,
     nickname,
     isMarketing,
+    interest: interest.join(),
   });
 
-  // UserInterest 생성
   const userID = (await user).id;
-  const interests = await interest.map((interestOne) => {
-    UserInterest.create({
-      userID: userID,
-      interest: interestOne,
-    });
-    return interestOne;
-  });
 
   // Badge 생성
   const badge = await Badge.create({
