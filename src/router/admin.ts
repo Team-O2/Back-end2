@@ -17,4 +17,13 @@ router.post(
   adminController.postAdminConcertController
 );
 
+router.post(
+  "/notice",
+  upload.fields([
+    { name: "videoLink", maxCount: 1 },
+    { name: "imgThumbnail", maxCount: 1 },
+  ]),
+  authMiddleware,
+  adminController.postAdminNoticeController
+);
 export default router;
