@@ -7,6 +7,8 @@ const upload = require("../modules/upload");
 
 const router = Router();
 
+router.get("/", authMiddleware, adminController.getAdminListController);
+
 router.post(
   "/concert",
   upload.fields([
