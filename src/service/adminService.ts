@@ -8,6 +8,7 @@ import { adminDTO, concertDTO, commentDTO } from "../DTO";
 
 // library
 import { array } from "../library";
+
 // /**
 //  *  @관리자_페이지_조회
 //  *  @route Get admin
@@ -215,7 +216,7 @@ import { array } from "../library";
 export const postAdminConcert = async (
   userID: number,
   reqData: adminDTO.adminWriteReqDTO,
-  url
+  url: any
 ) => {
   const { title, text, authorNickname } = reqData;
   let interest = array.stringToInterest(reqData.interest);
@@ -274,62 +275,58 @@ export const postAdminConcert = async (
   return 1;
 };
 
-// /**
-//  *  @관리자_공지사항_등록
-//  *  @route Post admin/notice
-//  *  @body
-//  *  @error
-//  *      1. 요청 바디 부족
-//  *      2. 유저 id가 관리자가 아님
-//  */
+/**
+ *  @관리자_공지사항_등록
+ *  @route Post admin/notice
+ *  @body
+ *  @error
+ *      1. 요청 바디 부족
+ *      2. 유저 id가 관리자가 아님
+ */
 
-// export const postAdminNotice = async (userID, reqData, url) => {
-//   const { title, text } = reqData;
+export const postAdminNotice = async (
+  userID: number,
+  reqData: adminDTO.adminWriteReqDTO,
+  url: any
+) => {
+  const { title, text } = reqData;
 
-//   let interest;
-//   if (reqData.interest) {
-//     interest = stringToArray(reqData.interest);
-//     // .toLowerCase()
-//     // .slice(1, -1)
-//     // .replace(/"/gi, "")
-//     // .split(/,\s?/);
-//   }
+  let interest = array.stringToInterest(reqData.interest);
+  let hashtag = array.stringToHashtag(reqData.hashtag);
 
-//   let hashtag;
-//   if (reqData.hashtag) {
-//     hashtag = stringToArray(reqData.hashtag);
-//     // .toLowerCase()
-//     // .slice(1, -1)
-//     // .replace(/"/gi, "")
-//     // .split(/,\s?/);
-//   }
+  // 1. 요청 바디 부족
+  if (!title || !text) {
+    return -1;
+  }
 
-//   // 1. 요청 바디 부족
-//   if (!title || !text) {
-//     return -1;
-//   }
+  // 2. 유저 id가 관리자가 아님
+  const user = await User.findOne({
+    where: { id: userID },
+    attributes: ["isAdmin", "nickName"],
+  });
+  if (user.isAdmin === false) {
+    return -2;
+  }
 
-//   // 2. 유저 id가 관리자가 아님
-//   let user = await User.findById(userID);
-//   if (!(user.userType === 1)) {
-//     return -2;
-//   }
+  // Notice 등록
+  const newPost = await Post.create({
+    userID,
+    interest,
+  });
 
-//   const notice = new Concert({
-//     title: title.toLowerCase(),
-//     interest,
-//     user: userID,
-//     isNotice: true,
-//     videoLink: url.videoLink,
-//     imgThumbnail: url.imgThumbnail,
-//     text: text.toLowerCase(),
-//     hashtag,
-//   });
+  await Concert.create({
+    id: newPost.id,
+    userID,
+    title,
+    videoLink: url.videoLink,
+    imgThumbnail: url.imgThumbnail,
+    text,
+    isNotice: true,
+    hashtag,
+  });
 
-//   await notice.save();
+  return 1;
+};
 
-//   return;
-// };
-
-const adminService = { postAdminConcert };
+const adminService = { postAdminConcert, postAdminNotice };
 export default adminService;

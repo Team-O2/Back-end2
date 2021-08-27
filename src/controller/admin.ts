@@ -122,14 +122,14 @@ const postAdminConcertController = async (req: Request, res: Response) => {
         : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
     };
     const reqData: adminDTO.adminWriteReqDTO = req.body;
-    const data = await adminService.postAdminConcert(
-      req.body.userID.id,
+    const resData = await adminService.postAdminConcert(
+      Number(req.body.userID.id),
       reqData,
       url
     );
 
     // 요청 바디가 부족할 경우
-    if (data === -1) {
+    if (resData === -1) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -137,7 +137,7 @@ const postAdminConcertController = async (req: Request, res: Response) => {
       );
     }
     // 유저 id가 관리자가 아님
-    else if (data === -2) {
+    else if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.BAD_REQUEST,
@@ -159,57 +159,63 @@ const postAdminConcertController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @관리자_공지사항_등록
-//  *  @route Post admin/notice
-//  *  @access private
-//  */
+/**
+ *  @관리자_공지사항_등록
+ *  @route Post admin/notice
+ *  @access private
+ */
 
-// router.post<unknown, unknown, IConcert>(
-//   "/notice",
-//   upload.fields([
-//     { name: "videoLink", maxCount: 1 },
-//     { name: "imgThumbnail", maxCount: 1 },
-//   ]),
-//   auth,
-//   async (req: Request, res: Response) => {
-//     try {
-//       const url = {
-//         videoLink: (req as any).files.videoLink
-//           ? (req as any).files.videoLink[0].location
-//           : "",
-//         imgThumbnail: (req as any).files.imgThumbnail
-//           ? (req as any).files.imgThumbnail[0].location
-//           : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
-//       };
+const postAdminNoticeController = async (req: Request, res: Response) => {
+  try {
+    const url = {
+      videoLink: (req as any).files.videoLink
+        ? (req as any).files.videoLink[0].location
+        : "",
+      imgThumbnail: (req as any).files.imgThumbnail
+        ? (req as any).files.imgThumbnail[0].location
+        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+    };
 
-//       const reqData: adminWriteReqDTO = req.body;
-//       const data = await postAdminNotice(
-//         req.body.userID.id,
-//         reqData,
-//         // JSON.parse(req.body.json),
-//         url
-//       );
+    const reqData: adminDTO.adminWriteReqDTO = req.body;
+    const data = await adminService.postAdminNotice(
+      Number(req.body.userID.id),
+      reqData,
+      url
+    );
 
-//       // 요청 바디가 부족할 경우
-//       if (data === -1) {
-//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//       }
-//       // 유저 id가 관리자가 아님
-//       else if (data === -2) {
-//         response(res, returnCode.BAD_REQUEST, "관리자 아이디가 아닙니다");
-//       }
+    // 요청 바디가 부족할 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // 유저 id가 관리자가 아님
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "관리자 아이디가 아닙니다"
+      );
+    }
 
-//       // 관리자 공지사항 등록 성공
-//       else {
-//         response(res, returnCode.OK, "관리자 공지사항 등록 성공");
-//       }
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
+    // 관리자 공지사항 등록 성공
+    else {
+      response.basicResponse(
+        res,
+        returnCode.CREATED,
+        "관리자 공지사항 등록 성공"
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-const adminController = { postAdminConcertController };
+const adminController = {
+  postAdminConcertController,
+  postAdminNoticeController,
+};
 export default adminController;
