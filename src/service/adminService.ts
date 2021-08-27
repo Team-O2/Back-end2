@@ -1,7 +1,16 @@
 import sequelize, { Op } from "sequelize";
 
 // models
-import { Badge, Concert, Comment, Like, Post, Scrap, User } from "../models";
+import {
+  Badge,
+  Concert,
+  Comment,
+  Like,
+  Post,
+  Challenge,
+  User,
+  Admin,
+} from "../models";
 
 // DTO
 import { adminDTO, concertDTO, commentDTO } from "../DTO";
@@ -9,87 +18,98 @@ import { adminDTO, concertDTO, commentDTO } from "../DTO";
 // library
 import { array } from "../library";
 
-// /**
-//  *  @관리자_페이지_조회
-//  *  @route Get admin
-//  *  @body
-//  *  @error
-//  *      1. 유저 id가 관리자가 아님
-//  */
+/**
+ *  @관리자_페이지_조회
+ *  @route Get /admin?offset=&limit=
+ *  @body
+ *  @error
+ *      1. 유저 id가 관리자가 아님
+ */
 
-// export const postAdminList = async (userID, offset, limit) => {
-//   if (!offset) {
-//     offset = 0;
-//   }
+export const getAdminList = async (
+  userID: number,
+  offset: number,
+  limit: number
+) => {
+  // isDelete = true 인 애들만 가져오기
+  // offset 뒤에서 부터 가져오기
+  // 최신순으로 정렬
+  // 댓글, 답글 최신순으로 정렬
+  if (!offset) {
+    offset = 0;
+  }
 
-//   if (!limit) {
-//     return -1;
-//   }
+  // 1. 요청 부족
+  if (!limit) {
+    return -1;
+  }
 
-//   // 1. 유저 id가 관리자가 아님
-//   let user = await User.findById(userID);
-//   if (!(user.userType === 1)) {
-//     return -2;
-//   }
+  // 2. 유저 id가 관리자가 아님
+  const user = await User.findOne({
+    where: { id: userID },
+    attributes: ["isAdmin", "nickName"],
+  });
+  if (user.isAdmin === false) {
+    return -2;
+  }
 
-//   const admins = await Admin.find(
-//     {},
-//     {
-//       _id: false,
-//       title: false,
-//       limitNum: false,
-//       __v: false,
-//     }
-//   ).sort({ generation: -1 });
+  const admins: adminDTO.adminResDetailDTO[] = await Admin.findAll({
+    order: [["generation", "DESC"]],
+    limit,
+    offset,
+  });
 
-//   const adminList = await Promise.all(
-//     admins.map(async function (admin) {
-//       let totalNum = await Challenge.aggregate([
-//         {
-//           $match: { generation: admin.generation },
-//         },
-//         {
-//           $group: {
-//             _id: "$user",
-//             // 참여 인원
-//             total: { $sum: 1 },
-//           },
-//         },
-//         { $project: { _id: 0 } },
-//       ]);
-//       let participants = 0;
-//       if (totalNum[0]) {
-//         participants = totalNum[0]["total"];
-//       }
-//       const admintemp = {
-//         registerStartDT: admin.registerStartDT,
-//         registerEndDT: admin.registerEndDT,
-//         challengeStartDT: admin.challengeStartDT,
-//         challengeEndDT: admin.challengeEndDT,
-//         generation: admin.generation,
-//         createdDT: admin.createdDT,
-//         // 신청 인원
-//         applyNum: admin.applyNum,
-//         // 참여 인원
-//         participants,
-//         postNum: await Challenge.find({ generation: admin.generation }).count(),
-//         img: admin.img,
-//       };
-//       return admintemp;
-//     })
-//   );
+  const adminList = await Promise.all(
+    admins.map(async (admin) => {
+      // 해당 기수 글 작성자
+      const participantList = await Post.findAll({
+        where: { generation: admin.generation },
+        include: [
+          {
+            model: Challenge,
+            required: true,
+          },
+        ],
+        attributes: [[sequelize.fn("count", sequelize.col("userID")), "count"]],
+      });
 
-//   var offsetAdmin = [];
-//   for (var i = Number(offset); i < Number(offset) + Number(limit); i++) {
-//     offsetAdmin.push(adminList[i]);
-//   }
-//   const resData: adminResDTO = {
-//     offsetAdmin,
-//     totalAdminNum: adminList.length,
-//   };
+      // 해당 기수 글 개수
+      const postNum = await Post.findAll({
+        where: { generation: admin.generation },
+        include: [
+          {
+            model: Challenge,
+            required: true,
+          },
+        ],
+      });
 
-//   return resData;
-// };
+      let returnData: adminDTO.adminResDetailDTO = {
+        registerStartDT: admin.registerStartDT,
+        registerEndDT: admin.registerEndDT,
+        challengeStartDT: admin.challengeStartDT,
+        challengeEndDT: admin.challengeEndDT,
+        generation: admin.generation,
+        createdAT: admin.createdAT,
+        applyNum: admin.applyNum,
+        participants: participantList.length,
+        postNum: postNum.length,
+        img: admin.img,
+      };
+
+      return returnData;
+    })
+  );
+
+  const totalAdmin = await Admin.findAll();
+
+  const resData: adminDTO.adminResDTO = {
+    offsetAdmin: adminList,
+    totalAdminNum: totalAdmin.length,
+  };
+
+  return resData;
+};
 
 // /**
 //  *  @관리자_챌린지_등록
@@ -328,5 +348,5 @@ export const postAdminNotice = async (
   return 1;
 };
 
-const adminService = { postAdminConcert, postAdminNotice };
+const adminService = { postAdminConcert, postAdminNotice, getAdminList };
 export default adminService;

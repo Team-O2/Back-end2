@@ -6,37 +6,51 @@ import { adminService } from "../service";
 // DTO
 import { adminDTO, commentDTO } from "../DTO";
 
-// /**
-//  *  @관리자_페이지_조회
-//  *  @route Get admin
-//  *  @access private
-//  */
-// router.get("/", auth, async (req: Request, res: Response) => {
-//   try {
-//     const data: adminResDTO | -1 | -2 = await postAdminList(
-//       req.body.userID.id,
-//       req.query.offset,
-//       req.query.limit
-//     );
+/**
+ *  @관리자_페이지_조회
+ *  @route Get /admin?offset=&limit=
+ *  @access private
+ */
+const getAdminListController = async (req: Request, res: Response) => {
+  try {
+    const resData: adminDTO.adminResDTO | -1 | -2 =
+      await adminService.getAdminList(
+        Number(req.body.userID.id),
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
 
-//     // limit 없을 때
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
+    // limit 없을 때
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
 
-//     // 유저 id가 관리자가 아님
-//     if (data === -2) {
-//       response(res, returnCode.NOT_FOUND, "관리자 아이디가 아닙니다");
-//     }
-//     // 관리자 챌린지 조회 성공
-//     else {
-//       dataResponse(res, returnCode.OK, "관리자 페이지 조회 성공", data);
-//     }
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+    // 유저 id가 관리자가 아님
+    if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "관리자 아이디가 아닙니다"
+      );
+    }
+    // 관리자 챌린지 조회 성공
+    else {
+      response.dataResponse(
+        res,
+        returnCode.OK,
+        "관리자 페이지 조회 성공",
+        resData
+      );
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 // /**
 //  *  @관리자_챌린지_등록
@@ -217,5 +231,6 @@ const postAdminNoticeController = async (req: Request, res: Response) => {
 const adminController = {
   postAdminConcertController,
   postAdminNoticeController,
+  getAdminListController,
 };
 export default adminController;
