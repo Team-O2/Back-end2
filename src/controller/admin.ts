@@ -30,7 +30,7 @@ const getAdminListController = async (req: Request, res: Response) => {
     }
 
     // 유저 id가 관리자가 아님
-    if (resData === -2) {
+    else if (resData === -2) {
       response.basicResponse(
         res,
         returnCode.NOT_FOUND,

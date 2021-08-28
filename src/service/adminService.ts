@@ -13,7 +13,7 @@ import {
 } from "../models";
 
 // DTO
-import { adminDTO, concertDTO, commentDTO } from "../DTO";
+import { adminDTO } from "../DTO";
 
 // library
 import { array, date } from "../library";
