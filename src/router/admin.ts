@@ -33,4 +33,11 @@ router.post(
   authMiddleware,
   adminController.postAdminNoticeController
 );
+router.post(
+  "/challenge",
+  upload.fields([{ name: "img", maxCount: 1 }]),
+  authMiddleware,
+  adminController.postAdminChallengeController
+);
+
 export default router;
