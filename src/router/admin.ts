@@ -8,6 +8,11 @@ const upload = require("../modules/upload");
 const router = Router();
 
 router.get("/", authMiddleware, adminController.getAdminListController);
+router.get(
+  "/regist",
+  publicAuthMiddleware,
+  adminController.getAdminRegistController
+);
 
 router.post(
   "/concert",
