@@ -16,7 +16,7 @@ import {
 import { adminDTO, concertDTO, commentDTO } from "../DTO";
 
 // library
-import { array } from "../library";
+import { array, date } from "../library";
 
 /**
  *  @관리자_페이지_조회
@@ -111,84 +111,79 @@ export const getAdminList = async (
   return resData;
 };
 
-// /**
-//  *  @관리자_챌린지_등록
-//  *  @route Post admin/challenge
-//  *  @body registerStartDT, registerEndDT, challengeStartDT, challengeEndDT, limitNum, img
-//  *  @error
-//  *      1. 요청 바디 부족
-//  *      2. 유저 id가 관리자가 아님
-//  *      3. 챌린지 기간이 잘못됨
-//  */
-// export const postAdminChallenge = async (
-//   userID,
-//   reqData: adminRegistReqDTO,
-//   url
-// ) => {
-//   const img = url.img;
-//   const {
-//     title,
-//     registerStartDT,
-//     registerEndDT,
-//     challengeStartDT,
-//     challengeEndDT,
-//     limitNum,
-//   } = reqData;
+/**
+ *  @관리자_챌린지_등록
+ *  @route Post admin/challenge
+ *  @body registerStartDT, registerEndDT, challengeStartDT, challengeEndDT, limitNum, img
+ *  @access private
+ *  @error
+ *      1. 요청 바디 부족
+ *      2. 유저 id가 관리자가 아님
+ *      3. 챌린지 기간이 잘못됨
+ */
+export const postAdminChallenge = async (
+  userID: number,
+  reqData: adminDTO.adminRegistReqDTO,
+  url
+) => {
+  const img = url.img;
+  const {
+    title,
+    registerStartDT,
+    registerEndDT,
+    challengeStartDT,
+    challengeEndDT,
+    limitNum,
+  } = reqData;
 
-//   // 1. 요청 바디 부족
-//   if (
-//     !title ||
-//     !registerStartDT ||
-//     !registerEndDT ||
-//     !challengeStartDT ||
-//     !challengeEndDT ||
-//     !limitNum
-//   ) {
-//     return -1;
-//   }
+  // 1. 요청 바디 부족
+  if (
+    !title ||
+    !registerStartDT ||
+    !registerEndDT ||
+    !challengeStartDT ||
+    !challengeEndDT ||
+    !limitNum
+  ) {
+    return -1;
+  }
 
-//   // 2. 유저 id가 관리자가 아님
-//   let user = await User.findById(userID);
-//   if (!(user.userType === 1)) {
-//     return -2;
-//   }
+  // 2. 유저 id가 관리자가 아님
+  const user = await User.findOne({
+    where: { id: userID },
+    attributes: ["isAdmin", "nickName"],
+  });
+  if (user.isAdmin === false) {
+    return -2;
+  }
 
-//   /*
-//     var = new Date('2020-10-23');
-//     var date2 = new Date('2020-10-22');
-
-//     console.log(date1 > date2); // true
-//   */
-
-//   //기수 증가
-//   const changeGen = (await Admin.find().count()) + 1;
-//   const admin = new Admin({
-//     title,
-//     registerStartDT: stringToDate(registerStartDT),
-//     registerEndDT: stringToEndDate(registerEndDT),
-//     challengeStartDT: stringToDate(challengeStartDT),
-//     challengeEndDT: stringToEndDate(challengeEndDT),
-//     generation: changeGen,
-//     limitNum,
-//     img,
-//     createdAt: new Date(),
-//   });
-//   // 3. 챌린지 기간이 잘못됨
-//   // 신청 마감날짜가 신청 시작 날짜보다 빠름
-//   if (registerEndDT < registerStartDT) {
-//     return -3;
-//   }
-//   // 챌린지 끝나는 날짜가 챌린지 시작하는 날짜보다 빠름
-//   else if (challengeEndDT < challengeStartDT) {
-//     return -3;
-//   }
-//   // 챌린지가 시작하는 날짜가 신청 마감 날짜보다 빠름
-//   else if (challengeStartDT < registerEndDT) {
-//     return -3;
-//   }
-//   await admin.save();
-//   return;
-// };
+  //기수 증가
+  const changeGen = (await (await Admin.findAll()).length) + 1;
+  await Admin.create({
+    title,
+    registerStartDT: date.stringToDate(registerStartDT),
+    registerEndDT: date.stringToEndDate(registerEndDT),
+    challengeStartDT: date.stringToDate(challengeStartDT),
+    challengeEndDT: date.stringToEndDate(challengeEndDT),
+    generation: changeGen,
+    limitNum,
+    img,
+  });
+  // 3. 챌린지 기간이 잘못됨
+  // 신청 마감날짜가 신청 시작 날짜보다 빠름
+  if (registerEndDT < registerStartDT) {
+    return -3;
+  }
+  // 챌린지 끝나는 날짜가 챌린지 시작하는 날짜보다 빠름
+  else if (challengeEndDT < challengeStartDT) {
+    return -3;
+  }
+  // 챌린지가 시작하는 날짜가 신청 마감 날짜보다 빠름
+  else if (challengeStartDT < registerEndDT) {
+    return -3;
+  }
+  return 1;
+};
 
 /**
  *  @관리자_챌린지_신청페이지
@@ -355,5 +350,6 @@ const adminService = {
   getAdminRegist,
   postAdminConcert,
   postAdminNotice,
+  postAdminChallenge,
 };
 export default adminService;

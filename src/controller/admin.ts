@@ -52,49 +52,60 @@ const getAdminListController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @관리자_챌린지_등록
-//  *  @route Post admin/challenge
-//  *  @access private
-//  */
-// router.post<unknown, unknown, IAdmin>(
-//   "/challenge",
-//   upload.fields([{ name: "img", maxCount: 1 }]),
-//   auth,
+/**
+ *  @관리자_챌린지_등록
+ *  @route Post admin/challenge
+ *  @access private
+ */
 
-//   async (req: Request, res: Response) => {
-//     try {
-//       const url = {
-//         img: (req as any).files.img
-//           ? (req as any).files.img[0].location
-//           : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
-//       };
-//       const reqData: adminRegistReqDTO = req.body;
-//       const data = await postAdminChallenge(req.body.userID.id, reqData, url);
+const postAdminChallengeController = async (req: Request, res: Response) => {
+  try {
+    const url = {
+      img: (req as any).files.img
+        ? (req as any).files.img[0].location
+        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+    };
+    const reqData: adminDTO.adminRegistReqDTO = req.body;
+    const data = await adminService.postAdminChallenge(
+      req.body.userID.id,
+      reqData,
+      url
+    );
 
-//       // 요청 바디가 부족할 경우
-//       if (data === -1) {
-//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//       }
-//       // 유저 id가 관리자가 아님
-//       else if (data === -2) {
-//         response(res, returnCode.NOT_FOUND, "관리자 아이디가 아닙니다");
-//       }
-//       // 챌린지 기간이 신청 기간보다 빠른 경우 or 기간 입력이 잘못된 경우
-//       else if (data === -3) {
-//         response(res, returnCode.BAD_REQUEST, "잘못된 기간을 입력하셨습니다");
-//       }
+    // 요청 바디가 부족할 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // 유저 id가 관리자가 아님
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "관리자 아이디가 아닙니다"
+      );
+    }
+    // 챌린지 기간이 신청 기간보다 빠른 경우 or 기간 입력이 잘못된 경우
+    else if (data === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "잘못된 기간을 입력하셨습니다"
+      );
+    }
 
-//       // 관리자 챌린지 등록 성공
-//       else {
-//         response(res, returnCode.OK, "관리자 챌린지 등록 성공");
-//       }
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
+    // 관리자 챌린지 등록 성공
+    else {
+      response.basicResponse(res, returnCode.OK, "관리자 챌린지 등록 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 /**
  *  @관리자_챌린지_신청페이지
@@ -243,5 +254,6 @@ const adminController = {
   getAdminRegistController,
   postAdminConcertController,
   postAdminNoticeController,
+  postAdminChallengeController,
 };
 export default adminController;
