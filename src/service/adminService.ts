@@ -190,38 +190,40 @@ export const getAdminList = async (
 //   return;
 // };
 
-// /**
-//  *  @관리자_챌린지_신청페이지
-//  *  @route Get admin/regist
-//  *  @access private
-//  */
-// export const getAdminRegist = async () => {
-//   // 신청 기간을 확인 현재 진행중인 기수를 가져옴
-//   let dateNow = new Date();
-//   const admin = await Admin.findOne({
-//     $and: [
-//       { registerStartDT: { $lte: dateNow } },
-//       { registerEndDT: { $gte: dateNow } },
-//     ],
-//   });
+/**
+ *  @관리자_챌린지_신청페이지
+ *  @route Get admin/regist
+ *  @access public
+ */
+export const getAdminRegist = async () => {
+  // 신청 기간을 확인 현재 진행중인 기수를 가져옴
+  let dateNow = new Date();
+  const admin = await Admin.findOne({
+    where: {
+      [sequelize.Op.and]: {
+        registerStartDT: { [sequelize.Op.lte]: dateNow },
+        registerEndDT: { [sequelize.Op.gte]: dateNow },
+      },
+    },
+  });
 
-//   // 현재 진행중인 기수가 없음
-//   if (!admin) {
-//     return -1;
-//   }
+  // 현재 진행중인 기수가 없음
+  if (!admin) {
+    return -1;
+  }
 
-//   const resData: adminRegistResDTO = {
-//     img: admin.img,
-//     title: admin.title,
-//     registerStartDT: admin.registerStartDT,
-//     registerEndDT: admin.registerEndDT,
-//     challengeStartDT: admin.challengeStartDT,
-//     challengeEndDT: admin.challengeEndDT,
-//     generation: admin.generation,
-//   };
+  const resData: adminDTO.adminRegistResDTO = {
+    img: admin.img,
+    title: admin.title,
+    registerStartDT: admin.registerStartDT,
+    registerEndDT: admin.registerEndDT,
+    challengeStartDT: admin.challengeStartDT,
+    challengeEndDT: admin.challengeEndDT,
+    generation: admin.generation,
+  };
 
-//   return resData;
-// };
+  return resData;
+};
 
 /**
  *  @관리자_콘서트_등록
@@ -348,5 +350,10 @@ export const postAdminNotice = async (
   return 1;
 };
 
-const adminService = { postAdminConcert, postAdminNotice, getAdminList };
+const adminService = {
+  getAdminList,
+  getAdminRegist,
+  postAdminConcert,
+  postAdminNotice,
+};
 export default adminService;
