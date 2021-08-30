@@ -51,10 +51,8 @@ const postSignup = async (data: authDTO.signupReqDTO) => {
     password: hashPassword,
     nickname,
     isMarketing,
-    interest: interest.join(),
+    interest: interest.join(","),
   });
-
-  const userID = (await user).id;
 
   // Badge 생성
   const badge = await Badge.create({
@@ -70,7 +68,7 @@ const postSignup = async (data: authDTO.signupReqDTO) => {
   // Return jsonwebtoken
   const payload = {
     user: {
-      id: userID,
+      id: user.id,
     },
   };
 
