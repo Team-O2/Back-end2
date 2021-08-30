@@ -6,6 +6,7 @@ import { authDTO } from "../DTO";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import config from "../config";
+import validator from "../library/validator";
 import { emailSender } from "../library";
 import ejs from "ejs";
 import sequelize from "sequelize";
@@ -28,6 +29,10 @@ const postSignup = async (data: authDTO.signupReqDTO) => {
     return -1;
   }
 
+  // 1. 이메일 형식 검사
+  if (!validator.emailValidator(email)) {
+    return -1;
+  }
   // 2. 아이디 중복
   const existUser = await User.findOne({ where: { email: email } });
 
@@ -100,6 +105,10 @@ async function postSignin(reqData: authDTO.signinReqDTO) {
 
   // 1. 요청 바디 부족
   if (!email || !password) {
+    return -1;
+  }
+  // 1. 이메일 형식 검사
+  if (!validator.emailValidator(email)) {
     return -1;
   }
 
