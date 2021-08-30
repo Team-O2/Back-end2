@@ -135,7 +135,13 @@ export const getConcertAll = async (
 
     return returnData;
   });
-  const totalConcertNum = concertList.length;
+
+  const totalConcertNum = await Post.count({
+    where: {
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
   const resData: concertDTO.concertAllResDTO = {
     concerts,
     totalConcertNum,
@@ -403,7 +409,10 @@ export const getConcertSearch = async (
     return returnData;
   });
 
-  const totalConcertNum = concertList.length;
+  const totalConcertNum = await Post.count({
+    where,
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
   const resData: concertDTO.concertAllResDTO = {
     concerts,
     totalConcertNum,
