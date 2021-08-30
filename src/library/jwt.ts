@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
-import { returnCode } from "../library/returnCode";
-import { response } from "../library/response";
+import { returnCode, response } from "../library";
 import config from "../config";
 
 function verify(authorization) {
@@ -39,7 +38,7 @@ function isLogin(req, res, next) {
       next();
     } catch (error) {
       // 유효하지 않은 경우
-      response(res, returnCode.UNAUTHORIZED, error.message); //
+      response.basicResponse(res, returnCode.UNAUTHORIZED, error.message); //
     }
   }
 }
@@ -53,7 +52,7 @@ function checkLogin(req, res, next) {
     next();
   } catch (error) {
     // 유효하지 않은 경우
-    response(res, returnCode.UNAUTHORIZED, error.message);
+    response.basicResponse(res, returnCode.UNAUTHORIZED, error.message);
   }
 }
 
