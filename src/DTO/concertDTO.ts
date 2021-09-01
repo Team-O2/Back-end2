@@ -7,7 +7,7 @@ namespace concertDTO {
     updatedAt: Date;
     userID: number;
     nickname: string;
-    authorNickname: string;
+    authorNickname?: string;
     title: string;
     videoLink: string;
     img: string;
@@ -17,8 +17,8 @@ namespace concertDTO {
     hashtag: string[];
     isDeleted: Boolean;
     isNotice: Boolean;
-    likeNum: number;
-    scrapNum: number;
+    likeNum?: number;
+    scrapNum?: number;
     commentNum: number;
     comment: commentDTO.IComment[];
     isLike?: boolean;
@@ -31,7 +31,7 @@ namespace concertDTO {
     updatedAt: Date;
     userID: number;
     nickname: string;
-    authorNickname: string;
+    authorNickname?: string;
     title: string;
     videoLink: string;
     imgThumbnail: string;
@@ -40,8 +40,8 @@ namespace concertDTO {
     hashtag: string[];
     isDeleted: Boolean;
     isNotice: Boolean;
-    likeNum: number;
-    scrapNum: number;
+    likeNum?: number;
+    scrapNum?: number;
     commentNum: number;
     comment: commentDTO.IComment[];
     isLike?: boolean;
@@ -50,6 +50,11 @@ namespace concertDTO {
 
   export interface concertAllResDTO {
     concerts: getConcertResDTO[];
+    totalConcertNum: number;
+  }
+
+  export interface noticeAllResDTO {
+    notices: getConcertResDTO[];
     totalConcertNum: number;
   }
 }

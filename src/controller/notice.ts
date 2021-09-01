@@ -1,138 +1,169 @@
-import { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 // libraries
-import { returnCode } from "../library/returnCode";
-import { response, dataResponse } from "../library/response";
+import { response, returnCode } from "../library";
 // services
-import {
-  getNoticeAll,
-  getNoticeOne,
-  getNoticeSearch,
-  postNoticeComment,
-} from "../service/noticeService";
-
-// middlewares
-import auth from "../middleware/auth";
-import publicAuth from "../middleware/publicAuth";
-
+import { noticeService } from "../service";
 // DTO
-import {
-  noticesResDTO,
-  noticeResDTO,
-  INotice,
-  noticeSearchResDTO,
-} from "../DTO/noticeDTO";
-import { commentReqDTO } from "../DTO/commentDTO";
-
-const router = Router();
+import { concertDTO, commentDTO } from "../DTO";
 
 /**
- *  @공지사항_전체_가져오기
- *  @route Get /notice
- *  @access private
+ *  @오투공지사항_전체_가져오기
+ *  @route Get /notice?offset=@&limit=
+ *  @access public
  */
 
-router.get("/", publicAuth, async (req: Request, res: Response) => {
+const getNoticeAllController = async (req: Request, res: Response) => {
   try {
-    const data: noticesResDTO | -1 = await getNoticeAll(
-      req.query.offset,
-      req.query.limit
-    );
+    const resData: concertDTO.noticeAllResDTO | -1 =
+      await noticeService.getNoticeAll(
+        req.body.userID?.id,
+        Number(req.query.offset),
+        Number(req.query.limit)
+      );
 
-    // 공지사항 불러오기 성공
-    const notice = data;
-
-    // limit 없을 때
-    if (data === -1) {
-      response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+    // 요청 데이터가 부족할 때
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 데이터가 부족합니다."
+      );
+    } else {
+      // 회고 전체 불러오기 성공
+      response.dataResponse(
+        res,
+        returnCode.OK,
+        "공지사항 전체 불러오기 성공",
+        resData
+      );
     }
-
-    dataResponse(res, returnCode.OK, "공지사항 불러오기 성공", notice);
   } catch (err) {
     console.error(err.message);
-    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-});
+};
 
 /**
- *  @공지사항_검색_또는_필터
- *  @route Get /notice/search?keyword=검색할단어
- *  @access private
+ *  @오투공지사항_검색_또는_필터
+ *  @route Get /notice/search?offset=&limit=&tag=&keyword=
+ *  @access public
  */
 
-router.get("/search", publicAuth, async (req: Request, res: Response) => {
+const getNoticeSearchController = async (req: Request, res: Response) => {
   try {
-    const data = await getNoticeSearch(
-      req.query.keyword,
-      req.query.offset,
-      req.query.limit
-    );
-
-    // 검색 불러오기 성공
-    const noticeSearch: noticeSearchResDTO | -1 = data;
+    const resData: concertDTO.noticeAllResDTO | -1 =
+      await noticeService.getNoticeSearch(
+        Number(req.query.offset),
+        Number(req.query.limit),
+        req.body.userID?.id,
+        req.query.tag ? String(req.query.tag) : undefined,
+        req.query.keyword ? String(req.query.keyword) : undefined
+      );
 
     // limit 없을 때
-    if (data === -1) {
-      response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
+    } else {
+      // 검색 불러오기 성공
+      response.dataResponse(res, returnCode.OK, "검색 성공", resData);
     }
-
-    dataResponse(res, returnCode.OK, "검색 성공", noticeSearch);
   } catch (err) {
     console.error(err.message);
-    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-});
+};
 
 /**
- *  @공지사항_디테일
+ *  @오투공지사항_Detail
  *  @route Get /notice/:noticeID
- *  @access private
+ *  @access public
+ *  @error
+ *    1. 올바르지 않은 게시글
  */
-
-router.get("/:id", publicAuth, async (req: Request, res: Response) => {
+const getNoticeDetailController = async (req: Request, res: Response) => {
   try {
-    // const data: INotice = await getNoticeOne(req.params.id);
-    const data = await getNoticeOne(req.params.id);
+    const resData: concertDTO.concertDetailDTO | -1 =
+      await noticeService.getNoticeOne(
+        req.body.userID?.id,
+        Number(req.params.noticeID)
+      );
 
-    dataResponse(res, returnCode.OK, "해당 공지사항 불러오기 성공", data);
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "존재하지 않는 게시글입니다"
+      );
+    } else {
+      response.dataResponse(
+        res,
+        returnCode.OK,
+        "해당 공지사항 게시글 불러오기 성공",
+        resData
+      );
+    }
   } catch (err) {
     console.error(err.message);
-    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-});
+};
 
 /**
  *  @공지사항_댓글_등록
  *  @route Post /notice/comment/:noticeID
  *  @access private
  */
-router.post("/comment/:id", auth, async (req: Request, res: Response) => {
+
+const postNoticeCommentController = async (req: Request, res: Response) => {
   try {
-    const reqData: commentReqDTO = req.body;
-    const data = await postNoticeComment(
-      req.params.id,
+    const reqData: commentDTO.postCommentReqDTO = req.body;
+    const resData = await noticeService.postNoticeComment(
+      Number(req.params.noticeID),
       req.body.userID.id,
       reqData
     );
 
-    // 공지사항 id가 잘못된 경우
-    if (data === -1) {
-      response(res, returnCode.NOT_FOUND, "요청 경로가 올바르지 않습니다");
+    // 회고 id가 잘못된 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.NOT_FOUND,
+        "요청 경로가 올바르지 않습니다"
+      );
     }
     //  요청 바디가 부족한 경우
-    if (data === -2) {
-      response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
+    else if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
     }
     // 부모 댓글 id가 잘못된 경우
-    if (data === -3) {
-      response(res, returnCode.BAD_REQUEST, "부모 댓글 id가 올바르지 않습니다");
+    else if (resData === -3) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "부모 댓글 id가 올바르지 않습니다"
+      );
+    } else {
+      // 댓글 등록 성공
+      response.basicResponse(res, returnCode.CREATED, "댓글 등록 성공");
     }
-    // 댓글 등록 성공
-    const noticeID = data;
-    dataResponse(res, returnCode.OK, "댓글 등록 성공", noticeID);
   } catch (err) {
     console.error(err.message);
-    response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
   }
-});
+};
 
-module.exports = router;
+const concertController = {
+  getNoticeAllController,
+  getNoticeDetailController,
+  getNoticeSearchController,
+  postNoticeCommentController,
+};
+export default concertController;
