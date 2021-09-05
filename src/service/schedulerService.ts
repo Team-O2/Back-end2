@@ -76,3 +76,8 @@ export const challengeOpen = schedule.scheduleJob("0 0 0 * * *", async () => {
     });
   }
 });
+const schedulerService = {
+  challengeOpen,
+};
+
+export default schedulerService;
