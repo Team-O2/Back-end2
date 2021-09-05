@@ -608,7 +608,7 @@ export const deleteConcertLike = async (concertID: number, userID: number) => {
 
 /**
  *  @오투콘서트_스크랩하기
- *  @route Post /user/concert/:concertID
+ *  @route Post /concert/:concertID/scrap
  *  @access private
  *  @error
  *      1. 콘서트 id 잘못됨
