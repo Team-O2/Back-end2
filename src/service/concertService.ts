@@ -585,7 +585,7 @@ export const deleteConcertLike = async (concertID: number, userID: number) => {
     },
     include: [
       { model: Concert, required: true, where: { isNotice: false } },
-      Like,
+      { model: Like, as: "likes", required: false },
     ],
   });
 
