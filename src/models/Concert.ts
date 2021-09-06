@@ -46,7 +46,6 @@ export default class Concert extends Model {
   @Column
   text!: string;
 
-  @Unique
   @Column
   authorNickname: string;
 
