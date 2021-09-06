@@ -55,7 +55,7 @@ namespace concertDTO {
 
   export interface noticeAllResDTO {
     notices: getConcertResDTO[];
-    totalConcertNum: number;
+    totalNoticeNum: number;
   }
 }
 export default concertDTO;

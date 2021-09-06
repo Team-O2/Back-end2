@@ -114,10 +114,10 @@ export const getNoticeAll = async (
 
     return returnData;
   });
-  const totalConcertNum = noticeList.length;
+  const totalNoticeNum = noticeList.length;
   const resData: concertDTO.noticeAllResDTO = {
     notices,
-    totalConcertNum,
+    totalNoticeNum,
   };
 
   return resData;
@@ -339,10 +339,10 @@ export const getNoticeSearch = async (
     return returnData;
   });
 
-  const totalConcertNum = noticeList.length;
+  const totalNoticeNum = noticeList.length;
   const resData: concertDTO.noticeAllResDTO = {
     notices,
-    totalConcertNum,
+    totalNoticeNum,
   };
 
   return resData;
