@@ -3,3 +3,4 @@ export { default as userController } from "./user";
 export { default as challengeController } from "./challenge";
 export { default as concertController } from "./concert";
 export { default as noticeController } from "./notice";
+export { default as adminController } from "./admin";

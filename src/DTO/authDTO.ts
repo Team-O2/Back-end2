@@ -28,6 +28,24 @@ namespace authDTO {
     email: string;
     password: string;
   }
+
+  export interface emailReqDTO {
+    email: string;
+  }
+
+  export interface codeReqDTO {
+    email: string;
+    emailCode: string;
+  }
+
+  export interface codeResDTO {
+    isOkay: boolean;
+  }
+
+  export interface passwordReqDTO {
+    email: string;
+    password: string;
+  }
 }
 
 export default authDTO;

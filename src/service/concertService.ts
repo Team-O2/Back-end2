@@ -135,7 +135,13 @@ export const getConcertAll = async (
 
     return returnData;
   });
-  const totalConcertNum = concertList.length;
+
+  const totalConcertNum = await Post.count({
+    where: {
+      isDeleted: false,
+    },
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
   const resData: concertDTO.concertAllResDTO = {
     concerts,
     totalConcertNum,
@@ -403,7 +409,10 @@ export const getConcertSearch = async (
     return returnData;
   });
 
-  const totalConcertNum = concertList.length;
+  const totalConcertNum = await Post.count({
+    where,
+    include: [{ model: Concert, required: true, where: { isNotice: false } }],
+  });
   const resData: concertDTO.concertAllResDTO = {
     concerts,
     totalConcertNum,
@@ -576,7 +585,7 @@ export const deleteConcertLike = async (concertID: number, userID: number) => {
     },
     include: [
       { model: Concert, required: true, where: { isNotice: false } },
-      Like,
+      { model: Like, as: "likes", required: false },
     ],
   });
 
@@ -599,7 +608,7 @@ export const deleteConcertLike = async (concertID: number, userID: number) => {
 
 /**
  *  @오투콘서트_스크랩하기
- *  @route Post /user/concert/:concertID
+ *  @route Post /concert/:concertID/scrap
  *  @access private
  *  @error
  *      1. 콘서트 id 잘못됨

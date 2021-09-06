@@ -22,9 +22,23 @@ function stringToArray(str: String) {
 
   return resultArr;
 }
+function stringToHashtag(str: String) {
+  let arrayStr = str
+    .replace("[", "#")
+    .replace("]", "")
+    .replace(/,/gi, ",#")
+    .replace(/"/gi, "");
+  return arrayStr;
+}
 
+function stringToInterest(str: String) {
+  let arrayStr = str.replace("[", "").replace("]", "").replace(/"/gi, "");
+  return arrayStr;
+}
 const array = {
   stringToArray,
+  stringToHashtag,
+  stringToInterest,
 };
 
 export default array;

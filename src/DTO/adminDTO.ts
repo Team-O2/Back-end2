@@ -1,31 +1,18 @@
 namespace adminDTO {
-  export interface IAdmin {
-    title: String;
-    registerStartDT: Date;
-    registerEndDT: Date;
-    challengeStartDT: Date;
-    challengeEndDT: Date;
-    generation: Number;
-    limitNum: Number;
-    img: string;
-    createdDT: Date;
-    applyNum: Number;
-  }
-
-  interface Admin {
+  export interface adminResDetailDTO {
     registerStartDT: Date;
     registerEndDT: Date;
     challengeStartDT: Date;
     challengeEndDT: Date;
     generation: number;
-    createdDT: Date;
+    createdAT?: Date;
     applyNum: number;
-    participants: number;
-    postNum: number;
-    img: string;
+    participants?: number;
+    postNum?: number;
+    img?: string;
   }
   export interface adminResDTO {
-    offsetAdmin: Admin[];
+    offsetAdmin: adminResDetailDTO[];
     totalAdminNum?: number;
   }
 
