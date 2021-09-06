@@ -160,10 +160,10 @@ const postNoticeCommentController = async (req: Request, res: Response) => {
   }
 };
 
-const concertController = {
+const noticeController = {
   getNoticeAllController,
   getNoticeDetailController,
   getNoticeSearchController,
   postNoticeCommentController,
 };
-export default concertController;
+export default noticeController;
