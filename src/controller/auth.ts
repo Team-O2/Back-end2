@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { check, validationResult } from "express-validator";
+import { validationResult } from "express-validator";
 // libraries
 import { response, returnCode } from "../library";
 // services
@@ -14,9 +14,14 @@ import { authDTO } from "../DTO";
  */
 
 const signupController = async (req: Request, res: Response) => {
+  // 이메일 형식이 잘못된 경우
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return response.basicResponse(
+      res,
+      returnCode.BAD_REQUEST,
+      "요청 값이 올바르지 않습니다"
+    );
   }
 
   try {
@@ -57,9 +62,14 @@ const signupController = async (req: Request, res: Response) => {
  */
 
 const signinController = async (req: Request, res: Response) => {
+  // 이메일 형식이 잘못된 경우
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return response.basicResponse(
+      res,
+      returnCode.BAD_REQUEST,
+      "요청 값이 올바르지 않습니다"
+    );
   }
 
   try {
@@ -107,113 +117,167 @@ const signinController = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  *  @이메일_인증번호_전송
-//  *  @route Post auth/email
-//  *  @access Public
-//  */
+/**
+ *  @이메일_인증번호_전송
+ *  @route Post auth/email
+ *  @desc post email code for certification
+ *  @access Public
+ */
 
-// router.post(
-//   "/email",
-//   [check("email", "Please include a valid email").isEmail()],
-//   async (req: Request, res: Response) => {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res.status(400).json({ errors: errors.array() });
-//     }
+const postEmailController = async (req: Request, res: Response) => {
+  // 이메일 형식이 잘못된 경우
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return response.basicResponse(
+      res,
+      returnCode.BAD_REQUEST,
+      "요청 값이 올바르지 않습니다"
+    );
+  }
 
-//     try {
-//       const data = await postEmail(req.body);
+  try {
+    const reqData: authDTO.emailReqDTO = req.body;
+    const resData: undefined | -1 | -2 | -3 = await authService.postEmail(
+      reqData
+    );
 
-//       // 요청 바디가 부족할 경우
-//       if (data == -1) {
-//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//       }
-//       // email이 DB에 없을 경우
-//       if (data == -2) {
-//         response(res, returnCode.BAD_REQUEST, "아이디가 존재하지 않습니다");
-//       }
-//       // 성공
-//       response(res, returnCode.OK, "인증번호 전송 성공");
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
+    // 요청 바디가 부족할 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // email이 DB에 없을 경우
+    else if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "아이디가 존재하지 않습니다"
+      );
+    }
+    // 이메일 전송이 실패한 경우
+    else if (resData === -3) {
+      response.basicResponse(
+        res,
+        returnCode.SERVICE_UNAVAILABLE,
+        "이메일 전송이 실패하였습니다"
+      );
+    }
+    // 성공
+    else {
+      response.basicResponse(res, returnCode.NO_CONTENT, "인증번호 전송 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// /**
-//  *  @인증번호_확인
-//  *  @route Post auth/code
-//  *  @access Public
-//  */
+/**
+ *  @인증번호_확인
+ *  @route Post auth/code
+ *  @desc check the certification code
+ *  @access Public
+ */
 
-// router.post("/code", async (req: Request, res: Response) => {
-//   try {
-//     const data = await postCode(req.body);
+const postCodeController = async (req: Request, res: Response) => {
+  // 이메일 형식이 잘못된 경우
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return response.basicResponse(
+      res,
+      returnCode.BAD_REQUEST,
+      "요청 값이 올바르지 않습니다"
+    );
+  }
 
-//     // 요청 바디가 부족할 경우
-//     if (data === -1) {
-//       response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//     }
-//     // email이 DB에 없을 경우
-//     if (data === -2) {
-//       response(res, returnCode.BAD_REQUEST, "아이디가 존재하지 않습니다");
-//     }
-//     // 인증번호가 올바르지 않은 경우
-//     if (data === -3) {
-//       dataResponse(res, returnCode.OK, "인증번호 인증 실패", { isOkay: false });
-//     }
-//     // 인증번호 인증 성공
-//     dataResponse(res, returnCode.OK, "인증번호 인증 성공", { isOkay: true });
-//   } catch (err) {
-//     console.error(err.message);
-//     response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//   }
-// });
+  try {
+    const reqData: authDTO.codeReqDTO = req.body;
+    const resData: undefined | -1 | -2 | -3 = await authService.postCode(
+      reqData
+    );
 
-// /**
-//  *  @비밀번호_변경
-//  *  @route Patch auth/pw
-//  *  @desc Authenticate user & get token
-//  *  @access Public
-//  */
+    // 요청 바디가 부족할 경우
+    if (resData === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // email이 DB에 없을 경우
+    if (resData === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "아이디가 존재하지 않습니다"
+      );
+    }
+    // 인증번호가 올바르지 않은 경우
+    if (resData === -3) {
+      response.dataResponse(res, returnCode.OK, "인증번호 인증 실패", {
+        isOkay: false,
+      });
+    }
+    // 인증번호 인증 성공
+    response.dataResponse(res, returnCode.OK, "인증번호 인증 성공", {
+      isOkay: true,
+    });
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
-// router.patch(
-//   "/pw",
-//   [
-//     check("email", "Please include a valid email").isEmail(),
-//     check(
-//       "password",
-//       "Please enter a password with 6 or more characters"
-//     ).isLength({ min: 6 }),
-//   ],
-//   async (req: Request, res: Response) => {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res.status(400).json({ errors: errors.array() });
-//     }
+/**
+ *  @비밀번호_변경
+ *  @route Patch auth/pw
+ *  @desc change password
+ *  @access Public
+ */
 
-//     try {
-//       const reqData: pwReqDTO = req.body;
-//       const data = await patchPassword(reqData);
+const patchPasswordController = async (req: Request, res: Response) => {
+  // 이메일 형식 또는 비밀번호 형식이 잘못된 경우
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return response.basicResponse(
+      res,
+      returnCode.BAD_REQUEST,
+      "요청 값이 올바르지 않습니다"
+    );
+  }
 
-//       // 요청 바디가 부족할 경우
-//       if (data === -1) {
-//         response(res, returnCode.BAD_REQUEST, "요청 값이 올바르지 않습니다");
-//       }
-//       // email이 DB에 없을 경우
-//       if (data === -2) {
-//         response(res, returnCode.BAD_REQUEST, "아이디가 존재하지 않습니다");
-//       }
-//       // 성공
-//       response(res, returnCode.OK, "비밀번호 변경 성공");
-//     } catch (err) {
-//       console.error(err.message);
-//       response(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
-//     }
-//   }
-// );
+  try {
+    const reqData: authDTO.passwordReqDTO = req.body;
+    const data: undefined | -1 | -2 = await authService.patchPassword(reqData);
+
+    // 요청 바디가 부족할 경우
+    if (data === -1) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "요청 값이 올바르지 않습니다"
+      );
+    }
+    // email이 DB에 없을 경우
+    else if (data === -2) {
+      response.basicResponse(
+        res,
+        returnCode.BAD_REQUEST,
+        "아이디가 존재하지 않습니다"
+      );
+    }
+    // 성공
+    else {
+      response.basicResponse(res, returnCode.NO_CONTENT, "비밀번호 변경 성공");
+    }
+  } catch (err) {
+    console.error(err.message);
+    response.basicResponse(res, returnCode.INTERNAL_SERVER_ERROR, "서버 오류");
+  }
+};
 
 /**
  *  @햄버거바
@@ -238,6 +302,9 @@ const authController = {
   signinController,
   signupController,
   hamburgerController,
+  postEmailController,
+  postCodeController,
+  patchPasswordController,
 };
 
 export default authController;

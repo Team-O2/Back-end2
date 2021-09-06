@@ -1,9 +1,10 @@
 // libararies
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import config from "../config";
 import { response, returnCode } from "../library";
 
-export default (req, res, next) => {
+export default (req: Request, res: Response, next) => {
   // 토큰 검사
   if (req.headers.authorization == null) {
     response.basicResponse(
@@ -17,7 +18,7 @@ export default (req, res, next) => {
   // Verify token
   try {
     const decoded = jwt.verify(token, config.jwtSecret);
-    
+
     req.body.userID = decoded.user;
     next();
   } catch (err) {
