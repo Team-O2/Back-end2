@@ -5,9 +5,12 @@ import { Badge, Admin, User, Generation } from "../models";
 // libraries
 import { date } from "../library";
 
-export const challengeOpen = schedule.scheduleJob("0 0 0 * * *", async () => {
+export const challengeOpen = schedule.scheduleJob("30 * * * * *", async () => {
   console.log("Changing Generation...");
-  const newDate = date.dateToString(new Date());
+  const curr = new Date();
+  const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
+  const kr_curr = new Date(curr.getTime() + KR_TIME_DIFF);
+  const newDate = date.dateToString(kr_curr);
   const today = date.stringToDate(newDate.substr(0, 10));
   const newChallenge = await Admin.findOne({
     where: { challengeStartDT: today },
@@ -17,12 +20,11 @@ export const challengeOpen = schedule.scheduleJob("0 0 0 * * *", async () => {
     const allUsers = await User.findAll();
 
     allUsers.map(async (user) => {
-      let userBadge = await Badge.findOne({ where: { user: user.id } });
+      let userBadge = await Badge.findOne({ where: { id: user.id } });
       // 해당 기수 user generation
       const userGeneration = await Generation.findOne({
         where: {
-          user: user.id,
-          generation: newChallenge.generation,
+          userID: user.id,
         },
       });
 
@@ -65,6 +67,11 @@ export const challengeOpen = schedule.scheduleJob("0 0 0 * * *", async () => {
         await user.update({
           isChallenge: true,
           isRegist: false,
+        });
+
+        // 해당 기수 유저 주당 챌린지 개수 설정
+        await userGeneration.update({
+          conditionNum: userGeneration.challengeNum,
         });
       }
 
