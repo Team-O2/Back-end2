@@ -5,7 +5,7 @@ import { Badge, Admin, User, Generation } from "../models";
 // libraries
 import { date } from "../library";
 
-export const challengeOpen = schedule.scheduleJob("30 * * * * *", async () => {
+export const challengeOpen = schedule.scheduleJob("0 0 0 * * *", async () => {
   console.log("Changing Generation...");
   const curr = new Date();
   const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
