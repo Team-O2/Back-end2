@@ -1,0 +1,208 @@
+<html>
+
+<head>
+    <!-- <link href="/public/css/style.css" rel="stylesheet" type="text/css" /> -->
+    <style>
+        p {
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+
+            -ms-flex-direction: column;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            position: absolute;
+            top: 10px;
+            height: 10px;
+        }
+
+        .content {
+            width: 100%;
+            padding: 0 60px;
+            padding-top: 110px;
+
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .title {
+            all: unset;
+            margin-bottom: 30px;
+            font-size: 36px;
+            font-weight: bold;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: 1.22;
+            letter-spacing: -0.5px;
+            text-align: left;
+            color: #000;
+        }
+
+        .title--blue {
+            color: #03b6ce;
+        }
+
+        .info-wrap {
+            width: 100%;
+            margin-bottom: 50px;
+            padding: 25px;
+            background-color: #f7f7f7;
+
+            font-display: column;
+        }
+
+        .info {
+            margin-bottom: 10px;
+            font-display: row;
+            font-size: 14px;
+            font-weight: 600;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: normal;
+            letter-spacing: normal;
+            text-align: left;
+            color: #3d3d3d;
+        }
+
+        .info__category {
+            width: 135px;
+        }
+
+        .schedule {
+            width: 100%;
+            margin-bottom: 60px;
+
+            font-display: column;
+            align-items: flex-start;
+        }
+
+        .schedule__title {
+            all: unset;
+            margin-bottom: 18px;
+            font-size: 16px;
+            font-weight: bold;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: 1.38;
+            letter-spacing: -0.5px;
+            text-align: left;
+            color: #000;
+        }
+
+        .schedule__text {
+            font-size: 14px;
+            font-weight: normal;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: 1.79;
+            letter-spacing: -0.5px;
+            text-align: left;
+            color: #242424;
+        }
+
+        .button {
+            all: unset;
+            cursor: pointer;
+            width: 278px;
+            height: 50px;
+            margin-bottom: 130px;
+            background-color: #03b6ce;
+            font-size: 16px;
+            font-weight: bold;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: 1.5;
+            letter-spacing: -0.5px;
+            text-align: center;
+            color: white;
+        }
+
+        .footer {
+            width: 100%;
+
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .footer .logo--text {
+            width: 130px;
+            height: 16px;
+        }
+
+        .footer .copyright {
+            font-size: 12px;
+            font-weight: normal;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: 1.33;
+            letter-spacing: normal;
+            text-align: left;
+            color: #8b8b8b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img src="/assets/Logo.svg" class="logo" />
+        <article class="content">
+            <h1 class="title">
+                <%= nickname %>님의 <span class="title--blue">신청내역</span>을
+                    <br />안내해 드립니다.
+            </h1>
+            <section class="info-wrap">
+                <div class="info">
+                    <span class="info__category" style="margin-right: 30px;">참여 Learn Myself</span>
+                    <span class="info__text">
+                        <%= generation %> Learn Myself
+                    </span>
+                </div>
+                <div class="info">
+                    <span class="info__category" style="margin-right: 74px;">챌린지 기간</span>
+                    <span class="info__text">
+                        <%= startM %>월 <%= startD %>일 <%= startDay %>요일 ~ <%= endM %>월 <%= endD %>일 <%= endDay %>요일
+                    </span>
+                </div>
+                <div class="info" style="margin-bottom: 0;">
+                    <span class="info__category" style="margin-right: 42px;">신청 챌린지 개수</span>
+                    <span class="info__text">
+                        한 주에 <%= challengeNum %>개
+                    </span>
+                </div>
+            </section>
+            <section class="schedule">
+                <h2 class="schedule__title">진행일정</h2>
+                <p class="schedule__text">1. <%= startM %>월 <%= startD %>일(<%= startDay %>)부터 <%= endM %>월 <%= endD %>일(
+                                        <%= endDay %>)까지 진행됩니다.
+                </p>
+                <p class="schedule__text">2. 시작일이 되면 Open Together 홈페이지에 '<%= generation %>' 페이지가 오픈될 예정입니다.</p>
+                <p class="schedule__text">3. 글쓰기 버튼을 클릭해 하루의 회고를 작성해주세요!</p>
+                <br />
+                <p class="schedule__text">
+                    <b>주의사항 3가지도</b> 꼭 기억해주세요 😎
+                </p>
+                <br />
+                <p class="schedule__text">1. 신청 때 선택하신 한 주 당 회고 작성 개수는 'N개'입니다! 변경이 불가하니 참고해주세요.</p>
+                <p class="schedule__text">
+                    2. 한 주에 2개 이상의 회고 작성을 선택하신 분들은 달성률 80%를 넘기면
+                    <br />'Learn Myself 배지'를 받을 수 있습니다.
+                </p>
+                <p class="schedule__text">3. 회고 작성 시 광고성 글, 카테고리와 무관한 내용은 무통보 삭제될 수 있으니 주의해주세요.</p>
+            </section>
+        </article>
+        <button class="button" onclick="window.location.href='https://www.opentogether-o2.com'">신청한 챌린지 바로가기</button>
+        <footer class="footer">
+            <img src="/assets/Frame.svg" class="logo--text" />
+            <p class="copyright">Copyright © 2021 Open Together</p>
+        </footer>
+    </div>
+</body>
+
+</html>
