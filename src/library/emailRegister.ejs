@@ -1,7 +1,6 @@
 <html>
 
 <head>
-    <!-- <link href="/public/css/style.css" rel="stylesheet" type="text/css" /> -->
     <style>
         p {
             margin: 0;
@@ -151,7 +150,7 @@
 
 <body>
     <div class="container">
-        <img src="/assets/Logo.svg" class="logo" />
+        <div style="background: url('https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/Logo.svg')" class="logo" />
         <article class="content">
             <h1 class="title">
                 <%= nickname %>님의 <span class="title--blue">신청내역</span>을
@@ -186,10 +185,10 @@
                 <p class="schedule__text">3. 글쓰기 버튼을 클릭해 하루의 회고를 작성해주세요!</p>
                 <br />
                 <p class="schedule__text">
-                    <b>주의사항 3가지도</b> 꼭 기억해주세요 😎
+                    <b>주의사항 3가지</b>도 꼭 기억해주세요 😎
                 </p>
                 <br />
-                <p class="schedule__text">1. 신청 때 선택하신 한 주 당 회고 작성 개수는 'N개'입니다! 변경이 불가하니 참고해주세요.</p>
+                <p class="schedule__text">1. 신청 때 선택하신 한 주 당 회고 작성 개수는 '<%= challengeNum %>개'입니다! 변경이 불가하니 참고해주세요.</p>
                 <p class="schedule__text">
                     2. 한 주에 2개 이상의 회고 작성을 선택하신 분들은 달성률 80%를 넘기면
                     <br />'Learn Myself 배지'를 받을 수 있습니다.
@@ -197,9 +196,9 @@
                 <p class="schedule__text">3. 회고 작성 시 광고성 글, 카테고리와 무관한 내용은 무통보 삭제될 수 있으니 주의해주세요.</p>
             </section>
         </article>
-        <button class="button" onclick="window.location.href='https://www.opentogether-o2.com'">신청한 챌린지 바로가기</button>
+        <!-- <button class="button" onclick="window.location.href='https://www.opentogether-o2.com'">신청한 챌린지 바로가기</button> -->
         <footer class="footer">
-            <img src="/assets/Frame.svg" class="logo--text" />
+            <div style="background: url('https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/Frame.svg');" class="logo--text" />
             <p class="copyright">Copyright © 2021 Open Together</p>
         </footer>
     </div>
