@@ -1,0 +1,1 @@
+{"version":3,"file":"emailSender.js","sourceRoot":"","sources":["../../src/library/emailSender.ts"],"names":[],"mappings":";;;;;AAAA,4DAAoC;AAEpC,kBAAe,oBAAU,CAAC,eAAe,CAAC;IACxC,OAAO,EAAE,OAAO;IAChB,IAAI,EAAE;QACJ,IAAI,EAAE,OAAO,CAAC,GAAG,CAAC,aAAa;QAC/B,IAAI,EAAE,OAAO,CAAC,GAAG,CAAC,cAAc;KACjC;IACD,GAAG,EAAE;QACH,kBAAkB,EAAE,KAAK;KAC1B;CACF,CAAC,CAAC"}
