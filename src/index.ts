@@ -4,6 +4,7 @@ import cors from "cors";
 import { sequelize } from "./models";
 import router from "./router";
 import path from "path";
+import schedulerService from "./service/schedulerService";
 
 // sequelize
 //   .sync({ alter: true })
@@ -56,7 +57,7 @@ app.use(function (err, req, res, next) {
   res.render("error");
 
   // scheduler
-  // challengeOpen;
+  schedulerService.challengeOpen;
 });
 
 const server = app
