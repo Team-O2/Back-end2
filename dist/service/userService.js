@@ -16,8 +16,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../models");
 const date_1 = __importDefault(require("../library/date"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const library_1 = require("../library");
+const ejs_1 = __importDefault(require("ejs"));
 const sequelize_1 = require("sequelize");
 const moment_1 = __importDefault(require("moment"));
+const week = ["일", "월", "화", "수", "목", "금", "토"];
 /**
  *  @User_마이페이지_Info
  *  @route Get user/mypage/info
@@ -776,7 +779,7 @@ const postRegister = (userID, body) => __awaiter(void 0, void 0, void 0, functio
     }
     const user = yield models_1.User.findOne({
         where: { id: userID },
-        attributes: ["isAdmin"],
+        attributes: ["isAdmin", "email", "nickname"],
     });
     // 2. 유저 id가 관리자 id임
     if (user.isAdmin) {
@@ -809,6 +812,45 @@ const postRegister = (userID, body) => __awaiter(void 0, void 0, void 0, functio
     if (admin.applyNum > admin.limitNum) {
         return -5;
     }
+    // email 전송
+    let emailTemplate;
+    ejs_1.default.renderFile("src/library/emailRegister.ejs", {
+        nickname: user.nickname,
+        generation: admin.id === 1
+            ? "1st"
+            : admin.id === 2
+                ? "2nd"
+                : String(admin.id) + "nd",
+        startM: admin.challengeStartDT.getMonth() + 1,
+        startD: admin.challengeStartDT.getDate(),
+        startDay: week[admin.challengeStartDT.getDay()],
+        endM: admin.challengeEndDT.getMonth() + 1,
+        endD: admin.challengeEndDT.getDate(),
+        endDay: week[admin.challengeEndDT.getDay()],
+        challengeNum: body.challengeNum,
+    }, (err, data) => {
+        if (err) {
+            console.log(err);
+        }
+        emailTemplate = data;
+    });
+    const mailOptions = {
+        front: process.env.EMAIL_ADDRESS,
+        to: user.email,
+        subject: "O2 챌린지 신청내역입니다.",
+        text: "",
+        html: emailTemplate,
+    };
+    library_1.emailSender.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+            return -6;
+        }
+        else {
+            console.log("success");
+        }
+        library_1.emailSender.close();
+    });
     yield models_1.Generation.create({
         generation: admin.id,
         userID,
