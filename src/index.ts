@@ -23,7 +23,6 @@ sequelize.sync({ force: false }).catch((error) => {
 
 app.use(express.urlencoded());
 app.use(express.json());
-app.use(express.static("public"));
 
 // Port Host
 const PORT: number = parseInt(process.env.PORT as string, 10) || 8080;
