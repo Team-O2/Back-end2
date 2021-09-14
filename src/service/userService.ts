@@ -29,6 +29,8 @@ import { userInfo } from "os";
 import { CodeArtifact } from "aws-sdk";
 import moment from "moment";
 
+const week = ["일", "월", "화", "수", "목", "금", "토"];
+
 /**
  *  @User_마이페이지_Info
  *  @route Get user/mypage/info
@@ -899,7 +901,7 @@ const postRegister = async (userID: number, body?: userDTO.registerReqDTO) => {
 
   const user = await User.findOne({
     where: { id: userID },
-    attributes: ["isAdmin"],
+    attributes: ["isAdmin", "email", "nickname"],
   });
 
   // 2. 유저 id가 관리자 id임
@@ -942,6 +944,52 @@ const postRegister = async (userID: number, body?: userDTO.registerReqDTO) => {
   if (admin.applyNum > admin.limitNum) {
     return -5;
   }
+
+  // email 전송
+  let emailTemplate: string;
+  ejs.renderFile(
+    "src/library/emailRegister.ejs",
+    {
+      nickname: user.nickname,
+      generation:
+        admin.id === 1
+          ? "1st"
+          : admin.id === 2
+          ? "2nd"
+          : String(admin.id) + "nd",
+      startM: admin.challengeStartDT.getMonth() + 1,
+      startD: admin.challengeStartDT.getDate(),
+      startDay: week[admin.challengeStartDT.getDay()],
+      endM: admin.challengeEndDT.getMonth() + 1,
+      endD: admin.challengeEndDT.getDate(),
+      endDay: week[admin.challengeEndDT.getDay()],
+      challengeNum: body.challengeNum,
+    },
+    (err, data) => {
+      if (err) {
+        console.log(err);
+      }
+      emailTemplate = data;
+    }
+  );
+
+  const mailOptions = {
+    front: process.env.EMAIL_ADDRESS,
+    to: user.email,
+    subject: "O2 챌린지 신청내역입니다.",
+    text: "",
+    html: emailTemplate,
+  };
+
+  emailSender.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log(error);
+      return -6;
+    } else {
+      console.log("success");
+    }
+    emailSender.close();
+  });
 
   await Generation.create({
     generation: admin.id,
