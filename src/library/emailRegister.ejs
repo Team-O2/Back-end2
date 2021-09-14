@@ -8,7 +8,6 @@
 
         .container {
             width: 100%;
-
             -ms-flex-direction: column;
             flex-direction: column;
             align-items: center;
@@ -17,15 +16,16 @@
         .logo {
             width: 80px;
             height: 80px;
-            position: absolute;
+            /* position: absolute;
+            z-index: 2;
             top: 10px;
-            height: 10px;
+            height: 10px; */
         }
 
         .content {
             width: 100%;
             padding: 0 60px;
-            padding-top: 110px;
+            padding-top: 20px;
 
             flex-direction: column;
             align-items: flex-start;
@@ -49,7 +49,7 @@
         }
 
         .info-wrap {
-            width: 100%;
+            width: 560px;
             margin-bottom: 50px;
             padding: 25px;
             background-color: #f7f7f7;
@@ -133,6 +133,7 @@
         .footer .logo--text {
             width: 130px;
             height: 16px;
+            margin-bottom: 6px;
         }
 
         .footer .copyright {
@@ -150,7 +151,7 @@
 
 <body>
     <div class="container">
-        <div style="background: url('https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/Logo.svg')" class="logo" />
+        <div style="background: url('https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/Logo.png')" class="logo" />
         <article class="content">
             <h1 class="title">
                 <%= nickname %>님의 <span class="title--blue">신청내역</span>을
@@ -191,14 +192,14 @@
                 <p class="schedule__text">1. 신청 때 선택하신 한 주 당 회고 작성 개수는 '<%= challengeNum %>개'입니다! 변경이 불가하니 참고해주세요.</p>
                 <p class="schedule__text">
                     2. 한 주에 2개 이상의 회고 작성을 선택하신 분들은 달성률 80%를 넘기면
-                    <br />'Learn Myself 배지'를 받을 수 있습니다.
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;'Learn Myself 배지'를 받을 수 있습니다.
                 </p>
                 <p class="schedule__text">3. 회고 작성 시 광고성 글, 카테고리와 무관한 내용은 무통보 삭제될 수 있으니 주의해주세요.</p>
             </section>
         </article>
         <!-- <button class="button" onclick="window.location.href='https://www.opentogether-o2.com'">신청한 챌린지 바로가기</button> -->
         <footer class="footer">
-            <div style="background: url('https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/Frame.svg');" class="logo--text" />
+            <div style="background: url('https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/Frame.png');" class="logo--text" />
             <p class="copyright">Copyright © 2021 Open Together</p>
         </footer>
     </div>
