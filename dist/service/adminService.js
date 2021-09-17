@@ -78,7 +78,7 @@ const getAdminList = (userID, offset, limit) => __awaiter(void 0, void 0, void 0
             challengeStartDT: admin.challengeStartDT,
             challengeEndDT: admin.challengeEndDT,
             generation: admin.generation,
-            createdAT: admin.createdAT,
+            createdAt: admin.createdAt,
             applyNum: admin.applyNum,
             participants: participantList.length,
             postNum: postNum.length,
