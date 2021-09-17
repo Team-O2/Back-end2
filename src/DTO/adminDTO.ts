@@ -5,7 +5,7 @@ namespace adminDTO {
     challengeStartDT: Date;
     challengeEndDT: Date;
     generation: number;
-    createdAT?: Date;
+    createdAt?: Date;
     applyNum: number;
     participants?: number;
     postNum?: number;
