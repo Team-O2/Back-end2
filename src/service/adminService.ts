@@ -90,7 +90,7 @@ export const getAdminList = async (
         challengeStartDT: admin.challengeStartDT,
         challengeEndDT: admin.challengeEndDT,
         generation: admin.generation,
-        createdAT: admin.createdAT,
+        createdAt: admin.createdAt,
         applyNum: admin.applyNum,
         participants: participantList.length,
         postNum: postNum.length,
