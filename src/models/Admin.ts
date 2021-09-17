@@ -54,7 +54,7 @@ export default class Admin extends Model {
   applyNum: number;
 
   @Default(
-    "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg"
+    "https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png"
   )
   @Column
   img?: string;

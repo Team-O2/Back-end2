@@ -63,7 +63,7 @@ const postAdminChallengeController = async (req: Request, res: Response) => {
     const url = {
       img: (req as any).files.img
         ? (req as any).files.img[0].location
-        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png",
     };
     const reqData: adminDTO.adminRegistReqDTO = req.body;
     const data = await adminService.postAdminChallenge(
@@ -154,7 +154,7 @@ const postAdminConcertController = async (req: Request, res: Response) => {
         : "",
       imgThumbnail: (req as any).files.imgThumbnail
         ? (req as any).files.imgThumbnail[0].location
-        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png",
     };
     const reqData: adminDTO.adminWriteReqDTO = req.body;
     const resData = await adminService.postAdminConcert(
@@ -208,7 +208,7 @@ const postAdminNoticeController = async (req: Request, res: Response) => {
         : "",
       imgThumbnail: (req as any).files.imgThumbnail
         ? (req as any).files.imgThumbnail[0].location
-        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+        : "https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png",
     };
 
     const reqData: adminDTO.adminWriteReqDTO = req.body;
