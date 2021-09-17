@@ -56,7 +56,7 @@ __decorate([
     __metadata("design:type", Number)
 ], Admin.prototype, "applyNum", void 0);
 __decorate([
-    sequelize_typescript_1.Default("https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg"),
+    sequelize_typescript_1.Default("https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png"),
     sequelize_typescript_1.Column,
     __metadata("design:type", String)
 ], Admin.prototype, "img", void 0);

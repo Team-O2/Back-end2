@@ -49,7 +49,7 @@ const postAdminChallengeController = (req, res) => __awaiter(void 0, void 0, voi
         const url = {
             img: req.files.img
                 ? req.files.img[0].location
-                : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+                : "https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png",
         };
         const reqData = req.body;
         const data = yield service_1.adminService.postAdminChallenge(req.body.userID.id, reqData, url);
@@ -110,7 +110,7 @@ const postAdminConcertController = (req, res) => __awaiter(void 0, void 0, void 
                 : "",
             imgThumbnail: req.files.imgThumbnail
                 ? req.files.imgThumbnail[0].location
-                : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+                : "https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png",
         };
         const reqData = req.body;
         const resData = yield service_1.adminService.postAdminConcert(Number(req.body.userID.id), reqData, url);
@@ -145,7 +145,7 @@ const postAdminNoticeController = (req, res) => __awaiter(void 0, void 0, void 0
                 : "",
             imgThumbnail: req.files.imgThumbnail
                 ? req.files.imgThumbnail[0].location
-                : "https://o2-server.s3.ap-northeast-2.amazonaws.com/origin/default_img_100%403x.jpg",
+                : "https://o2-server.s3.ap-northeast-2.amazonaws.com/default_O2_Logo%403x.png",
         };
         const reqData = req.body;
         const data = yield service_1.adminService.postAdminNotice(Number(req.body.userID.id), reqData, url);
