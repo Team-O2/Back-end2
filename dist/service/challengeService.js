@@ -406,7 +406,9 @@ const getChallengeSearch = (offset, limit, generation, userID, tag, isMine, keyw
             ] });
     // isMine, user id 여부에 따라 query 적용
     if (isMine && userID)
-        where = Object.assign(Object.assign({}, where), { "$user.id$": { [sequelize_1.Op.eq]: userID } });
+        where = Object.assign(Object.assign({}, where), { 
+            //@ts-ignore
+            "$user.id$": { [sequelize_1.Op.eq]: userID } });
     // include option
     let include = [
         { model: models_1.Challenge, required: true },
