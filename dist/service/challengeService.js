@@ -54,13 +54,13 @@ const postChallenge = (userID, reqData) => __awaiter(void 0, void 0, void 0, fun
     const newPost = yield models_1.Post.create({
         userID,
         generation,
+        interest: interest.join(),
     });
     yield models_1.Challenge.create({
         id: newPost.id,
         good: good,
         bad: bad,
         learn: learn,
-        interest: interest.join(),
     });
     // 유저의 writingCNT 증가
     yield models_1.Generation.increment("writingNum", { by: 1, where: { userID } });
@@ -77,8 +77,8 @@ const postChallenge = (userID, reqData) => __awaiter(void 0, void 0, void 0, fun
                 model: models_1.User,
                 attributes: ["nickname", "img"],
             },
-            models_1.Like,
-            models_1.Scrap,
+            { model: models_1.Like, as: "likes", required: false },
+            { model: models_1.Scrap, as: "scraps", required: false },
         ],
     });
     // data 형식에 맞게 변경
