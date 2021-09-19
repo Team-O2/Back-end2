@@ -956,7 +956,7 @@ const postRegister = async (userID: number, body?: userDTO.registerReqDTO) => {
           ? "1st"
           : admin.id === 2
           ? "2nd"
-          : String(admin.id) + "nd",
+          : String(admin.id) + "th",
       startM: admin.challengeStartDT.getMonth() + 1,
       startD: admin.challengeStartDT.getDate(),
       startDay: week[admin.challengeStartDT.getDay()],
