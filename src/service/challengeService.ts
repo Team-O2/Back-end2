@@ -73,8 +73,8 @@ const postChallenge = async (
         model: User,
         attributes: ["nickname", "img"],
       },
-      Like,
-      Scrap,
+      { model: Like, as: "likes", required: false },
+      { model: Scrap, as: "scraps", required: false },
     ],
   });
 
