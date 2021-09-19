@@ -493,6 +493,7 @@ const getChallengeSearch = async (
   if (isMine && userID)
     where = {
       ...where,
+      //@ts-ignore
       "$user.id$": { [Op.eq]: userID },
     };
 
