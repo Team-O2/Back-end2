@@ -44,13 +44,13 @@ const postChallenge = async (
   const newPost = await Post.create({
     userID,
     generation,
+    interest: interest.join(),
   });
   await Challenge.create({
     id: newPost.id,
     good: good,
     bad: bad,
     learn: learn,
-    interest: interest.join(),
   });
 
   // 유저의 writingCNT 증가

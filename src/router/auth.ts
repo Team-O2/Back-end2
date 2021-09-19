@@ -6,8 +6,12 @@ const router = express.Router();
 
 router.post("/signup", typeCheckMiddleware, authController.signupController);
 router.post("/signin", typeCheckMiddleware, authController.signinController);
-router.post("/email", typeCheckMiddleware, authController.postEmailController);
-router.post("/code", typeCheckMiddleware, authController.postCodeController);
+router.post(
+  "/email",
+  typeCheckMiddleware[0],
+  authController.postEmailController
+);
+router.post("/code", typeCheckMiddleware[0], authController.postCodeController);
 router.get("/hamburger", authController.hamburgerController);
 router.patch(
   "/pw",
