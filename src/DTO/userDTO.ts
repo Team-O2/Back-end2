@@ -83,9 +83,16 @@ namespace userDTO {
     challengeNum: number;
   }
 
+  // export interface userInfoReqDTO {
+  //   nickname: string;
+  //   interest: string[];
+  //   isMarketing: Boolean;
+  //   img?: File;
+  // }
+
   export interface userInfoReqDTO {
     nickname: string;
-    interest: string[];
+    interest: string;
     isMarketing: Boolean;
     img?: File;
   }
