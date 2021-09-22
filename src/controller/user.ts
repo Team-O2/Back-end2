@@ -221,14 +221,14 @@ const getMyCommentsController = async (req: Request, res: Response) => {
         "잘못된 postModel 값입니다."
       );
     }
-    // 3. 작성한 댓글이 없을 때
-    else if (data === -3) {
-      response.basicResponse(
-        res,
-        returnCode.NO_CONTENT,
-        "작성한 댓글이 없습니다."
-      );
-    }
+    // // 3. 작성한 댓글이 없을 때
+    // else if (data === -3) {
+    //   response.basicResponse(
+    //     res,
+    //     returnCode.NO_CONTENT,
+    //     "작성한 댓글이 없습니다."
+    //   );
+    // }
     // 4. 내가 쓴 댓글 조회 성공
     else {
       response.dataResponse(

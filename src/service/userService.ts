@@ -17,7 +17,7 @@ import period from "../library/date";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import config from "../config";
-import { emailSender } from "../library";
+import { emailSender, array } from "../library";
 import ejs from "ejs";
 import { ConnectionTimedOutError, Op, QueryTypes, Sequelize } from "sequelize";
 // DTO
@@ -157,7 +157,7 @@ const getUserInfo = async (userID: number) => {
   const user = await User.findOne({
     where: {
       id: userID,
-    },
+    },    
     attributes: ["isMarketing", "img", "id", "email", "nickname", "interest"],
   });
 
@@ -724,11 +724,11 @@ const getMyComments = async (
   if (!commentList) {
     return -2;
   }
-  // 3. 작성한 댓글이 없을 떄
-  else if (!commentList.length) {
-    // console.log(challengeList.length);
-    return -3;
-  }
+  // // 3. 작성한 댓글이 없을 떄
+  // else if (!commentList.length) {
+  //   // console.log(challengeList.length);
+  //   return -3;
+  // }
 
   const commentNum = commentList.length;
 
@@ -1015,7 +1015,8 @@ const patchUserInfo = async (
   body: userDTO.userInfoReqDTO,
   url?
 ) => {
-  let { nickname, interest, isMarketing } = body;
+  let { nickname, isMarketing } = body;
+  let interest = array.stringToInterest(body.interest);
 
   // 1. 요청 바디 부족
   if (
@@ -1033,7 +1034,6 @@ const patchUserInfo = async (
     return -2;
   }
 
-  let newInterest = "";
   const user = await User.findOne({
     where: { id: userID },
   });
@@ -1043,7 +1043,7 @@ const patchUserInfo = async (
     await User.update(
       {
         nickname,
-        interest: interest.join(),
+        interest,
         isMarketing,
         img: url.img,
       },
@@ -1053,7 +1053,7 @@ const patchUserInfo = async (
     await User.update(
       {
         nickname,
-        interest: interest.join(),
+        interest: interest,
         isMarketing,
       },
       { where: { id: userID } }
