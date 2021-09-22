@@ -708,7 +708,12 @@ const patchChallenge = async (
 
   const challenge = await Post.findOne({
     where: { isDeleted: false, "$challenge.id$": challengeID },
-    include: [{ model: Challenge, required: true }, User, Like, Scrap],
+    include: [
+      { model: Challenge, required: true },
+      User,
+      { model: Like, as: "likes", required: false },
+      { model: Scrap, as: "scraps", required: false },
+    ],
   });
 
   // 2. 회고록 id 잘못됨
