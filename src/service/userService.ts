@@ -28,6 +28,7 @@ import { getModels } from "sequelize-typescript";
 import { userInfo } from "os";
 import { CodeArtifact } from "aws-sdk";
 import moment from "moment";
+import { json } from "stream/consumers";
 
 const week = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -1026,6 +1027,7 @@ const patchUserInfo = async (
   ) {
     return -1;
   }
+
   const nicknameUser = await User.findOne({
     where: { nickname, id: { [Op.ne]: userID } },
   });
@@ -1033,10 +1035,6 @@ const patchUserInfo = async (
   if (nicknameUser) {
     return -2;
   }
-
-  const user = await User.findOne({
-    where: { id: userID },
-  });
 
   // 이미지 변경이 존재하는 경우
   if (url && url.img !== "") {
@@ -1056,9 +1054,19 @@ const patchUserInfo = async (
         interest: interest,
         isMarketing,
       },
-      { where: { id: userID } }
+      { 
+        where: { id: userID },
+        returning: true
+      },
     );
   }
+
+  const user = await User.findOne({
+    where: {
+      id: userID,
+    },    
+    attributes: ["img", "email"]
+  });
 
   if (isMarketing) {
     await Badge.update({ marketingBadge: true }, { where: { id: userID } });
@@ -1067,7 +1075,7 @@ const patchUserInfo = async (
   const resData: userDTO.userInfoResDTO = {
     interest: interest.split(","),
     isMarketing,
-    img: url.img,
+    img: user.img,
     id: userID,
     email: user.email,
     nickname
