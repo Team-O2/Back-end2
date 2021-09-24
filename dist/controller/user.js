@@ -142,10 +142,14 @@ const getMyCommentsController = (req, res) => __awaiter(void 0, void 0, void 0, 
         else if (data === -2) {
             library_1.response.basicResponse(res, library_1.returnCode.BAD_REQUEST, "잘못된 postModel 값입니다.");
         }
-        // 3. 작성한 댓글이 없을 때
-        else if (data === -3) {
-            library_1.response.basicResponse(res, library_1.returnCode.NO_CONTENT, "작성한 댓글이 없습니다.");
-        }
+        // // 3. 작성한 댓글이 없을 때
+        // else if (data === -3) {
+        //   response.basicResponse(
+        //     res,
+        //     returnCode.NO_CONTENT,
+        //     "작성한 댓글이 없습니다."
+        //   );
+        // }
         // 4. 내가 쓴 댓글 조회 성공
         else {
             library_1.response.dataResponse(res, library_1.returnCode.OK, "내가 쓴 댓글 가져오기 성공", data);

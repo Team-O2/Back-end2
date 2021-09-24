@@ -634,11 +634,11 @@ const getMyComments = (userID, postModel, offset, limit) => __awaiter(void 0, vo
     if (!commentList) {
         return -2;
     }
-    // 3. 작성한 댓글이 없을 떄
-    else if (!commentList.length) {
-        // console.log(challengeList.length);
-        return -3;
-    }
+    // // 3. 작성한 댓글이 없을 떄
+    // else if (!commentList.length) {
+    //   // console.log(challengeList.length);
+    //   return -3;
+    // }
     const commentNum = commentList.length;
     const comments = yield Promise.all(commentList.map((comment) => __awaiter(void 0, void 0, void 0, function* () {
         const returnData = {
@@ -820,7 +820,7 @@ const postRegister = (userID, body) => __awaiter(void 0, void 0, void 0, functio
             ? "1st"
             : admin.id === 2
                 ? "2nd"
-                : String(admin.id) + "nd",
+                : String(admin.id) + "th",
         startM: admin.challengeStartDT.getMonth() + 1,
         startD: admin.challengeStartDT.getDate(),
         startDay: week[admin.challengeStartDT.getDay()],
@@ -868,7 +868,8 @@ const postRegister = (userID, body) => __awaiter(void 0, void 0, void 0, functio
  *    2. 닉네임 중복
  */
 const patchUserInfo = (userID, body, url) => __awaiter(void 0, void 0, void 0, function* () {
-    let { nickname, interest, isMarketing } = body;
+    let { nickname, isMarketing } = body;
+    let interest = library_1.array.stringToInterest(body.interest);
     // 1. 요청 바디 부족
     if (nickname === undefined ||
         interest === undefined ||
@@ -882,7 +883,6 @@ const patchUserInfo = (userID, body, url) => __awaiter(void 0, void 0, void 0, f
     if (nicknameUser) {
         return -2;
     }
-    let newInterest = "";
     const user = yield models_1.User.findOne({
         where: { id: userID },
     });
@@ -890,7 +890,7 @@ const patchUserInfo = (userID, body, url) => __awaiter(void 0, void 0, void 0, f
     if (url && url.img !== "") {
         yield models_1.User.update({
             nickname,
-            interest: interest.join(),
+            interest,
             isMarketing,
             img: url.img,
         }, { where: { id: userID } });
@@ -898,7 +898,7 @@ const patchUserInfo = (userID, body, url) => __awaiter(void 0, void 0, void 0, f
     else {
         yield models_1.User.update({
             nickname,
-            interest: interest.join(),
+            interest: interest,
             isMarketing,
         }, { where: { id: userID } });
     }

@@ -592,7 +592,12 @@ const patchChallenge = (challengeID, reqData) => __awaiter(void 0, void 0, void 
     }
     const challenge = yield models_1.Post.findOne({
         where: { isDeleted: false, "$challenge.id$": challengeID },
-        include: [{ model: models_1.Challenge, required: true }, models_1.User, models_1.Like, models_1.Scrap],
+        include: [
+            { model: models_1.Challenge, required: true },
+            models_1.User,
+            { model: models_1.Like, as: "likes", required: false },
+            { model: models_1.Scrap, as: "scraps", required: false },
+        ],
     });
     // 2. 회고록 id 잘못됨
     if (!challenge) {
