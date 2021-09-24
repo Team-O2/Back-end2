@@ -1064,7 +1064,16 @@ const patchUserInfo = async (
     await Badge.update({ marketingBadge: true }, { where: { id: userID } });
   }
 
-  return;
+  const resData: userDTO.userInfoResDTO = {
+    interest: interest.split(","),
+    isMarketing,
+    img: url.img,
+    id: userID,
+    email: user.email,
+    nickname
+  }
+
+  return resData;
 };
 
 const userService = {
