@@ -28,7 +28,6 @@ import { getModels } from "sequelize-typescript";
 import { userInfo } from "os";
 import { CodeArtifact } from "aws-sdk";
 import moment from "moment";
-import { json } from "stream/consumers";
 
 const week = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -158,7 +157,7 @@ const getUserInfo = async (userID: number) => {
   const user = await User.findOne({
     where: {
       id: userID,
-    },    
+    },
     attributes: ["isMarketing", "img", "id", "email", "nickname", "interest"],
   });
 
@@ -1054,18 +1053,18 @@ const patchUserInfo = async (
         interest: interest,
         isMarketing,
       },
-      { 
+      {
         where: { id: userID },
-        returning: true
-      },
+        returning: true,
+      }
     );
   }
 
   const user = await User.findOne({
     where: {
       id: userID,
-    },    
-    attributes: ["img", "email"]
+    },
+    attributes: ["img", "email"],
   });
 
   if (isMarketing) {
@@ -1078,8 +1077,8 @@ const patchUserInfo = async (
     img: user.img,
     id: userID,
     email: user.email,
-    nickname
-  }
+    nickname,
+  };
 
   return resData;
 };
