@@ -883,9 +883,6 @@ const patchUserInfo = (userID, body, url) => __awaiter(void 0, void 0, void 0, f
     if (nicknameUser) {
         return -2;
     }
-    const user = yield models_1.User.findOne({
-        where: { id: userID },
-    });
     // 이미지 변경이 존재하는 경우
     if (url && url.img !== "") {
         yield models_1.User.update({
@@ -900,12 +897,29 @@ const patchUserInfo = (userID, body, url) => __awaiter(void 0, void 0, void 0, f
             nickname,
             interest: interest,
             isMarketing,
-        }, { where: { id: userID } });
+        }, {
+            where: { id: userID },
+            returning: true,
+        });
     }
+    const user = yield models_1.User.findOne({
+        where: {
+            id: userID,
+        },
+        attributes: ["img", "email"],
+    });
     if (isMarketing) {
         yield models_1.Badge.update({ marketingBadge: true }, { where: { id: userID } });
     }
-    return;
+    const resData = {
+        interest: interest.split(","),
+        isMarketing,
+        img: user.img,
+        id: userID,
+        email: user.email,
+        nickname,
+    };
+    return resData;
 });
 const userService = {
     getMypageInfo,
