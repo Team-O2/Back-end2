@@ -365,7 +365,7 @@ const getChallengeAll = (userID, generation, offset, limit) => __awaiter(void 0,
  *    2. generation이 없는 경우
  *    3. isMine=true 인데 user id가 없는 경우
  */
-const getChallengeSearch = (offset, limit, generation, userID, tag, isMine, keyword) => __awaiter(void 0, void 0, void 0, function* () {
+const getChallengeSearch = (offset, limit, generation, userID, tag, ismine, keyword) => __awaiter(void 0, void 0, void 0, function* () {
     // isDelete = false 인 애들만 가져오기
     // offset 뒤에서 부터 가져오기
     // 최신순으로 정렬
@@ -382,8 +382,8 @@ const getChallengeSearch = (offset, limit, generation, userID, tag, isMine, keyw
     if (!generation) {
         return -2;
     }
-    // 3. isMine=true 인데 user id가 없는 경우
-    if (isMine && !userID) {
+    // 3. ismine=true 인데 user id가 없는 경우
+    if (ismine && !userID) {
         return -3;
     }
     if (!offset) {
@@ -405,7 +405,7 @@ const getChallengeSearch = (offset, limit, generation, userID, tag, isMine, keyw
                 { "$challenge.learn$": { [sequelize_1.Op.like]: `%${keyword}%` } },
             ] });
     // isMine, user id 여부에 따라 query 적용
-    if (isMine && userID)
+    if (ismine && userID)
         where = Object.assign(Object.assign({}, where), { 
             //@ts-ignore
             "$user.id$": { [sequelize_1.Op.eq]: userID } });

@@ -166,7 +166,7 @@ const getChallengeAllController = (req, res) => __awaiter(void 0, void 0, void 0
 const getChallengeSearchController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     try {
-        const resData = yield service_1.challengeService.getChallengeSearch(Number(req.query.offset), Number(req.query.limit), Number(req.query.generation), (_b = req.body.userID) === null || _b === void 0 ? void 0 : _b.id, req.query.tag ? String(req.query.tag) : undefined, Boolean(req.query.isMine), req.query.keyword ? String(req.query.keyword) : undefined);
+        const resData = yield service_1.challengeService.getChallengeSearch(Number(req.query.offset), Number(req.query.limit), Number(req.query.generation), (_b = req.body.userID) === null || _b === void 0 ? void 0 : _b.id, req.query.tag ? String(req.query.tag) : undefined, Boolean(req.query.ismine), req.query.keyword ? String(req.query.keyword) : undefined);
         // limit 없을 때
         if (resData === -1) {
             library_1.response.basicResponse(res, library_1.returnCode.NOT_FOUND, "잘못된 limit 값입니다");
