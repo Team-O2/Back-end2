@@ -19,7 +19,7 @@ const models_1 = require("../models");
 // libraries
 const library_1 = require("../library");
 exports.challengeOpen = node_schedule_1.default.scheduleJob("0 0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Changing Generation...");
+    console.log("Check Generation...");
     const curr = new Date();
     const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
     const kr_curr = new Date(curr.getTime() + KR_TIME_DIFF);
@@ -30,6 +30,7 @@ exports.challengeOpen = node_schedule_1.default.scheduleJob("0 0 0 * * *", () =>
     });
     // 챌린지 시작하는 경우
     if (newChallenge) {
+        console.log("Changing Generation...");
         const allUsers = yield models_1.User.findAll();
         allUsers.map((user) => __awaiter(void 0, void 0, void 0, function* () {
             let userBadge = yield models_1.Badge.findOne({ where: { id: user.id } });
