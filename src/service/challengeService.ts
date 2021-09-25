@@ -434,7 +434,7 @@ const getChallengeSearch = async (
   generation: number,
   userID?: number,
   tag?: string,
-  isMine?: boolean,
+  ismine?: boolean,
   keyword?: string
 ) => {
   // isDelete = false 인 애들만 가져오기
@@ -456,8 +456,8 @@ const getChallengeSearch = async (
     return -2;
   }
 
-  // 3. isMine=true 인데 user id가 없는 경우
-  if (isMine && !userID) {
+  // 3. ismine=true 인데 user id가 없는 경우
+  if (ismine && !userID) {
     return -3;
   }
 
@@ -490,7 +490,7 @@ const getChallengeSearch = async (
     };
 
   // isMine, user id 여부에 따라 query 적용
-  if (isMine && userID)
+  if (ismine && userID)
     where = {
       ...where,
       //@ts-ignore

@@ -250,7 +250,7 @@ const getChallengeSearchController = async (req: Request, res: Response) => {
         Number(req.query.generation),
         req.body.userID?.id,
         req.query.tag ? String(req.query.tag) : undefined,
-        Boolean(req.query.isMine),
+        Boolean(req.query.ismine),
         req.query.keyword ? String(req.query.keyword) : undefined
       );
 
