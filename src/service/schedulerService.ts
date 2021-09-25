@@ -6,7 +6,7 @@ import { Badge, Admin, User, Generation } from "../models";
 import { date } from "../library";
 
 export const challengeOpen = schedule.scheduleJob("0 0 0 * * *", async () => {
-  console.log("Changing Generation...");
+  console.log("Check Generation...");
   const curr = new Date();
   const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
   const kr_curr = new Date(curr.getTime() + KR_TIME_DIFF);
@@ -17,6 +17,7 @@ export const challengeOpen = schedule.scheduleJob("0 0 0 * * *", async () => {
   });
   // 챌린지 시작하는 경우
   if (newChallenge) {
+    console.log("Changing Generation...");
     const allUsers = await User.findAll();
 
     allUsers.map(async (user) => {
