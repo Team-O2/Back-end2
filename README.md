@@ -201,4 +201,4 @@
 | :---: | :---: | :---: |
 | [![FVCproductions](https://avatars.githubusercontent.com/u/64517473?v=4)]()    | [![FVCproductions](https://avatars.githubusercontent.com/u/69850106?v=4)]() |[![FVCproductions](https://avatars.githubusercontent.com/u/71129059?v=4)]() |
 | 서버 개발자 | 서버 개발자 | 서버 개발자 |
-|프로젝트 세팅<br /> Auth API <br /> User API <br /> Concert API <br /> Admin API <br /> Notice API <br />|프로젝트 세팅 <br /> Auth API <br /> User API <br /> Challenge API <br /> Scheduler <br /> 서버 배포</br>| 프로젝트 세팅<br /> DB 설계 </br> 서버 배포</br>
+|프로젝트 세팅<br /> Auth API <br /> User API <br /> Concert API <br /> Admin API <br /> Notice API <br />|프로젝트 세팅 <br /> Auth API <br /> User API <br /> Challenge API <br /> Scheduler <br /> 서버 배포</br>| 프로젝트 세팅<br /> DB 설계 </br> 서버 배포</br> User API <br /> Notice API <br />
